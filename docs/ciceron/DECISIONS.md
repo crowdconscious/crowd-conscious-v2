@@ -193,6 +193,19 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
+### 2026-11-12 — Prompt 9 demo mode, guided story, RBAC/ABAC showcase
+- **Context:** Partners need a three-minute path from a real DOF note to an approved client alert; Francisco asked for an explicit RBAC vs ABAC pair with Spanish policy denials audited.
+- **Decision:**
+  1. Hashed `invite_codes` (pepper `CICERON_INVITE_PEPPER`, default `ciceron-demo-pepper-v1`); `DESPACHO-DEMO` / `DESPACHO-PASANTE` migrated; optional work email; opaque demo session cookie.
+  2. Persona switcher (Socia / Asociado / Pasante) via `switch_demo_persona`.
+  3. DB-enforced `evaluate_access` (RBAC role + ABAC matter / conflict wall / sensitivity / expiring grants) writes denials through `write_audit_event`.
+  4. Guided story max 6 steps + finale; progress in `guided_story_progress` + `engagement_resume` / `record_product_event`.
+  5. Demo freshness via `refresh_demo_dates` / `touch_session_freshness` — **no Vercel cron**.
+  6. Hardening migration `320` separate: revoke `set_actor` from authenticated; split `firm_onboarding` FOR ALL write policy.
+- **Consequences:** Migrations `317–320`. Seed UUIDs `e3…`. Agents do not apply. Supporting pages `/ciceron/proteccion`, `/ciceron/fuentes-cobertura`; sales `/ciceron/admin/ventas`.
+
+---
+
 ## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo

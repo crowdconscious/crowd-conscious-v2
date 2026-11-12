@@ -5,8 +5,11 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { CICERON_ROOMS } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import type { GuidedStoryState } from '@/lib/ciceron/demo/guided-story-pure'
 import { CiceronLockup } from './CiceronLogo'
 import { CommandPalette } from './CommandPalette'
+import { GuidedStoryPanel } from './GuidedStory'
+import { PersonaSwitcher, type SwitchablePersona } from './PersonaSwitcher'
 import './ciceron.css'
 
 export type ShellMeta = {
@@ -14,9 +17,12 @@ export type ShellMeta = {
   userName: string
   role: string
   roleKey?: string
+  personaId?: string
   m365Status?: 'connected' | 'disconnected'
   /** Live count for the Revisión rail badge (mine tab). */
   reviewBadge?: number
+  switchablePersonas?: SwitchablePersona[]
+  guidedStory?: GuidedStoryState | null
 }
 
 export function CiceronShell({
@@ -46,6 +52,12 @@ export function CiceronShell({
       <div className="cic-demo-banner" role="note">
         {copy.demoLabel}
       </div>
+      {meta.switchablePersonas && meta.personaId ? (
+        <PersonaSwitcher
+          currentPersonaId={meta.personaId}
+          personas={meta.switchablePersonas}
+        />
+      ) : null}
       <div className="cic-shell">
         <nav className="cic-rail" aria-label="Salas">
           <Link href="/ciceron/hoy" className="cic-rail-brand" aria-label={copy.brand}>
@@ -69,10 +81,22 @@ export function CiceronShell({
             )
           })}
           <div className="cic-rail-footer">
+            <Link href="/ciceron/acceso" className="cic-rail-m365">
+              <span>{copy.access.title}</span>
+            </Link>
+            <Link href="/ciceron/proteccion" className="cic-rail-m365">
+              <span>{copy.proteccion.title}</span>
+            </Link>
+            <Link href="/ciceron/fuentes-cobertura" className="cic-rail-m365">
+              <span>{copy.fuentesCobertura.title}</span>
+            </Link>
             {meta.role === copy.roleAdmin || meta.roleKey === 'admin' ? (
               <>
                 <Link href="/ciceron/admin/metricas" className="cic-rail-m365">
                   <span>{copy.adminMetricas.title}</span>
+                </Link>
+                <Link href="/ciceron/admin/ventas" className="cic-rail-m365">
+                  <span>{copy.adminVentas.title}</span>
                 </Link>
                 <Link href="/ciceron/admin/fuentes" className="cic-rail-m365">
                   <span>{copy.adminFuentes.title}</span>
@@ -106,7 +130,12 @@ export function CiceronShell({
               {meta.userName} · {meta.role}
             </div>
           </header>
-          <main className="cic-content">{children}</main>
+          <main className="cic-content">
+            {meta.guidedStory && !meta.guidedStory.dismissed ? (
+              <GuidedStoryPanel state={meta.guidedStory} />
+            ) : null}
+            {children}
+          </main>
         </div>
       </div>
       <nav className="cic-mobile-nav" aria-label="Salas">

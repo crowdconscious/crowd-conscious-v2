@@ -8,7 +8,10 @@ export const CICERON_BASE = '/ciceron'
  */
 export const CICERON_DEMO_INVITE_CODE = 'DESPACHO-DEMO'
 
-/** Cookie value = invite code (resolved server-side to demo_personas). */
+/**
+ * Cookie value = opaque session token (Prompt 9) or legacy/offline invite code.
+ * Server resolves via redeem_invite / resolve_demo_session (hashed).
+ */
 export const CICERON_DEMO_COOKIE = 'ciceron_demo_session'
 
 export const CICERON_FIRM_NAME = 'Despacho Demo, S.C.'

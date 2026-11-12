@@ -14,7 +14,7 @@ Enforced by:
 3. SQL RPC `record_product_event` allow-list (same keys); string values `^[A-Za-z0-9_:.-]{1,120}$`
 4. Migration `316`: authenticated cannot INSERT/UPDATE/DELETE `ciceron.events` (service_role / RPC only)
 
-Allowed property keys: `room`, `surface`, `kind`, `verdict`, `reason_code`, `output_type`, `decision`, `simulated`, `invite_role`, `source_kind`, `source_id`, `match_id`, `matter_id`, `client_id`, `watch_profile_id`, `is_demo`. Prefer `is_demo: true` on seed/demo rows.
+Allowed property keys: `room`, `surface`, `kind`, `verdict`, `reason_code`, `output_type`, `decision`, `simulated`, `invite_role`, `source_kind`, `source_id`, `match_id`, `matter_id`, `client_id`, `watch_profile_id`, `is_demo`, plus Prompt 9: `step`, `persona_role`, `story_action`, `invite_id`, `model`. Prefer `is_demo: true` on seed/demo rows.
 
 ## Event catalog
 
@@ -35,9 +35,13 @@ Allowed property keys: `room`, `surface`, `kind`, `verdict`, `reason_code`, `out
 | `watch_profile_created` | New watch profile | `client_id`, `watch_profile_id?`, `is_demo?` |
 | `watch_profile_edited` | Watch profile changed | `watch_profile_id`, `reason_code?`, `is_demo?` |
 | `saved_view_created` | Saved view created | `room`, `is_demo?` |
-| `invite_redeemed` | Invite code accepted | `invite_role?`, `is_demo?` |
+| `invite_redeemed` | Invite code accepted | `invite_role?`, `invite_id?`, `is_demo?` |
+| `guided_story_step` | Guided story advance / dismiss | `step`, `story_action?`, `is_demo?` |
+| `persona_switched` | Demo bar persona change | `persona_role`, `is_demo?` |
+| `access_demo_tried` | RBAC/ABAC try-it panel | `model` (`rbac`\|`abac`), `verdict?`, `is_demo?` |
 
 Legacy inserts (`match_feedback_relevant`, `prepare_client_alert`, …) may still exist in older rows; new code emits only the names above.
+`room_opened.room` also accepts `acceso`, `proteccion`, `fuentes-cobertura`, `admin-ventas`.
 
 ## Indicators (SQL views)
 

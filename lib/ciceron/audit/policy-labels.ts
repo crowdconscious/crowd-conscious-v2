@@ -33,6 +33,39 @@ export const POLICY_LABELS_ES: Record<string, { label: string; reasonFallback: s
     label: 'Presupuesto de IA',
     reasonFallback: 'Se alcanzó el presupuesto mensual de IA del despacho.',
   },
+  rbac_role: {
+    label: 'RBAC — rol insuficiente',
+    reasonFallback: 'Su rol no autoriza esta acción.',
+  },
+  rbac_membership: {
+    label: 'RBAC — membresía',
+    reasonFallback: 'El actor no es miembro de este despacho.',
+  },
+  abac_conflict_wall: {
+    label: 'ABAC — muro de conflicto',
+    reasonFallback:
+      'Muro de conflicto: no puede acceder a material de un cliente en conflicto.',
+  },
+  abac_matter_assignment: {
+    label: 'ABAC — asignación al asunto',
+    reasonFallback: 'No tiene asignación a este asunto.',
+  },
+  abac_sensitivity: {
+    label: 'ABAC — sensibilidad del documento',
+    reasonFallback: 'Se requiere una concesión vigente para este nivel de sensibilidad.',
+  },
+  abac_grant_expired: {
+    label: 'ABAC — permiso expirado',
+    reasonFallback: 'El permiso temporal para este recurso ya expiró.',
+  },
+  invite_expired: {
+    label: 'Invitación expirada',
+    reasonFallback: 'El código de invitación ha expirado.',
+  },
+  invite_exhausted: {
+    label: 'Invitación agotada',
+    reasonFallback: 'Este código ya alcanzó el máximo de usos.',
+  },
 }
 
 /** Known English seed reasons → Spanish (usted). */

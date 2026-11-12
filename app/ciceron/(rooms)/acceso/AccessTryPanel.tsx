@@ -1,0 +1,120 @@
+'use client'
+
+import { useActionState } from 'react'
+import { tryAccessAction } from '../../actions'
+import { copy } from '@/lib/ciceron/copy/es-MX'
+import { formatPolicyCell } from '@/lib/ciceron/audit/policy-labels'
+
+function ResultCard({
+  title,
+  ok,
+  policyId,
+  policyReason,
+  model,
+}: {
+  title: string
+  ok: boolean
+  policyId?: string | null
+  policyReason?: string | null
+  model?: string | null
+}) {
+  return (
+    <div className={`cic-policy-box ${ok ? 'is-allowed' : 'is-denied'}`}>
+      <strong>
+        {title}: {ok ? copy.access.allowed : copy.access.denied}
+      </strong>
+      {model ? (
+        <p className="cic-muted" style={{ margin: '6px 0 0', fontSize: '0.85rem' }}>
+          {copy.access.model}: {model.toUpperCase()}
+        </p>
+      ) : null}
+      {!ok ? (
+        <p style={{ margin: '8px 0 0', fontSize: '0.9rem' }}>
+          <span className="cic-muted">{copy.access.policy}: </span>
+          {formatPolicyCell(policyId, policyReason)}
+        </p>
+      ) : null}
+      {!ok && policyId ? (
+        <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
+          policy_id: {policyId}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+export function AccessTryPanel() {
+  const [state, action, pending] = useActionState(tryAccessAction, null)
+
+  return (
+    <div className="cic-access-grid" style={{ marginTop: 24 }}>
+      <section className="cic-section" aria-labelledby="rbac-title">
+        <h2 id="rbac-title" className="cic-h2">
+          {copy.access.rbacTitle}
+        </h2>
+        <p>{copy.access.rbacBody}</p>
+        <form action={action}>
+          <input type="hidden" name="scenario" value="rbac" />
+          <button type="submit" className="cic-btn" disabled={pending}>
+            {copy.access.tryIt} RBAC
+          </button>
+        </form>
+        {state?.scenario === 'rbac' ? (
+          <>
+            <ResultCard
+              title={copy.access.allowed}
+              ok={state.result.allowed.ok}
+              policyId={state.result.allowed.policyId}
+              policyReason={state.result.allowed.policyReason}
+              model={state.result.allowed.model}
+            />
+            <ResultCard
+              title={copy.access.denied}
+              ok={state.result.denied.ok}
+              policyId={state.result.denied.policyId}
+              policyReason={state.result.denied.policyReason}
+              model={state.result.denied.model}
+            />
+            <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.9rem' }}>
+              {state.result.explainer}
+            </p>
+          </>
+        ) : null}
+      </section>
+
+      <section className="cic-section" aria-labelledby="abac-title">
+        <h2 id="abac-title" className="cic-h2">
+          {copy.access.abacTitle}
+        </h2>
+        <p>{copy.access.abacBody}</p>
+        <form action={action}>
+          <input type="hidden" name="scenario" value="abac" />
+          <button type="submit" className="cic-btn" disabled={pending}>
+            {copy.access.tryIt} ABAC
+          </button>
+        </form>
+        {state?.scenario === 'abac' ? (
+          <>
+            <ResultCard
+              title={copy.access.allowed}
+              ok={state.result.allowed.ok}
+              policyId={state.result.allowed.policyId}
+              policyReason={state.result.allowed.policyReason}
+              model={state.result.allowed.model}
+            />
+            <ResultCard
+              title={copy.access.denied}
+              ok={state.result.denied.ok}
+              policyId={state.result.denied.policyId}
+              policyReason={state.result.denied.policyReason}
+              model={state.result.denied.model}
+            />
+            <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.9rem' }}>
+              {state.result.explainer}
+            </p>
+          </>
+        ) : null}
+      </section>
+    </div>
+  )
+}

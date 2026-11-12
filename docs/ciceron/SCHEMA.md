@@ -20,6 +20,7 @@ Prompt 1 creates the foundation under schema `ciceron`. Groups below marked
 | Analytics | `events` |
 | Prompt 7 | `firm_settings`, `evaluation_candidates`, `in_app_notifications`; audit columns `outcome` / `policy_id` / `policy_reason` / `snapshot_ref` |
 | Prompt 8 | `firm_onboarding`, `briefing_previews`, `engagement_resume`; `firm_ai_budgets.threshold_alert_*`; views `metric_*`; RPC `record_product_event`; `316` events RPC-only writes |
+| Prompt 9 | `invite_codes` (hashed), `demo_sessions`, `guided_story_progress`, `client_conflicts`, `access_grants`, `demo_freshness_runs`; `documents.sensitivity_level` / `matter_id` / `is_demo`; view `sales_invite_progress`; RPCs `redeem_invite`, `evaluate_access`, `refresh_demo_dates`, `reset_demo_firm`; `320` hardening (`set_actor` service_role-only; `firm_onboarding` split policies) |
 
 Embeddings: `extensions.vector(1536)` on `chunks.embedding` and `watch_profiles.embedding`; store `embedding_model` (`text-embedding-3-small`).
 

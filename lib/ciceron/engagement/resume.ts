@@ -19,6 +19,12 @@ export const RESUME_LABEL_CODES = [
   'investigacion_desk',
   'clientes_list',
   'hoy',
+  'guided_step_1',
+  'guided_step_2',
+  'guided_step_3',
+  'guided_step_4',
+  'guided_step_5',
+  'guided_step_6',
 ] as const
 
 export type ResumeLabelCode = (typeof RESUME_LABEL_CODES)[number]
@@ -49,6 +55,12 @@ const RESUME_LABEL_ES: Record<string, string> = {
   investigacion_desk: 'Investigación',
   clientes_list: 'Clientes y asuntos',
   hoy: copy.rooms.hoy,
+  guided_step_1: 'Recorrido guiado — Hoy',
+  guided_step_2: 'Recorrido guiado — coincidencia',
+  guided_step_3: 'Recorrido guiado — alerta',
+  guided_step_4: 'Recorrido guiado — Revisión',
+  guided_step_5: 'Recorrido guiado — Investigación',
+  guided_step_6: 'Recorrido guiado — Expedientes',
 }
 
 export function resumeLabelEs(code: string): string {
