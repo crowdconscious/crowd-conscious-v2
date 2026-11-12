@@ -212,9 +212,22 @@ export async function resolveSessionByToken(
       if (error || !data) return null
       const mapped = mapResolved(data as ResolveRow, raw)
       if (mapped) {
-        void db.rpc('touch_session_freshness', {
-          p_token_hash: hashSessionToken(raw),
-        })
+        // supabase-js builders are lazy until awaited/then'd — `void db.rpc(...)`
+        // never sends the request. Await so it runs; catch so freshness failure
+        // does not fail session resolution.
+        try {
+          const { error: freshnessError } = await db.rpc('touch_session_freshness', {
+            p_token_hash: hashSessionToken(raw),
+          })
+          if (freshnessError) {
+            console.warn(
+              '[ciceron] touch_session_freshness failed:',
+              freshnessError.message
+            )
+          }
+        } catch (err) {
+          console.warn('[ciceron] touch_session_freshness failed:', err)
+        }
       }
       return mapped
     } catch {

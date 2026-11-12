@@ -19,5 +19,17 @@ function walk(dir) {
 }
 roots.forEach(walk)
 if (!files.length) { console.error('no test files found'); process.exit(1) }
-const r = spawnSync(process.execPath, ['--import', 'tsx', '--test', ...files.sort()], { stdio: 'inherit' })
+// --experimental-test-module-mocks: needed for server-only / Next module stubs
+// in a few Ciceron unit tests (e.g. session freshness RPC).
+const r = spawnSync(
+  process.execPath,
+  [
+    '--experimental-test-module-mocks',
+    '--import',
+    'tsx',
+    '--test',
+    ...files.sort(),
+  ],
+  { stdio: 'inherit' }
+)
 process.exit(r.status ?? 1)
