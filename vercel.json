@@ -139,6 +139,22 @@
     {
       "path": "/api/cron/pulse-reveal-notify",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 14 * * 1-5"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 19 * * 1-5"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 0 * * 2-6"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 16 * * 0,6"
     }
   ],
   "headers": [
