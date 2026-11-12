@@ -1,4 +1,5 @@
 -- 309_ciceron_expedientes_seed.rollback.sql (branch / non-prod only)
+-- Deletes only fixed seed IDs inserted by 309 (and firm-archive: documents).
 
 DELETE FROM ciceron.saved_views
 WHERE id = 'e5700000-0000-4000-8000-000000000001'::uuid;
@@ -15,8 +16,13 @@ DELETE FROM ciceron.firm_integrations
 WHERE id = 'e5500000-0000-4000-8000-000000000001'::uuid;
 
 DELETE FROM ciceron.firm_archive_items
-WHERE firm_id = 'a1000000-0000-4000-8000-000000000001'::uuid
-  AND is_sample = true;
+WHERE id IN (
+  'e5400000-0000-4000-8000-000000000001'::uuid,
+  'e5400000-0000-4000-8000-000000000002'::uuid,
+  'e5400000-0000-4000-8000-000000000003'::uuid,
+  'e5400000-0000-4000-8000-000000000004'::uuid,
+  'e5400000-0000-4000-8000-000000000005'::uuid
+);
 
 DELETE FROM ciceron.chunks
 WHERE id IN (
@@ -43,9 +49,12 @@ WHERE id IN (
   'e5100000-0000-4000-8000-000000000003'::uuid,
   'e5100000-0000-4000-8000-000000000004'::uuid,
   'e5100000-0000-4000-8000-000000000005'::uuid
-);
+)
+OR canonical_id LIKE 'firm-archive:%';
 
-DELETE FROM ciceron.sources WHERE source_key = 'firm_archive_sim';
+DELETE FROM ciceron.sources
+WHERE id = 'e5000000-0000-4000-8000-000000000001'::uuid
+   OR source_key = 'firm_archive_sim';
 
 DELETE FROM ciceron.deadline_reminders
 WHERE id = 'e4000000-0000-4000-8000-000000000011'::uuid;
@@ -64,5 +73,9 @@ WHERE id IN (
 );
 
 DELETE FROM ciceron.deadline_rules
-WHERE firm_id = 'a1000000-0000-4000-8000-000000000001'::uuid
-  AND is_sample = true;
+WHERE id IN (
+  'e1000000-0000-4000-8000-000000000001'::uuid,
+  'e1000000-0000-4000-8000-000000000002'::uuid,
+  'e1000000-0000-4000-8000-000000000003'::uuid,
+  'e1000000-0000-4000-8000-000000000004'::uuid
+);

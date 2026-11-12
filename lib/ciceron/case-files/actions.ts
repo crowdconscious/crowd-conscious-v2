@@ -17,6 +17,15 @@ import {
   PROMPT_INFORMAR_CLIENTE_V1,
   wrapUntrusted,
 } from '@/lib/ciceron/gateway/prompts'
+import {
+  deadlineConfirmColumns,
+  deadlineDiscardColumns,
+  demoPersonaActor,
+  integrationConnectedByColumns,
+  notifyApproveColumns,
+  notifyCreatedByColumns,
+  reviewAssigneeColumns,
+} from '@/lib/ciceron/demo/actor-write'
 import { writeM365CookieStatus } from '@/lib/ciceron/m365/demo-store'
 import { CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 
@@ -39,7 +48,7 @@ export async function connectOutlookSim(): Promise<ActionResult> {
           provider: 'microsoft365_sim',
           status: 'connected',
           connected_at: new Date().toISOString(),
-          connected_by: persona.id,
+          ...integrationConnectedByColumns(demoPersonaActor(persona.id)),
           is_sample: true,
           metadata: {
             label: CICERON_DEMO_LABEL,
@@ -109,7 +118,7 @@ export async function confirmDeadlineAction(formData: FormData): Promise<ActionR
       .from('deadlines')
       .update({
         status: 'confirmado',
-        confirmed_by: persona.id,
+        ...deadlineConfirmColumns(demoPersonaActor(persona.id)),
         confirmed_at: new Date().toISOString(),
       })
       .eq('id', deadlineId)
@@ -148,7 +157,7 @@ export async function discardDeadlineAction(formData: FormData): Promise<ActionR
         .from('deadlines')
         .update({
           status: 'descartado',
-          discarded_by: persona.id,
+          ...deadlineDiscardColumns(demoPersonaActor(persona.id)),
           discarded_at: new Date().toISOString(),
         })
         .eq('id', deadlineId)
@@ -242,7 +251,7 @@ export async function draftInformarCliente(formData: FormData): Promise<ActionRe
           .insert({
             matter_id: matterId,
             ai_output_id: aiOutputId,
-            assignee_id: persona.id,
+            ...reviewAssigneeColumns(demoPersonaActor(persona.id)),
             status: 'pendiente',
           })
           .select('id')
@@ -340,7 +349,7 @@ export async function draftClientNotifyEmail(formData: FormData): Promise<Action
           .insert({
             matter_id: matterId,
             ai_output_id: aiOutputId,
-            assignee_id: persona.id,
+            ...reviewAssigneeColumns(demoPersonaActor(persona.id)),
             status: 'pendiente',
           })
           .select('id')
@@ -361,7 +370,7 @@ export async function draftClientNotifyEmail(formData: FormData): Promise<Action
           body,
           status: 'en_revision',
           is_sample: true,
-          created_by: persona.id,
+          ...notifyCreatedByColumns(demoPersonaActor(persona.id)),
         })
         .select('id')
         .maybeSingle()
@@ -411,7 +420,7 @@ export async function approveClientNotifySim(formData: FormData): Promise<Action
         .from('client_notify_drafts')
         .update({
           status: 'enviado_simulado',
-          approved_by: persona.id,
+          ...notifyApproveColumns(demoPersonaActor(persona.id)),
           approved_at: new Date().toISOString(),
           simulated_sent_at: new Date().toISOString(),
         })

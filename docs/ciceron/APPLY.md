@@ -9,10 +9,11 @@ Already on production: **298, 299, 300, 302, 303**, plus manual **`ciceron_revok
 
 Already on prod through **307** (research) after Prompt 5 (confirm on your side). Next (Francisco applies; agents do not):
 
-1. `308_ciceron_expedientes.sql` — deadline rules, reminders, saved views, M365 sim tables, notify drafts, deadline/case_event columns
+1. `308_ciceron_expedientes.sql` — deadline rules, reminders, saved views, M365 sim tables, notify drafts, deadline/case_event columns, `*_persona` companions (auth.users FKs kept)
 2. Verify: `308_ciceron_expedientes.verify.sql`
-3. `309_ciceron_expedientes_seed.sql` — sample rules, archive docs/chunks, Outlook calendar, reminders (`is_sample`)
-4. Rollback (branch only): `309_…rollback.sql` then `308_…rollback.sql`
+3. `309_ciceron_expedientes_seed.sql` — sample rules, archive docs/chunks (`embedding`/`embedding_model` NULL), Outlook calendar, reminders
+4. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) to embed archive chunks
+5. Rollback (branch only): `309_…rollback.sql` then `308_…rollback.sql`
 
 If **307** is not yet on prod, apply it first (see prior Prompt 5 notes), then 308 → 309.
 

@@ -349,7 +349,7 @@ export async function loadCaseDetail(
     const dlRes = await db
       .from('deadlines')
       .select(
-        'id, due_at, status, basis_text, computation_text, confirmed_by, confirmed_at, is_sample'
+        'id, due_at, status, basis_text, computation_text, confirmed_by, confirmed_by_persona, confirmed_at, is_sample'
       )
       .eq('case_file_id', caseId)
       .order('due_at', { ascending: true })
@@ -362,6 +362,7 @@ export async function loadCaseDetail(
       basis_text: string | null
       computation_text?: string | null
       confirmed_by?: string | null
+      confirmed_by_persona?: string | null
       confirmed_at?: string | null
     }>
 
@@ -374,7 +375,7 @@ export async function loadCaseDetail(
             status: d.status,
             basisText: d.basis_text ?? '',
             computationText: d.computation_text ?? d.basis_text ?? '',
-            confirmedBy: d.confirmed_by ?? null,
+            confirmedBy: d.confirmed_by ?? d.confirmed_by_persona ?? null,
             confirmedAt: d.confirmed_at ? formatEsDate(d.confirmed_at) : null,
             urgency: urgencyFromDue(d.due_at),
             isSample: true,

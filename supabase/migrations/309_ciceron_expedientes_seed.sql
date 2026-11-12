@@ -1,7 +1,7 @@
 -- 309_ciceron_expedientes_seed.sql
 -- Prompt 6 seed: Datos de demostración (is_sample / is_demo).
--- Additive. Do NOT apply from agents. Requires 302 + 308.
--- Archive chunk embeddings left NULL (embedding_pending); backfill via gateway.
+-- Additive. Applied by CTO after review. Requires 302 + 308.
+-- Archive chunk embeddings left NULL; embedding_model NULL until gateway backfill.
 
 -- ---------------------------------------------------------------------------
 -- Deadline rules (labelled examples; admins edit later)
@@ -302,15 +302,16 @@ VALUES
   )
 ON CONFLICT (id) DO NOTHING;
 
--- Chunks (FTS-ready; embedding null until AI Gateway backfill)
-INSERT INTO ciceron.chunks (id, version_id, text, position, embedding_model, canonical_citation_id)
+-- Chunks (FTS-ready; embedding + embedding_model NULL until AI Gateway backfill)
+INSERT INTO ciceron.chunks (id, version_id, text, position, embedding, embedding_model, canonical_citation_id)
 VALUES
   (
     'e5300000-0000-4000-8000-000000000001'::uuid,
     'e5200000-0000-4000-8000-000000000001'::uuid,
     $c$Datos de demostración. CONTRATO DE PRESTACIÓN DE SERVICIOS JURÍDICOS. Celebran Nexora Pagos, S.A.P.I. de C.V. («Cliente») y Despacho Demo, S.C. («Despacho»). Objeto: asesoría en materia de instituciones de fondos de pago electrónico y prevención de lavado de dinero ante la CNBV. Honorarios: cuota mensual fija más gastos erogados. Confidencialidad: las partes guardarán secreto sobre información no pública del Cliente durante la vigencia y cinco años posteriores. Terminación: cualquiera podrá dar por terminado el contrato con treinta días naturales de aviso por escrito.$c$,
     0,
-    'openai/text-embedding-3-small',
+    NULL,
+    NULL,
     'firm-archive:nexora-contrato-servicio-2026#0'
   ),
   (
@@ -318,7 +319,8 @@ VALUES
     'e5200000-0000-4000-8000-000000000002'::uuid,
     $c$Datos de demostración. PROYECTO DE CONTESTACIÓN. Expediente DEMO-TFJA-1001/2026. Nexora Pagos opone las defensas de falta de legitimación activa y cumplimiento oportuno de las obligaciones de identificación de clientes. Se ofrece como prueba la póliza de cumplimiento PLD y el informe de auditoría interna de octubre de 2026. Se solicita se declare la nulidad del acto impugnado.$c$,
     0,
-    'openai/text-embedding-3-small',
+    NULL,
+    NULL,
     'firm-archive:nexora-escrito-contestacion#0'
   ),
   (
@@ -326,7 +328,8 @@ VALUES
     'e5200000-0000-4000-8000-000000000003'::uuid,
     $c$Datos de demostración. ACUERDO DE JUNTA DE ACLARACIONES. Proyecto eólico Viento del Istmo. Las partes aclaran el alcance de la interconexión y los plazos de respuesta a información adicional requerida por la autoridad. Queda asentado que el despacho coordinará la respuesta técnica con el área de ingeniería del Cliente.$c$,
     0,
-    'openai/text-embedding-3-small',
+    NULL,
+    NULL,
     'firm-archive:viento-acuerdo-junta#0'
   ),
   (
@@ -334,7 +337,8 @@ VALUES
     'e5200000-0000-4000-8000-000000000004'::uuid,
     $c$Datos de demostración. Estimada Distribuidora Farma Sierra: le informamos que el aviso de COFEPRIS sobre verificación de cadena de frío puede afectar sus almacenes autorizados. Le recomendamos contrastar el protocolo vigente y agendar una revisión conjunta la próxima semana. Quedamos a sus órdenes.$c$,
     0,
-    'openai/text-embedding-3-small',
+    NULL,
+    NULL,
     'firm-archive:farma-carta-cliente#0'
   ),
   (
@@ -342,12 +346,14 @@ VALUES
     'e5200000-0000-4000-8000-000000000005'::uuid,
     $c$Datos de demostración. CONVENIO DE CONFIDENCIALIDAD entre Nexora Pagos y Proveedor Ficticio Sigma, S.A. de C.V. La información técnica de APIs de pagos y los datos de clientes son confidenciales. Queda prohibida la ingeniería inversa de los sistemas del Cliente. Vigencia: tres años a partir de la firma.$c$,
     0,
-    'openai/text-embedding-3-small',
+    NULL,
+    NULL,
     'firm-archive:nexora-nda-proveedor#0'
   )
 ON CONFLICT (id) DO UPDATE
 SET text = EXCLUDED.text,
-    embedding_model = EXCLUDED.embedding_model;
+    embedding = NULL,
+    embedding_model = NULL;
 
 INSERT INTO ciceron.firm_archive_items (
   id, firm_id, document_id, folder_path, doc_date, parties, is_sample

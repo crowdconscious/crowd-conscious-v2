@@ -1,20 +1,9 @@
 -- 308_ciceron_expedientes.sql
 -- Prompt 6: Expedientes room + simulated Microsoft 365 (schema only).
--- Additive. Do NOT apply from agents — Francisco applies on branch then prod.
+-- Additive. Applied by CTO after review.
 -- No judiciary automation; M365 is demo-only (no Graph network calls).
-
--- ---------------------------------------------------------------------------
--- Drop remaining auth.users FKs on deadline actor columns (demo personas).
--- ---------------------------------------------------------------------------
-ALTER TABLE ciceron.deadlines DROP CONSTRAINT IF EXISTS deadlines_confirmed_by_fkey;
-ALTER TABLE ciceron.deadlines DROP CONSTRAINT IF EXISTS deadlines_proposed_by_fkey;
-ALTER TABLE ciceron.review_tasks DROP CONSTRAINT IF EXISTS review_tasks_assignee_id_fkey;
-ALTER TABLE ciceron.review_decisions DROP CONSTRAINT IF EXISTS review_decisions_decided_by_fkey;
-
-COMMENT ON COLUMN ciceron.deadlines.confirmed_by IS
-  'Actor id (auth.users or ciceron.demo_personas). FK dropped in 308 for demo personas.';
-COMMENT ON COLUMN ciceron.deadlines.proposed_by IS
-  'Actor id (auth.users or ciceron.demo_personas). FK dropped in 308 for demo personas.';
+-- auth.users FKs on confirmed_by / proposed_by / assignee_id / decided_by stay intact.
+-- Demo invite actors write companion *_persona columns → ciceron.demo_personas.
 
 -- ---------------------------------------------------------------------------
 -- Deadline rules (admins edit; seed is sample-only in 309)
@@ -79,13 +68,17 @@ CREATE TRIGGER deadline_rules_set_updated_at
 
 -- ---------------------------------------------------------------------------
 -- Deadlines: computation audit + confirmation timestamp + rule/event link
+-- Persona columns keep auth.users FKs intact for real users.
 -- ---------------------------------------------------------------------------
 ALTER TABLE ciceron.deadlines
   ADD COLUMN IF NOT EXISTS case_event_id uuid REFERENCES ciceron.case_events(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS rule_id uuid REFERENCES ciceron.deadline_rules(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS computation_text text,
   ADD COLUMN IF NOT EXISTS confirmed_at timestamptz,
-  ADD COLUMN IF NOT EXISTS discarded_by uuid,
+  ADD COLUMN IF NOT EXISTS confirmed_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS proposed_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS discarded_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS discarded_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS discarded_at timestamptz,
   ADD COLUMN IF NOT EXISTS is_sample boolean NOT NULL DEFAULT false;
 
@@ -97,7 +90,62 @@ CREATE INDEX IF NOT EXISTS deadlines_status_due_idx
 COMMENT ON COLUMN ciceron.deadlines.computation_text IS
   'Human-readable basis + day-count computation shown before confirm.';
 COMMENT ON COLUMN ciceron.deadlines.confirmed_at IS
-  'When a socio/asociado/admin confirmed; paired with confirmed_by.';
+  'When a socio/asociado/admin confirmed; paired with confirmed_by or confirmed_by_persona.';
+COMMENT ON COLUMN ciceron.deadlines.confirmed_by IS
+  'Real auth.users id when a signed-in lawyer confirms. Demo path leaves NULL.';
+COMMENT ON COLUMN ciceron.deadlines.confirmed_by_persona IS
+  'Demo persona id when confirming via invite session. Mutually exclusive with confirmed_by in app writes.';
+
+-- Review actor persona companions (auth.users FKs unchanged)
+ALTER TABLE ciceron.review_tasks
+  ADD COLUMN IF NOT EXISTS assignee_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL;
+
+ALTER TABLE ciceron.review_decisions
+  ADD COLUMN IF NOT EXISTS decided_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL;
+
+COMMENT ON COLUMN ciceron.review_tasks.assignee_persona IS
+  'Demo persona assignee; assignee_id remains auth.users FK for real users.';
+COMMENT ON COLUMN ciceron.review_decisions.decided_by_persona IS
+  'Demo persona decision actor; decided_by remains auth.users FK for real users.';
+
+-- Tier-2 confirm gate: accept auth user OR demo persona with socio/asociado/admin membership
+CREATE OR REPLACE FUNCTION ciceron.deadlines_confirm_authority()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ciceron
+AS $$
+DECLARE
+  actor uuid;
+BEGIN
+  IF NEW.status = 'confirmado' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM NEW.status) THEN
+    IF NEW.confirmed_by IS NULL AND NEW.confirmed_by_persona IS NULL THEN
+      RAISE EXCEPTION 'confirmed_by or confirmed_by_persona is required when status is confirmado'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    actor := COALESCE(NEW.confirmed_by, NEW.confirmed_by_persona);
+
+    IF NOT EXISTS (
+      SELECT 1
+      FROM ciceron.matters m
+      JOIN ciceron.memberships ms
+        ON ms.firm_id = m.firm_id
+       AND ms.user_id = actor
+       AND ms.role IN ('socio', 'asociado', 'admin')
+      WHERE m.id = NEW.matter_id
+    ) THEN
+      RAISE EXCEPTION 'only socio, asociado, or admin may confirm deadlines'
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION ciceron.deadlines_confirm_authority() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION ciceron.deadlines_confirm_authority() TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- Case events: original capture + AI summary
@@ -197,7 +245,8 @@ CREATE TABLE IF NOT EXISTS ciceron.firm_integrations (
   status text NOT NULL DEFAULT 'disconnected'
     CHECK (status IN ('disconnected', 'connected')),
   connected_at timestamptz,
-  connected_by uuid,
+  connected_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  connected_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL,
   disconnected_at timestamptz,
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   is_sample boolean NOT NULL DEFAULT true,
@@ -346,11 +395,13 @@ CREATE TABLE IF NOT EXISTS ciceron.client_notify_drafts (
   body text NOT NULL,
   status text NOT NULL DEFAULT 'borrador'
     CHECK (status IN ('borrador', 'en_revision', 'aprobado', 'enviado_simulado', 'rechazado')),
-  approved_by uuid,
+  approved_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  approved_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL,
   approved_at timestamptz,
   simulated_sent_at timestamptz,
   is_sample boolean NOT NULL DEFAULT true,
-  created_by uuid,
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_by_persona uuid REFERENCES ciceron.demo_personas(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -389,24 +440,29 @@ CREATE OR REPLACE FUNCTION ciceron.client_notify_tier2_gate()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = ciceron, public
+SET search_path = ciceron
 AS $$
+DECLARE
+  actor uuid;
 BEGIN
   IF NEW.status IN ('aprobado', 'enviado_simulado')
      AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM NEW.status) THEN
-    IF NEW.approved_by IS NULL THEN
-      RAISE EXCEPTION 'approved_by is required when status is %', NEW.status;
+    IF NEW.approved_by IS NULL AND NEW.approved_by_persona IS NULL THEN
+      RAISE EXCEPTION 'approved_by or approved_by_persona is required when status is %', NEW.status
+        USING ERRCODE = 'check_violation';
     END IF;
+    actor := COALESCE(NEW.approved_by, NEW.approved_by_persona);
     IF NOT EXISTS (
       SELECT 1
       FROM ciceron.matters m
       JOIN ciceron.memberships ms
         ON ms.firm_id = m.firm_id
-       AND ms.user_id = NEW.approved_by
+       AND ms.user_id = actor
        AND ms.role IN ('socio', 'asociado', 'admin')
       WHERE m.id = NEW.matter_id
     ) THEN
-      RAISE EXCEPTION 'only socio, asociado, or admin may approve client notify drafts';
+      RAISE EXCEPTION 'only socio, asociado, or admin may approve client notify drafts'
+        USING ERRCODE = 'check_violation';
     END IF;
   END IF;
   RETURN NEW;
