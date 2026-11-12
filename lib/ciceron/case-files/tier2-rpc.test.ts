@@ -4,6 +4,7 @@ import { describe, it } from 'node:test'
 import {
   rpcApproveClientNotify,
   rpcConfirmDeadline,
+  rpcDiscardDeadline,
   type Tier2RpcClient,
 } from '@/lib/ciceron/case-files/tier2-rpc'
 
@@ -69,19 +70,37 @@ describe('tier2 RPC wrappers (action→RPC path)', () => {
     })
   })
 
-  it('confirmDeadlineAction / approveClientNotifySim use RPCs not raw updates', () => {
+  it('rpcDiscardDeadline calls discard_deadline and surfaces errors', async () => {
+    const db = mockRpc(() => null)
+    const ok = await rpcDiscardDeadline(db, {
+      actorId: 'b1000000-0000-4000-8000-000000000001',
+      deadlineId: 'd1000000-0000-4000-8000-000000000001',
+    })
+    assert.equal(ok.ok, true)
+    assert.equal(db.calls[0]!.fn, 'discard_deadline')
+    assert.deepEqual(db.calls[0]!.args, {
+      p_actor: 'b1000000-0000-4000-8000-000000000001',
+      p_deadline_id: 'd1000000-0000-4000-8000-000000000001',
+    })
+
+    const bad = mockRpc(() => ({ message: 'deadline already decided (descartado)' }))
+    const err = await rpcDiscardDeadline(bad, {
+      actorId: 'b1000000-0000-4000-8000-000000000001',
+      deadlineId: 'd1000000-0000-4000-8000-000000000001',
+    })
+    assert.equal(err.ok, false)
+    if (!err.ok) assert.match(err.message, /already decided|descartado/i)
+  })
+
+  it('confirm/approve/discard actions use RPCs not raw updates', () => {
     const src = readFileSync('lib/ciceron/case-files/actions.ts', 'utf8')
     assert.match(src, /rpcConfirmDeadline/)
     assert.match(src, /rpcApproveClientNotify/)
+    assert.match(src, /rpcDiscardDeadline/)
     assert.match(src, /resolveCiceronActionActor/)
-    assert.doesNotMatch(
-      src,
-      /deadlineConfirmColumns\(/
-    )
-    assert.doesNotMatch(
-      src,
-      /notifyApproveColumns\(/
-    )
+    assert.doesNotMatch(src, /deadlineConfirmColumns\(/)
+    assert.doesNotMatch(src, /deadlineDiscardColumns\(/)
+    assert.doesNotMatch(src, /notifyApproveColumns\(/)
   })
 
   it('310 defines service-role-only confirm/approve RPCs with set_actor', () => {
@@ -96,5 +115,17 @@ describe('tier2 RPC wrappers (action→RPC path)', () => {
     assert.match(sql, /GRANT EXECUTE ON FUNCTION ciceron\.approve_client_notify/)
     assert.match(sql, /REVOKE ALL ON FUNCTION ciceron\.confirm_deadline/)
     assert.match(sql, /current_actor_id\(\)/)
+  })
+
+  it('311 adds idempotent guards and discard_deadline', () => {
+    const sql = readFileSync(
+      'supabase/migrations/311_ciceron_confirm_idempotent.sql',
+      'utf8'
+    )
+    assert.match(sql, /deadline already decided/)
+    assert.match(sql, /notify draft already decided/)
+    assert.match(sql, /CREATE OR REPLACE FUNCTION ciceron\.discard_deadline/)
+    assert.match(sql, /GRANT EXECUTE ON FUNCTION ciceron\.discard_deadline/)
+    assert.match(sql, /REVOKE ALL ON FUNCTION ciceron\.discard_deadline/)
   })
 })

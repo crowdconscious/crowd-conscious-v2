@@ -1,7 +1,7 @@
 /**
- * Service-role RPC wrappers for tier-2 confirms/approves.
+ * Service-role RPC wrappers for tier-2 confirms/approves/discards.
  * DB functions set_actor(p_actor) then UPDATE so current_actor_id() matches
- * the row's confirmed_by / *_persona columns under the 310 gates.
+ * the row's confirmed_by / *_persona columns under the 310/311 gates.
  */
 
 export type Tier2RpcClient = {
@@ -26,6 +26,20 @@ export async function rpcConfirmDeadline(
   })
   if (error) {
     return { ok: false, message: error.message || 'No se pudo confirmar el plazo.' }
+  }
+  return { ok: true }
+}
+
+export async function rpcDiscardDeadline(
+  db: Tier2RpcClient,
+  opts: { actorId: string; deadlineId: string }
+): Promise<Tier2RpcResult> {
+  const { error } = await db.rpc('discard_deadline', {
+    p_actor: opts.actorId,
+    p_deadline_id: opts.deadlineId,
+  })
+  if (error) {
+    return { ok: false, message: error.message || 'No se pudo descartar el plazo.' }
   }
   return { ok: true }
 }

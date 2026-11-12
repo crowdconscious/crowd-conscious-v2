@@ -2,23 +2,23 @@
 
 ## Production status (2026-11-12)
 
-Already on production: **298–307**, plus **308** (Expedientes schema) applied on `821deb14`.  
-**309 failed and rolled back** (`saved_views.is_sample` missing — 306 already owned `ciceron.saved_views`, so 308’s `CREATE TABLE IF NOT EXISTS` skipped).  
+Already on production: **298–310** and **309** seed (Prompt 6).  
+**308 / 309 / 310 forward bodies must not be edited** (applied).  
 **Do not apply** retired `301` (auth.users seed).
 
-## Apply order (production next — Prompt 6 fixups)
+## Apply order (production next)
 
-Francisco applies; agents do not. Order is intentional (310 before 309):
+Francisco applies; agents do not:
 
-1. `310_ciceron_expedientes_fixups.sql` — `saved_views.is_sample`, room CHECK (`monitor-dof`|`expedientes`|`calendario`), session-actor bind on gates, plus `confirm_deadline` / `approve_client_notify` RPCs (set_actor + update; service_role only)
-2. Verify: `310_ciceron_expedientes_fixups.verify.sql`
-3. `309_ciceron_expedientes_seed.sql` — sample rules, archive docs/chunks (`embedding`/`embedding_model` NULL), Outlook calendar, reminders, saved view
-4. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) to embed archive chunks
-5. Rollback (branch only): `309_…rollback.sql` → `310_…rollback.sql` → (only if fully reversing Prompt 6) `308_…rollback.sql`
+1. `311_ciceron_confirm_idempotent.sql` — idempotent `confirm_deadline` / `approve_client_notify` (refuse already decided); new `discard_deadline` RPC (`set_actor` + tier-2 role gate; service_role only)
+2. Verify: `311_ciceron_confirm_idempotent.verify.sql`
+3. Optional (if not done): `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`)
 
-**Do not** re-apply 308 forward on prod (already applied). 308 rollback never drops `ciceron.saved_views` (306 table).
+Rollback (branch only): `311_…rollback.sql` (restores 310 RPC bodies; drops `discard_deadline`).
 
-If **308** is not yet on a fresh env, apply `308` → verify → `310` → `309`.
+Do **not** re-apply 308 / 309 / 310 on prod.
+
+Fresh env Prompt 6 path: `308` → `310` → `309` → `311`.
 
 Embeddings need **Vercel AI Gateway** enabled for the project (OIDC on deploy). Locally optional `AI_GATEWAY_API_KEY`. Anthropic keys unchanged for rewrite/answer.
 
@@ -45,7 +45,7 @@ npx tsx scripts/ciceron-research-eval.ts
 7. `305_ciceron_dof_pipeline.sql`
 8. Expose schema `ciceron`
 9. Run `302_ciceron.verify.sql` then `305_ciceron_dof_pipeline.verify.sql`
-10. `306` → `307` → `308` → `310` → `309` (note: **310 before 309**)
+10. `306` → `307` → `308` → `310` → `309` → `311`
 
 Rollback (branch only): `298_ciceron.rollback.sql` (drops schema; does not touch civic `auth.users` for Cicéron — none are created by 302).
 

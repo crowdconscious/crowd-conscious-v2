@@ -12,6 +12,7 @@ import { resolveCiceronActionActor } from '@/lib/ciceron/case-files/resolve-acto
 import {
   rpcApproveClientNotify,
   rpcConfirmDeadline,
+  rpcDiscardDeadline,
 } from '@/lib/ciceron/case-files/tier2-rpc'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
@@ -23,7 +24,6 @@ import {
   wrapUntrusted,
 } from '@/lib/ciceron/gateway/prompts'
 import {
-  deadlineDiscardColumns,
   demoPersonaActor,
   integrationConnectedByColumns,
   notifyCreatedByColumns,
@@ -138,33 +138,45 @@ export async function confirmDeadlineAction(formData: FormData): Promise<ActionR
 }
 
 export async function discardDeadlineAction(formData: FormData): Promise<ActionResult> {
-  const persona = await getCiceronDemoSession()
-  if (!persona) return { ok: false, message: 'Sesión no válida.' }
+  const actor = await resolveCiceronActionActor()
+  if (!actor) return { ok: false, message: 'Sesión no válida.' }
   const deadlineId = String(formData.get('deadlineId') ?? '')
   const caseId = String(formData.get('caseId') ?? '')
+  if (!deadlineId) return { ok: false, message: 'Falta el plazo.' }
+
   const gate = assertCanConfirmDeadline({
-    role: persona.role,
+    role: actor.role,
     nextStatus: 'confirmado',
-    confirmedBy: persona.id,
+    confirmedBy: actor.actorId,
   })
   // Same authority for discard of proposed deadlines
   if (!gate.ok) return { ok: false, message: gate.message }
 
   const db = tryCreateCiceronAdminClient()
-  if (db) {
-    try {
-      await db
-        .from('deadlines')
-        .update({
-          status: 'descartado',
-          ...deadlineDiscardColumns(demoPersonaActor(persona.id)),
-          discarded_at: new Date().toISOString(),
-        })
-        .eq('id', deadlineId)
-    } catch {
-      // degrade
+  if (!db) {
+    revalidatePath(`/ciceron/expedientes/${caseId || 'case-1'}`)
+    return {
+      ok: true,
+      message: 'Plazo descartado en la demostración (sin base aún).',
+      payload: { deadlineId, status: 'descartado' },
     }
   }
+
+  try {
+    const result = await rpcDiscardDeadline(db, {
+      actorId: actor.actorId,
+      deadlineId,
+    })
+    if (!result.ok) {
+      return { ok: false, message: result.message }
+    }
+  } catch (e) {
+    return {
+      ok: false,
+      message: e instanceof Error ? e.message : 'No se pudo descartar el plazo.',
+    }
+  }
+
   revalidatePath(`/ciceron/expedientes/${caseId}`)
   return { ok: true, message: 'Plazo descartado.' }
 }
