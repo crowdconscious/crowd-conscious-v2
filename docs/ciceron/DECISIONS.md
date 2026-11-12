@@ -225,6 +225,26 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Decision:** Reject leakage. `app/layout.tsx` reads `x-pathname` (set by `middleware.ts`) via `headers()` and skips Analytics, SpeedInsights, ConversionCelebration, and the Crowd Conscious `organizationJsonLd` script when the path starts with `/ciceron`.
 - **Consequences:** Cicéron routes stay free of civic product telemetry and schema.org org markup. P7 closed.
 
+### 2026-11-12 — Brand board overrides light-theme / no-gradients note
+- **Context:** Cicerón.ai dark navy + mint board was already accepted for `/ciceron`.
+- **Decision:** Record explicitly in `.cursor/rules/ciceron.mdc` that the brand board overrides the earlier “light theme first, no gradients” experience note for this surface only.
+- **Consequences:** Agents keep the dark theme; do not “fix” it back to cream/light.
+
+### 2026-11-12 — Client alert v2 + four-eyes demo seed
+- **Context:** Guided story step 4 told the Socia to edit and approve, which four-eyes blocks when she authored the human draft.
+- **Decision:** `PROMPT_CLIENT_ALERT_V2` (firm voice, citations on factual sentences, mark passed dates, no commercial pitch). Seeded human draft authored by Asociado so Socia only approves. Migration `322` also makes `reset_demo_firm` reopen seeded review tasks and delete simulated deliveries.
+- **Consequences:** Four-eyes rule unchanged. Step 4 copy matches the seed.
+
+### 2026-11-12 — Freshness deadlines use fixed business-day offsets
+- **Context:** Uniform event-delta left sample deadlines overdue after re-dating.
+- **Decision:** `refresh_demo_dates` (migration `324`) still shifts events, then assigns sample deadlines to ~2 / 6 / 14 business days from today. None may be overdue after a freshness run. Court spelling «Décimo» fixed; extra sample events so at most one expediente is «Sin actuaciones».
+- **Consequences:** Verify script + unit tests lock the offsets.
+
+### 2026-11-12 — Daily DOF ingestion behind CICERON_INGESTION_ENABLED
+- **Context:** Need scheduled SIDOF runs without turning them on blindly.
+- **Decision:** Restore vercel.json cron slots for `/api/ciceron/cron/dof`. Route no-ops with HTTP 200 + logged skip when `CICERON_INGESTION_ENABLED` is unset/false. Daily spend cap via `CICERON_INGESTION_DAILY_CAP_USD` (default 25). Agents do not flip the Vercel env.
+- **Consequences:** CTO turns the flag on explicitly (steps in the cron route comment).
+
 ---
 
 ## Pending
