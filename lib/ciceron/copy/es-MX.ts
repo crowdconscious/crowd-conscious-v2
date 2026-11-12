@@ -15,9 +15,143 @@ export const copy = {
       'Inteligencia jurídica para despachos mexicanos: Diario Oficial, expedientes, investigación con citas verificadas y revisión humana antes de cualquier salida al cliente.',
     codeLabel: 'Código de invitación',
     codePlaceholder: 'Ingrese su código',
+    emailLabel: 'Correo de trabajo (opcional)',
+    emailPlaceholder: 'nombre@despacho.mx',
     submit: 'Entrar a la demostración',
     error: 'El código no es válido o ha expirado.',
-    note: 'Esta es una demostración. Los datos del despacho y de sus clientes son ficticios.',
+    note: 'Esta es una demostración. Los datos del despacho y de sus clientes son ficticios. Entra como miembro de Despacho Demo, S.C.',
+  },
+
+  demoBar: {
+    persona: 'Persona',
+    switchLabel: 'Cambiar persona',
+    socio: 'Socia',
+    asociado: 'Asociado',
+    pasante: 'Pasante',
+    hint: 'Al cambiar de persona cambian la visibilidad y las acciones permitidas.',
+  },
+
+  guidedStory: {
+    title: 'Recorrido guiado',
+    progress: 'Paso',
+    of: 'de',
+    next: 'Continuar',
+    back: 'Anterior',
+    dismiss: 'Omitir recorrido',
+    resume: 'Reanudar recorrido',
+    steps: {
+      1: {
+        title: 'Hoy — lo publicado que afecta a sus clientes',
+        body: 'Empiece en Hoy. Las coincidencias del Diario Oficial son datos reales del corpus; el despacho y los clientes son de demostración.',
+        cta: 'Ver Hoy',
+      },
+      2: {
+        title: 'Abra una coincidencia',
+        body: 'Revise por qué importa al cliente y el texto oficial marcado. La fuente abre el pasaje del DOF.',
+        cta: 'Ir al Monitor DOF',
+      },
+      3: {
+        title: 'Prepare la alerta al cliente',
+        body: 'Genere un borrador con citas. Nada se envía: queda en Revisión (nivel 2).',
+        cta: 'Preparar borrador',
+      },
+      4: {
+        title: 'Revisión como Socia',
+        body: 'Cambie a Socia, edite una frase, apruebe y vea el mensaje exacto y la entrada de auditoría.',
+        cta: 'Abrir Revisión',
+      },
+      5: {
+        title: 'Investigación con fuentes',
+        body: 'Formule una pregunta sobre la nota, abra la fuente verificada. Una pregunta fuera del corpus debe recibir negativa explícita.',
+        cta: 'Ir a Investigación',
+      },
+      6: {
+        title: 'Expedientes y plazos',
+        body: 'Abra un expediente de muestra, revise el plazo propuesto y confírmelo con el rol autorizado.',
+        cta: 'Ir a Expedientes',
+      },
+    },
+    finale: {
+      title: 'Qué fue real y qué fue muestra',
+      body: 'Real: notas del Diario Oficial del corpus ingerido. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
+      realLabel: 'Datos reales',
+      sampleLabel: 'Datos de demostración',
+      realItems: 'Notas DOF del corpus; citas verificadas a esos textos.',
+      sampleItems: 'Despacho Demo, S.C.; clientes; expedientes; plazos; entregas simuladas.',
+      cta: 'Solicitar un piloto',
+      ctaHref: 'mailto:hola@ciceron.ai?subject=Piloto%20Cicer%C3%B3n.ai',
+    },
+  },
+
+  access: {
+    title: 'Control de acceso: RBAC y ABAC',
+    lead: 'Compare dos modelos. Uno decide por rol; el otro por atributos (asunto, conflicto, sensibilidad, vigencia).',
+    rbacTitle: 'RBAC — por rol',
+    rbacBody:
+      'Socia Demo Rivera: el acceso a aprobar revisiones y confirmar plazos viene de su rol de socia.',
+    abacTitle: 'ABAC — por atributos',
+    abacBody:
+      'Asociada Atributos Vega: el acceso depende de asignación al asunto, muros de conflicto, sensibilidad del documento y concesiones con vigencia.',
+    tryIt: 'Probar',
+    allowed: 'Permitido',
+    denied: 'Denegado',
+    policy: 'Regla',
+    reason: 'Motivo',
+    model: 'Modelo',
+    rpcError: 'No se pudo evaluar el acceso en este momento. Intente de nuevo.',
+  },
+
+  proteccion: {
+    title: 'Cómo protegemos su información',
+    lead: 'Aislamiento por despacho y por asunto, sin entrenamiento con datos del cliente, revisión humana, auditoría y derechos de exportación y eliminación.',
+    isolationTitle: 'Aislamiento',
+    isolationBody:
+      'Cada despacho tiene su propio espacio (firm_id). Los asuntos restringen el acceso por membresía. La recuperación filtra en la base de datos antes de ordenar resultados.',
+    noTrainingTitle: 'Sin entrenamiento con sus datos',
+    noTrainingBody:
+      'Los documentos y consultas del cliente no se usan para entrenar modelos de Cicerón.ai.',
+    humanTitle: 'Revisión humana',
+    humanBody:
+      'Todo lo que sale al cliente (nivel 2) requiere decisión de un abogado autorizado. No hay envíos automáticos sin confirmación.',
+    auditTitle: 'Auditoría',
+    auditBody:
+      'Consultas, aprobaciones, rechazos, entregas y denegaciones de acceso se registran en un diario de solo anexión.',
+    exportTitle: 'Exportación y eliminación',
+    exportBody:
+      'Puede solicitar la exportación de los datos de su despacho y la eliminación conforme a su contrato. No afirmamos certificaciones que no poseemos.',
+  },
+
+  fuentesCobertura: {
+    title: 'Fuentes y cobertura',
+    lead: 'Orígenes del corpus, desde cuándo y última actualización con datos reales disponibles.',
+    sourcesTitle: 'Fuentes',
+    sourcesBody:
+      'Diario Oficial de la Federación vía SIDOF (JSON). No se consultan portales del Poder Judicial de forma automatizada.',
+    sinceTitle: 'Desde cuándo',
+    sinceBody: 'Corpus de demostración con ediciones DOF ingeridas en el periodo documentado abajo.',
+    lastUpdateTitle: 'Última actualización',
+    lastUpdateFallback: 'Consulte el administrador de Fuentes para el estado del conector.',
+    honesty:
+      'Sin scrapeo programado. La cobertura es la del corpus ya ingerido; no implica vigilancia diaria automática.',
+  },
+
+  adminVentas: {
+    title: 'Ventas — invitaciones',
+    lead: 'Progreso por código de invitación: pasos del recorrido, salas abiertas y sesiones. Solo administración del despacho.',
+    prospect: 'Prospecto',
+    uses: 'Usos',
+    sessions: 'Sesiones',
+    rooms: 'Salas',
+    storySteps: 'Pasos del recorrido',
+    finished: 'Recorridos terminados',
+    lastSeen: 'Última actividad',
+    resetTitle: 'Restablecer demostración',
+    resetBody:
+      'Vuelve el despacho de demostración al estado semilla. No toca las notas del Diario Oficial.',
+    resetCta: 'Restablecer ahora',
+    resetDone: 'Demostración restablecida.',
+    resetDenied: 'No tiene permiso para restablecer.',
+    empty: 'No hay códigos de invitación para este despacho.',
   },
 
   rooms: {

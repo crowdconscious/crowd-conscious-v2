@@ -34,6 +34,19 @@ export default function CiceronInvitePage() {
               autoComplete="off"
               spellCheck={false}
               disabled={pending}
+              required
+            />
+            <label htmlFor="ciceron-work-email" style={{ marginTop: 16 }}>
+              {copy.invite.emailLabel}
+            </label>
+            <input
+              id="ciceron-work-email"
+              name="workEmail"
+              type="email"
+              className="cic-input"
+              placeholder={copy.invite.emailPlaceholder}
+              autoComplete="email"
+              disabled={pending}
             />
             {state && !state.ok ? <p className="cic-error">{copy.invite.error}</p> : null}
             <button type="submit" className="cic-btn" disabled={pending}>

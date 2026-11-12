@@ -283,7 +283,8 @@ Alternative (not recommended for first demo): require Crowd Conscious login + al
 | `OPENAI_API_KEY` | Embeddings (`text-embedding-3-small`); optional until provisioned — fail soft |
 | `CICERON_DOF_USER_AGENT` | Identifying UA + contact for SIDOF requests |
 | `CICERON_DOF_CONTACT_EMAIL` | Contact address embedded in UA |
-| `CICERON_INVITE_PEPPER` | Server pepper for hashing invite codes |
+| `CICERON_INVITE_PEPPER` | Pepper v1 — public demo codes only (`DESPACHO-DEMO` / `DESPACHO-PASANTE`) |
+| `CICERON_INVITE_PEPPER_V2` | Pepper v2 — runtime invite mints (ops script; secret) |
 | `CICERON_EMAIL_ALLOWLIST` | Comma-separated addresses that may receive real demo email |
 | `CICERON_MONTHLY_BUDGET_USD` | Per-firm AI budget default |
 | `CICERON_PUBLIC_LOOKUP_ENABLED` | Must default `false` (rule 9 / Prompt 6 stub) |

@@ -24,6 +24,9 @@ export const CICERON_EVENT_NAMES = [
   'watch_profile_edited',
   'saved_view_created',
   'invite_redeemed',
+  'guided_story_step',
+  'persona_switched',
+  'access_demo_tried',
 ] as const
 
 export type CiceronEventName = (typeof CICERON_EVENT_NAMES)[number]
@@ -46,6 +49,11 @@ export const ALLOWED_EVENT_PROPERTY_KEYS = [
   'client_id',
   'watch_profile_id',
   'is_demo',
+  'step',
+  'persona_role',
+  'story_action',
+  'invite_id',
+  'model',
 ] as const
 
 export type AllowedEventPropertyKey = (typeof ALLOWED_EVENT_PROPERTY_KEYS)[number]
@@ -98,6 +106,10 @@ export const eventPayloadSchemas = {
         'clientes',
         'admin-metricas',
         'admin-fuentes',
+        'admin-ventas',
+        'acceso',
+        'proteccion',
+        'fuentes-cobertura',
       ]),
     })
     .strict(),
@@ -177,6 +189,24 @@ export const eventPayloadSchemas = {
   invite_redeemed: demoFlag
     .extend({
       invite_role: z.enum(['socio', 'asociado', 'pasante', 'admin']).optional(),
+      invite_id: safeCodeOpt,
+    })
+    .strict(),
+  guided_story_step: demoFlag
+    .extend({
+      step: safeCode,
+      story_action: z.enum(['advance', 'dismiss', 'resume']).optional(),
+    })
+    .strict(),
+  persona_switched: demoFlag
+    .extend({
+      persona_role: z.enum(['socio', 'asociado', 'pasante']),
+    })
+    .strict(),
+  access_demo_tried: demoFlag
+    .extend({
+      model: z.enum(['rbac', 'abac']),
+      verdict: z.enum(['allowed', 'denied']).optional(),
     })
     .strict(),
 } as const

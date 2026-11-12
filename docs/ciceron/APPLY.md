@@ -3,7 +3,7 @@
 ## Production status (2026-11-12)
 
 Already on production: **298–310** and **309** seed (Prompt 6).  
-**311–313** (Prompt 7) and **314–315** (Prompt 8) are next / pending CTO apply.  
+**311–316** (Prompts 7–8) and **317–320** (Prompt 9) are next / pending CTO apply.  
 **308 / 309 / 310 forward bodies must not be edited** (applied).  
 **Do not apply** retired `301` (auth.users seed).
 
@@ -11,25 +11,24 @@ Already on production: **298–310** and **309** seed (Prompt 6).
 
 Francisco applies; agents do not:
 
-1. `311_ciceron_confirm_idempotent.sql` — if not yet applied
-2. Verify: `311_ciceron_confirm_idempotent.verify.sql`
-3. `312_ciceron_review_queue.sql` — Prompt 7 schema + RPCs
-4. Verify: `312_ciceron_review_queue.verify.sql` (`BEGIN`…`ROLLBACK`)
-5. `313_ciceron_review_seed.sql` — demo review tasks (`f100…101+`)
-6. Verify: `313_ciceron_review_seed.verify.sql`
-7. **`314_ciceron_engagement.sql`** — Prompt 8 events RPC, engagement tables, metric views, budget thresholds
-8. Verify: `314_ciceron_engagement.verify.sql` (`BEGIN`…`ROLLBACK`)
-9. **`315_ciceron_engagement_seed.sql`** — demo events / cost ai_runs (`e200…`)
-10. Verify: `315_ciceron_engagement_seed.verify.sql`
-11. **`316_ciceron_events_rpc_only.sql`** — revoke authenticated INSERT/UPDATE/DELETE on `ciceron.events`
-12. Verify: `316_ciceron_events_rpc_only.verify.sql` (`BEGIN`…`ROLLBACK`)
-13. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; no scheduled DOF cron
+1. Ensure Prompt 7–8: `311` → `312` → `313` → `314` → `315` → `316` (if not already)
+2. **`317_ciceron_demo_invites.sql`** — hashed invites, demo sessions, guided story table, redeem/switch RPCs
+3. Verify: `317_ciceron_demo_invites.verify.sql` (`BEGIN`…`ROLLBACK`)
+4. **`318_ciceron_demo_access.sql`** — RBAC/ABAC tables + `evaluate_access` / `try_access_demo` + e3 seed
+5. Verify: `318_ciceron_demo_access.verify.sql`
+6. **`319_ciceron_demo_ops.sql`** — freshness (no cron), reset, sales view, story RPC, event property keys
+7. Verify: `319_ciceron_demo_ops.verify.sql`
+8. Set env before merge/traffic: `CICERON_INVITE_PEPPER` (v1 public codes) and `CICERON_INVITE_PEPPER_V2` (runtime mints). Existing demo users must re-enter their invite code once after 317 is applied (new session cookie shape).
+9. Mint non-public invites with `npx tsx scripts/ciceron/create-invite.ts --persona=admin --label="…"`.
+10. **`320_ciceron_hardening_prompt9.sql`** — approve separately: revoke `set_actor` from authenticated; split `firm_onboarding` writes
+11. Verify: `320_ciceron_hardening_prompt9.verify.sql`
+12. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; **no Cicerón Vercel crons for demo freshness**
 
-Rollback (branch only, reverse order): `316_…rollback.sql` → `315_…` → `314_…` → `313_…` → `312_…`.
+Rollback (branch only, reverse): `320` → `319` → `318` → `317` → `316` → …
 
 Do **not** re-apply 308 / 309 / 310 on prod.
 
-Fresh env Prompt 6–8 path: `308` → `310` → `309` → `311` → `312` → `313` → `314` → `315` → `316`.
+Fresh env Prompt 6–9 path: `308` → `310` → `309` → `311` → `312` → `313` → `314` → `315` → `316` → `317` → `318` → `319` → `320`.
 
 Embeddings need **Vercel AI Gateway** enabled for the project (OIDC on deploy). Locally optional `AI_GATEWAY_API_KEY`. Anthropic keys unchanged for rewrite/answer.
 

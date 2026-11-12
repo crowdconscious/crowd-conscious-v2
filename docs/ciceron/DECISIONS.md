@@ -193,6 +193,20 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
+### 2026-11-12 — Prompt 9 demo mode, guided story, RBAC/ABAC showcase
+- **Context:** Partners need a three-minute path from a real DOF note to an approved client alert; Francisco asked for an explicit RBAC vs ABAC pair with Spanish policy denials audited.
+- **Decision:**
+  1. Two-pepper invites: `pepper_version=1` + `CICERON_INVITE_PEPPER` only for intentionally public codes `DESPACHO-DEMO` / `DESPACHO-PASANTE` (public by design). `pepper_version=2` + `CICERON_INVITE_PEPPER_V2` for every runtime mint (`scripts/ciceron/create-invite.ts`). Peppers never in repo; fail closed if the needed env is missing. Redeem tries configured pepper hashes until a row matches. Non-public invites are never seeded in SQL. Optional work email; opaque 64-hex demo session cookie (DB path); offline invite fallback never yields admin.
+  2. Persona switcher (Socia / Asociado / Pasante) via `switch_demo_persona`.
+  3. DB-enforced `evaluate_access` (RBAC role + ABAC matter / conflict wall / sensitivity / expiring grants) writes denials through `write_audit_event`. Document sensitivity/conflict are **RPC-enforced** (not documents RLS). Membership denials audit before `set_actor`. Simulated denials record the real caller via `simulated_by`.
+  4. Guided story max 6 steps + finale; progress in `guided_story_progress` + `engagement_resume` / `record_product_event`.
+  5. Demo freshness via `refresh_demo_dates` / `touch_session_freshness` — **no Vercel cron**.
+  6. `reset_demo_firm` is **admin-only**; expires sessions in place (keeps sales history + emails); never deletes DOF corpus.
+  7. Hardening migration `320` separate: revoke `set_actor` from authenticated; split `firm_onboarding` FOR ALL write policy.
+- **Consequences:** Migrations `317–320`. Seed UUIDs `e3…`. Agents do not apply. Supporting pages `/ciceron/proteccion`, `/ciceron/fuentes-cobertura`; sales `/ciceron/admin/ventas`.
+
+---
+
 ## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo

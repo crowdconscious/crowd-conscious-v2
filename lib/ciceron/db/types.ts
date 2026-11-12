@@ -90,6 +90,168 @@ export type CiceronDatabase = {
         }
         Update: Partial<CiceronDatabase['ciceron']['Tables']['demo_personas']['Insert']>
       }
+      invite_codes: {
+        Row: {
+          id: string
+          code_hash: string
+          pepper_version: number
+          prospect_label: string
+          firm_id: string
+          default_persona_id: string
+          expires_at: string | null
+          max_uses: number | null
+          use_count: number
+          is_active: boolean
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code_hash: string
+          pepper_version?: number
+          prospect_label: string
+          firm_id: string
+          default_persona_id: string
+          expires_at?: string | null
+          max_uses?: number | null
+          use_count?: number
+          is_active?: boolean
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['invite_codes']['Insert']>
+      }
+      demo_sessions: {
+        Row: {
+          id: string
+          invite_code_id: string
+          firm_id: string
+          persona_id: string
+          work_email: string | null
+          token_hash: string
+          expires_at: string
+          last_seen_at: string
+          story_dismissed: boolean
+          last_freshness_at: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invite_code_id: string
+          firm_id: string
+          persona_id: string
+          work_email?: string | null
+          token_hash: string
+          expires_at: string
+          last_seen_at?: string
+          story_dismissed?: boolean
+          last_freshness_at?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['demo_sessions']['Insert']>
+      }
+      guided_story_progress: {
+        Row: {
+          session_id: string
+          firm_id: string
+          current_step: number
+          completed_steps: number[]
+          dismissed: boolean
+          completed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          session_id: string
+          firm_id: string
+          current_step?: number
+          completed_steps?: number[]
+          dismissed?: boolean
+          completed_at?: string | null
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['guided_story_progress']['Insert']>
+      }
+      client_conflicts: {
+        Row: {
+          id: string
+          firm_id: string
+          client_id: string
+          blocked_client_id: string
+          reason: string
+          is_active: boolean
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          client_id: string
+          blocked_client_id: string
+          reason: string
+          is_active?: boolean
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['client_conflicts']['Insert']>
+      }
+      access_grants: {
+        Row: {
+          id: string
+          firm_id: string
+          user_id: string
+          resource_type: string
+          resource_id: string | null
+          permission: string
+          expires_at: string | null
+          granted_by: string | null
+          reason: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          user_id: string
+          resource_type: string
+          resource_id?: string | null
+          permission: string
+          expires_at?: string | null
+          granted_by?: string | null
+          reason?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['access_grants']['Insert']>
+      }
+      sales_invite_progress: {
+        Row: {
+          invite_code_id: string
+          prospect_label: string
+          firm_id: string
+          firm_name: string
+          use_count: number
+          max_uses: number | null
+          expires_at: string | null
+          is_active: boolean
+          sessions_opened: number
+          rooms_opened_approx: number
+          max_story_steps_completed: number
+          stories_finished: number
+          last_seen_at: string | null
+        }
+        Insert: never
+        Update: never
+      }
       clients: {
         Row: {
           id: string
