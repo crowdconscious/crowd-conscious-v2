@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import { readFileSync } from 'node:fs'
 import {
   CICERON_EVENT_NAMES,
+  EVENT_PROPERTY_STRING_RE,
   FORBIDDEN_EVENT_PROPERTY_KEYS,
   assertNoForbiddenKeys,
   parseEventProperties,
@@ -32,6 +33,31 @@ describe('ciceron events allow-list', () => {
       reason_code: 'has spaces and ñ',
     })
     assert.equal(bad.ok, false)
+  })
+
+  it('uses the same string regex as SQL for source_id and free codes', () => {
+    assert.equal(EVENT_PROPERTY_STRING_RE.source, '^[A-Za-z0-9_:.-]{1,120}$')
+    assert.equal(EVENT_PROPERTY_STRING_RE.test('nota-5803341'), true)
+    assert.equal(EVENT_PROPERTY_STRING_RE.test('has spaces'), false)
+
+    const ok = parseEventProperties('source_opened', {
+      source_kind: 'dof',
+      source_id: 'nota-5803341',
+      is_demo: true,
+    })
+    assert.equal(ok.ok, true)
+
+    const badSpace = parseEventProperties('source_opened', {
+      source_kind: 'dof',
+      source_id: 'nota 5803341',
+    })
+    assert.equal(badSpace.ok, false)
+
+    const badUrl = parseEventProperties('source_opened', {
+      source_kind: 'dof',
+      source_id: 'https://example.com/x',
+    })
+    assert.equal(badUrl.ok, false)
   })
 
   it('parses alert_feedback without free text', () => {

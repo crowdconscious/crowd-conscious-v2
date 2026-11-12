@@ -14,5 +14,4 @@ CREATE POLICY events_insert ON ciceron.events
     )
   );
 
-COMMENT ON TABLE ciceron.events IS
-  'Product analytics events (Prompt 1).';
+COMMENT ON TABLE ciceron.events IS NULL;

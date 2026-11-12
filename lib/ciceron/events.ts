@@ -73,9 +73,10 @@ export const FORBIDDEN_EVENT_PROPERTY_KEYS = [
 
 export type ForbiddenEventPropertyKey = (typeof FORBIDDEN_EVENT_PROPERTY_KEYS)[number]
 
-const SAFE_CODE = /^[A-Za-z0-9_:.-]{1,120}$/
+/** Same pattern as ciceron.record_product_event in 314 (string property values). */
+export const EVENT_PROPERTY_STRING_RE = /^[A-Za-z0-9_:.-]{1,120}$/
 
-const safeCode = z.string().regex(SAFE_CODE)
+const safeCode = z.string().regex(EVENT_PROPERTY_STRING_RE)
 const safeCodeOpt = safeCode.optional()
 
 const demoFlag = z.object({ is_demo: z.boolean().optional() }).strict()
@@ -235,6 +236,13 @@ export function parseEventProperties<N extends CiceronEventName>(
   const parsed = schema.safeParse(properties)
   if (!parsed.success) {
     return { ok: false, message: parsed.error.message }
+  }
+  // Belt-and-suspenders: every string value must match SQL allow-list regex
+  // (including enum fields), so invalid codes never reach the RPC silently.
+  for (const [key, value] of Object.entries(parsed.data as Record<string, unknown>)) {
+    if (typeof value === 'string' && !EVENT_PROPERTY_STRING_RE.test(value)) {
+      return { ok: false, message: `invalid event property value for ${key}` }
+    }
   }
   return { ok: true, properties: parsed.data as CiceronEventPayloadMap[N] }
 }
