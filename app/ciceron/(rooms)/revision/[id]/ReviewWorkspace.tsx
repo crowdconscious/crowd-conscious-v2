@@ -7,11 +7,13 @@ import { ConfirmDialog } from '../../../_components/ConfirmDialog'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
+import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 import {
   decideReviewAction,
   reassignReviewAction,
   saveReviewEditAction,
 } from '@/lib/ciceron/review/actions'
+import { markPassedDatesInText } from '@/lib/ciceron/review/alert-dates'
 import { diffLines } from '@/lib/ciceron/review/diff'
 import type { ReviewTaskDetail } from '@/lib/ciceron/review/types'
 
@@ -29,7 +31,11 @@ export function ReviewWorkspace({
   neighborIds: { prev: string | null; next: string | null }
 }) {
   const router = useRouter()
-  const [body, setBody] = useState(detail.currentBody)
+  const initialBody = markPassedDatesInText(
+    detail.currentBody,
+    todayInMexicoCity()
+  )
+  const [body, setBody] = useState(initialBody)
   const [editing, setEditing] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
@@ -288,6 +294,42 @@ export function ReviewWorkspace({
 
           <div className="cic-stack">
             <div>
+              <h3 className="cic-label">{copy.revision.citedPassages}</h3>
+              {detail.evidence.length === 0 ? (
+                <p className="cic-muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+                  {copy.investigacion.evidenceEmpty}
+                </p>
+              ) : (
+                detail.evidence.map((ev) => (
+                  <div key={ev.id} className="cic-evidence-card">
+                    {ev.href ? (
+                      <a
+                        className="cic-source"
+                        href={ev.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {ev.authority}
+                        {ev.title ? ` · ${ev.title}` : ''}
+                      </a>
+                    ) : (
+                      <div className="cic-evidence-sub">{ev.authority}</div>
+                    )}
+                    <div className="cic-evidence-title" style={{ marginTop: 6 }}>
+                      {ev.title || ev.authority}
+                    </div>
+                    <p className="cic-legal cic-evidence-excerpt">
+                      <mark>{ev.passage}</mark>
+                    </p>
+                    <p className="cic-muted" style={{ fontSize: '0.8rem', margin: '8px 0 0' }}>
+                      {copy.revision.matchReason}: {ev.matchReason}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div>
               <h3 className="cic-label">{copy.revision.clientContext}</h3>
               <p className="cic-muted" style={{ margin: 0, fontSize: '0.9rem' }}>
                 {detail.clientContext}
@@ -295,38 +337,19 @@ export function ReviewWorkspace({
             </div>
 
             {detail.aiRun ? (
-              <div>
-                <h3 className="cic-label">{copy.revision.modelMeta}</h3>
-                <p className="cic-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              <details className="cic-card" style={{ padding: '10px 12px' }}>
+                <summary className="cic-secondary-summary">
+                  {copy.revision.traceability}
+                </summary>
+                <p className="cic-muted" style={{ margin: '8px 0 0', fontSize: '0.85rem' }}>
                   {detail.aiRun.model} · {detail.aiRun.promptVersion}
                   <br />
                   {detail.aiRun.purpose}
+                  <br />
+                  {copy.revision.modelMeta}
                 </p>
-              </div>
+              </details>
             ) : null}
-
-            {detail.evidence.map((ev) => (
-              <div key={ev.id} className="cic-evidence-card">
-                <div className="cic-evidence-title">{ev.title || ev.authority}</div>
-                <div className="cic-evidence-sub">{ev.authority}</div>
-                <p className="cic-legal cic-evidence-excerpt">
-                  <mark>{ev.passage}</mark>
-                </p>
-                <p className="cic-muted" style={{ fontSize: '0.8rem', margin: '8px 0 0' }}>
-                  {copy.revision.matchReason}: {ev.matchReason}
-                </p>
-                {ev.href ? (
-                  <a
-                    className="cic-source"
-                    href={ev.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {copy.components.openSource}
-                  </a>
-                ) : null}
-              </div>
-            ))}
           </div>
         </aside>
       </div>

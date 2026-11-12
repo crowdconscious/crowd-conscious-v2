@@ -137,11 +137,11 @@ export function fixtureTaskDetail(taskId: string): ReviewTaskDetail | null {
       : taskId === CICERON_REVIEW_SEED.tasks.nexoraAsociadoFollowup
         ? CICERON_REVIEW_SEED.versions.nexoraFollowupModel
         : CICERON_REVIEW_SEED.versions.nexoraModel,
-    humanEditAuthorId: isNexora ? (CICERON_SEED.personas.socio as string) : null,
+    humanEditAuthorId: isNexora ? (CICERON_SEED.personas.asociado as string) : null,
     fourEyesOn: item.outputType === 'client_alert',
     aiRun: {
       model: 'claude-sonnet-5',
-      promptVersion: 'client_alert / v1',
+      promptVersion: 'dof_client_alert_draft / v2',
       purpose: item.outputType ?? 'client_alert',
       createdAt: '2026-11-10T10:00:00-06:00',
     },

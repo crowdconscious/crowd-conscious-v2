@@ -6,10 +6,16 @@ import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { complete } from '@/lib/ciceron/gateway/complete'
+import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 import {
-  PROMPT_CLIENT_ALERT_V1,
+  PROMPT_CLIENT_ALERT_V2,
   wrapUntrusted,
 } from '@/lib/ciceron/gateway/prompts'
+import {
+  classifyAlertDates,
+  formatAlertDatesForPrompt,
+  markPassedDatesInText,
+} from '@/lib/ciceron/review/alert-dates'
 
 export async function submitMatchFeedback(formData: FormData) {
   const persona = await getCiceronDemoSession()
@@ -138,14 +144,30 @@ export async function prepareClientAlert(formData: FormData) {
 
   const { data: classRows } = await db
     .from('classifications')
-    .select('summary')
+    .select('summary, entry_into_force, compliance_deadlines')
     .eq('dof_note_id', match.dof_note_id)
     .is('chunk_id', null)
     .limit(1)
-  const summary =
+  const classification =
     Array.isArray(classRows) && classRows[0]
-      ? (classRows[0] as { summary: string | null }).summary
+      ? (classRows[0] as {
+          summary: string | null
+          entry_into_force: string | null
+          compliance_deadlines: string[] | null
+        })
       : null
+  const summary = classification?.summary ?? null
+  const generatedOn = todayInMexicoCity()
+  const rawDates = [
+    ...(classification?.entry_into_force
+      ? [classification.entry_into_force]
+      : []),
+    ...(Array.isArray(classification?.compliance_deadlines)
+      ? classification!.compliance_deadlines!
+      : []),
+  ]
+  const dateStatuses = classifyAlertDates(rawDates, generatedOn)
+  const datesBlock = formatAlertDatesForPrompt(dateStatuses)
 
   const chunkIds = match.supporting_chunk_ids ?? []
   let chunkTexts: { id: string; text: string }[] = []
@@ -175,20 +197,22 @@ export async function prepareClientAlert(formData: FormData) {
   const { data: pv } = await db
     .from('prompt_versions')
     .select('id')
-    .eq('purpose', PROMPT_CLIENT_ALERT_V1.purpose)
-    .eq('version_label', PROMPT_CLIENT_ALERT_V1.versionLabel)
+    .eq('purpose', PROMPT_CLIENT_ALERT_V2.purpose)
+    .eq('version_label', PROMPT_CLIENT_ALERT_V2.versionLabel)
     .limit(1)
   const promptVersionId =
     Array.isArray(pv) && pv[0] ? (pv[0] as { id: string }).id : null
 
   const user = [
+    `Fecha de generación (America/Mexico_City): ${generatedOn}`,
     `Cliente: ${client.display_name}`,
     `Contexto: ${profile.description ?? ''}`,
     `Motivo del match: ${match.reason ?? ''}`,
-    `Acción sugerida interna: ${match.suggested_action ?? ''}`,
+    `Acción sugerida interna (no comercial): ${match.suggested_action ?? ''}`,
     `Nota: ${note?.title ?? ''}`,
     `Autoridad: ${note?.authority ?? ''}`,
     `Resumen: ${summary ?? ''}`,
+    datesBlock,
     `Chunks citables: ${JSON.stringify(chunkTexts.map((c) => ({ id: c.id, text: c.text.slice(0, 500) })))}`,
     '',
     wrapUntrusted(
@@ -198,10 +222,10 @@ export async function prepareClientAlert(formData: FormData) {
   ].join('\n')
 
   const result = await complete({
-    purpose: PROMPT_CLIENT_ALERT_V1.purpose,
+    purpose: PROMPT_CLIENT_ALERT_V2.purpose,
     tier: 'creative',
     promptVersionId,
-    system: PROMPT_CLIENT_ALERT_V1.system,
+    system: PROMPT_CLIENT_ALERT_V2.system,
     user,
     maxTokens: 1600,
     firmId: persona.firmId,
@@ -224,18 +248,23 @@ export async function prepareClientAlert(formData: FormData) {
     chunkTexts.some((c) => c.id === id)
   )
 
+  const annotatedBody = markPassedDatesInText(draft.body, generatedOn)
+
   const { data: outputs } = await db
     .from('ai_outputs')
     .insert({
       ai_run_id: result.aiRunId,
       tier: 2,
       status: 'borrador',
-      body: `${draft.subject}\n\n${draft.body}`,
+      body: `${draft.subject}\n\n${annotatedBody}`,
       structured: {
         subject: draft.subject,
         match_id: matchId,
         client_id: client.id,
         label: 'Datos de demostración',
+        prompt_version: PROMPT_CLIENT_ALERT_V2.versionLabel,
+        generated_on: generatedOn,
+        date_statuses: dateStatuses,
       },
     })
     .select('id')
