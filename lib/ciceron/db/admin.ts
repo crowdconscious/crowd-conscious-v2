@@ -23,6 +23,7 @@ type CiceronQuery = {
   in: (column: string, values: readonly string[]) => CiceronQuery
   is: (column: string, value: null) => CiceronQuery
   or: (filters: string) => CiceronQuery
+  not: (column: string, operator: string, value: string) => CiceronQuery
   order: (column: string, opts?: { ascending?: boolean }) => CiceronQuery
   limit: (count: number) => CiceronQuery
   then: Promise<CiceronQueryResult>['then']

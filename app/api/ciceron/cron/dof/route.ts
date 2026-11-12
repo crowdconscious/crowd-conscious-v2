@@ -173,6 +173,8 @@ async function handle(req: NextRequest) {
       limit: 6,
       noteDate: targetDate,
       onlyPending: true,
+      // Daily cron may recover failed notes once; backfill defaults off.
+      retryFailed: true,
     })
     const spentAfter = await spendTodayUsd()
     return NextResponse.json({
@@ -243,6 +245,7 @@ async function handle(req: NextRequest) {
       limit: 4,
       noteDate: result.targetDate,
       onlyPending: true,
+      retryFailed: true,
     })
   }
 

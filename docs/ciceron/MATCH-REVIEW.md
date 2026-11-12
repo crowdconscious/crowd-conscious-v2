@@ -5,7 +5,7 @@ Status: **TEMPLATE** — fill after the CTO runs the classify/match backfill on 
 ## Commands (do not run against production without cost confirmation)
 
 ```bash
-# 1) Cost estimate only (note count + USD from measured ai_runs rates)
+# 1) Cost estimate only (measured per-note blend × 1.15 margin)
 # --since binds the cumulative US$60 window across resume runs
 npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run --since=2026-11-12
 
@@ -13,8 +13,9 @@ npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run --since=2026-11-12
 npx tsx scripts/ciceron/embed-watch-profiles.ts --dry-run
 npx tsx scripts/ciceron/embed-watch-profiles.ts
 
-# 3) Backfill classify+match oldest→newest
-# Hard US$60 cumulative code cap since --since (edit COST_CAP_USD only if CTO approves)
+# 3) Backfill classify+match oldest→newest (skips failed unless --retry-failed)
+# Live run may start when the full estimate exceeds US$60; each batch is projected
+# against remaining budget so the cumulative cap is not overshot.
 npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --tag=pre-demo
 ```
 
