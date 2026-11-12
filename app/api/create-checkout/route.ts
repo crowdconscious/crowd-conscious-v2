@@ -31,13 +31,6 @@ export async function POST(request: NextRequest) {
     if (rateLimitResult && !rateLimitResult.allowed) {
       return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
     }
-    // Debug logging
-    console.log('🔍 Environment check:', {
-      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
-      keyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7),
-      nodeEnv: process.env.NODE_ENV
-    })
-
     // Validate request body
     let validatedData
     try {

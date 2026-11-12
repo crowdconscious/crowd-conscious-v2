@@ -7,6 +7,9 @@
 
 export const COST_CAP_USD = 60
 
+/** Max `--limit` batch size for classify/match backfill rounds. */
+export const MAX_BACKFILL_BATCH_LIMIT = 50
+
 export type AiRunRate = {
   purpose: string
   avgCostUsd: number
@@ -86,12 +89,37 @@ export function parseFlags(argv: string[]) {
     )
     process.exit(2)
   }
+  const limitRaw = argv.find((a) => a.startsWith('--limit='))?.split('=')[1]
+  let limit: number | undefined
+  if (limitRaw !== undefined) {
+    if (!/^\d+$/.test(limitRaw.trim())) {
+      console.error(
+        JSON.stringify({
+          ok: false,
+          error: 'invalid_limit',
+          hint: `--limit must be a positive integer ≤ ${MAX_BACKFILL_BATCH_LIMIT}`,
+        })
+      )
+      process.exit(1)
+    }
+    limit = Number(limitRaw)
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_BACKFILL_BATCH_LIMIT) {
+      console.error(
+        JSON.stringify({
+          ok: false,
+          error: 'limit_out_of_range',
+          limit,
+          max: MAX_BACKFILL_BATCH_LIMIT,
+          hint: `--limit must be between 1 and ${MAX_BACKFILL_BATCH_LIMIT}`,
+        })
+      )
+      process.exit(1)
+    }
+  }
+
   return {
     dryRun: argv.includes('--dry-run'),
-    limit: (() => {
-      const raw = argv.find((a) => a.startsWith('--limit='))?.split('=')[1]
-      return raw ? Number(raw) : undefined
-    })(),
+    limit,
   }
 }
 

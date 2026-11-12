@@ -10,6 +10,7 @@ import {
   fixtureReviews,
   type ReviewState,
 } from '@/lib/ciceron/demo/fixtures'
+import { isDueWithinNextDaysCdmx } from '@/lib/ciceron/dof/dates'
 
 export type RoomSource = 'schema' | 'fixture'
 
@@ -290,6 +291,8 @@ export async function loadDeadlines(persona: DemoPersona): Promise<{
     const firmMatterIds = new Set(firmMatters.map((m) => m.id))
     rows = rows.filter((r) => firmMatterIds.has(r.matter_id))
     if (scope) rows = rows.filter((r) => scope.includes(r.matter_id))
+    // Hoy «próximos 15 días»: CDMX calendar — never show already-passed due dates.
+    rows = rows.filter((r) => isDueWithinNextDaysCdmx(r.due_at, 15))
 
     const clientIds = [
       ...new Set(
@@ -334,9 +337,7 @@ export async function loadDeadlines(persona: DemoPersona): Promise<{
       }
     })
 
-    if (deadlines.length === 0) {
-      return { source: 'fixture', deadlines: fixtureDeadlines.map((d) => ({ ...d })) }
-    }
+    // Empty after filtering past dates is a valid schema result (do not reinject fixtures).
     return { source: 'schema', deadlines }
   } catch {
     return { source: 'fixture', deadlines: fixtureDeadlines.map((d) => ({ ...d })) }
