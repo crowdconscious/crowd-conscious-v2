@@ -142,6 +142,29 @@ export async function loadEvidenceSources(
     }
   }
 
+  type ArchiveRow = {
+    document_id: string
+    folder_path: string
+    doc_date: string | null
+    parties: string | null
+  }
+  const archiveByDoc = new Map<string, ArchiveRow>()
+  if (documentIds.length) {
+    try {
+      let q = db
+        .from('firm_archive_items')
+        .select('document_id, folder_path, doc_date, parties')
+        .in('document_id', documentIds)
+      if (opts?.firmId) q = q.eq('firm_id', opts.firmId)
+      const { data: archiveRows } = await q
+      for (const a of (Array.isArray(archiveRows) ? archiveRows : []) as ArchiveRow[]) {
+        archiveByDoc.set(a.document_id, a)
+      }
+    } catch {
+      // table may be missing before migration 308/309
+    }
+  }
+
   const out: AnswerSource[] = []
   for (const id of unique) {
     const chunk = byChunkId.get(id)
@@ -150,14 +173,15 @@ export async function loadEvidenceSources(
     const doc = documentId ? docs.get(documentId) : undefined
     if (documentId && !doc) continue // firm-scoped doc filtered out
     const note = documentId ? notesByDoc.get(documentId) : undefined
+    const archive = documentId ? archiveByDoc.get(documentId) : undefined
 
     const title = note?.title || doc?.title || null
-    const authority = note?.authority || null
-    const noteDate = note?.note_date || null
-    const section = note?.section || null
+    const authority = note?.authority || (archive ? 'Archivo del despacho' : null)
+    const noteDate = note?.note_date || archive?.doc_date || null
+    const section = note?.section || archive?.folder_path || null
     const edition = editionLabel(note?.edition, note?.edition_kind)
     const officialUrl = doc?.official_url || null
-    const noteCode = note?.note_code || null
+    const noteCode = note?.note_code || archive?.parties || null
 
     out.push({
       chunkId: chunk.id,

@@ -47,6 +47,8 @@ export async function askResearch(
   const matterRaw = String(formData.get('matterId') ?? '').trim()
   const matterId = matterRaw || null
   const followUp = String(formData.get('followUpOf') ?? '').trim()
+  const scopeRaw = String(formData.get('scope') ?? 'dof')
+  const scope = scopeRaw === 'firm' ? 'firm' : 'dof'
 
   const fullQuestion = followUp
     ? `${question}\n\n(Contexto de seguimiento; respuesta previa id ${followUp})`
@@ -57,6 +59,7 @@ export async function askResearch(
     actorId: persona.id,
     firmId: persona.firmId,
     matterId,
+    scope,
   })
 
   if (!result.ok) {

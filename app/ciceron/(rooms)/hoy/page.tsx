@@ -25,6 +25,31 @@ export default async function HoyPage() {
       <h1 className="cic-h1">{copy.hoy.title}</h1>
       <p className="cic-lead">{copy.hoy.lead}</p>
 
+      <section className="cic-section" aria-labelledby="hoy-outlook">
+        <div className="cic-card cic-demo-path">
+          <h2 id="hoy-outlook" className="cic-h2" style={{ fontSize: '1.05rem', marginTop: 0 }}>
+            {copy.m365.demoPathTitle}
+          </h2>
+          <p className="cic-muted" style={{ marginTop: 6 }}>
+            {copy.m365.demoPathLead}
+          </p>
+          <ol className="cic-demo-steps">
+            <li>
+              <Link href="/ciceron/expedientes/outlook">{copy.m365.demoStepConnect}</Link>
+            </li>
+            <li>
+              <Link href="/ciceron/expedientes/outlook">{copy.m365.demoStepArchive}</Link>
+            </li>
+            <li>
+              <Link href="/ciceron/expedientes/calendario">{copy.m365.demoStepCalendar}</Link>
+            </li>
+            <li>
+              <Link href="/ciceron/expedientes/case-1">{copy.m365.demoStepNotify}</Link>
+            </li>
+          </ol>
+        </div>
+      </section>
+
       <section className="cic-section" aria-labelledby="hoy-matches">
         <h2 id="hoy-matches" className="cic-h2">
           {copy.hoy.matches}

@@ -1,0 +1,61 @@
+import { CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
+import type { NormalisedCaseEvent } from '@/lib/ciceron/connectors/case-file'
+
+/** Seeded sample events served by SampleConnector (always is_sample). */
+export const SAMPLE_CASE_EVENTS: NormalisedCaseEvent[] = [
+  {
+    courtName: 'TFJA Sala Regional Metropolitana',
+    fileNumber: 'DEMO-TFJA-1001/2026',
+    eventType: 'notificacion_demanda',
+    occurredAt: '2026-10-22T16:30:00.000Z',
+    text: `${CICERON_DEMO_LABEL}. Notificación por lista: término de quince días hábiles para contestar la demanda en el expediente DEMO-TFJA-1001/2026.`,
+    summary: `${CICERON_DEMO_LABEL}. Notificación por lista — término para contestar.`,
+    rawPayload: { source: 'sample', label: CICERON_DEMO_LABEL },
+    isSample: true,
+    captureKind: 'sample',
+  },
+  {
+    courtName: 'TFJA Sala Regional Metropolitana',
+    fileNumber: 'DEMO-TFJA-1001/2026',
+    eventType: 'acuerdo_requerimiento',
+    occurredAt: '2026-11-03T16:00:00.000Z',
+    text: `${CICERON_DEMO_LABEL}. Requerimiento para exhibir poder notarial del representante legal en cinco días hábiles.`,
+    summary: `${CICERON_DEMO_LABEL}. Requerimiento para exhibir poder notarial.`,
+    rawPayload: { source: 'sample', label: CICERON_DEMO_LABEL },
+    isSample: true,
+    captureKind: 'sample',
+  },
+  {
+    courtName: 'Juzgado Primero de Distrito en Materia de Amparo',
+    fileNumber: 'DEMO-AMP-404/2026',
+    eventType: 'acuerdo',
+    occurredAt: '2026-10-18T12:00:00.000Z',
+    text: `${CICERON_DEMO_LABEL}. Se tiene por presentado el escrito de demanda de amparo.`,
+    summary: `${CICERON_DEMO_LABEL}. Se tiene por presentado el escrito de demanda.`,
+    rawPayload: { source: 'sample', label: CICERON_DEMO_LABEL },
+    isSample: true,
+    captureKind: 'sample',
+  },
+  {
+    courtName: 'Juzgado Decimo de Distrito en Materia Administrativa',
+    fileNumber: 'DEMO-JDA-220/2026',
+    eventType: 'notificacion_demanda',
+    occurredAt: '2026-11-05T15:00:00.000Z',
+    text: `${CICERON_DEMO_LABEL}. Emplazamiento al demandado con término para contestar.`,
+    summary: `${CICERON_DEMO_LABEL}. Emplazamiento — término para contestar.`,
+    rawPayload: { source: 'sample', label: CICERON_DEMO_LABEL },
+    isSample: true,
+    captureKind: 'sample',
+  },
+  {
+    courtName: 'TFJA Sala Especializada',
+    fileNumber: 'DEMO-TFJA-331/2026',
+    eventType: 'audiencia',
+    occurredAt: '2026-11-18T17:00:00.000Z',
+    text: `${CICERON_DEMO_LABEL}. Audiencia de pruebas señalada.`,
+    summary: `${CICERON_DEMO_LABEL}. Audiencia de pruebas señalada.`,
+    rawPayload: { source: 'sample', label: CICERON_DEMO_LABEL },
+    isSample: true,
+    captureKind: 'sample',
+  },
+]

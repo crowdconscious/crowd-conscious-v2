@@ -1019,3 +1019,168 @@ textarea.cic-input {
     font-weight: 600;
   }
 }
+
+/* Prompt 6 — Expedientes + simulated M365 */
+.cic-btn-ghost {
+  background: transparent;
+  color: var(--cic-accent-mint);
+  border: 1px solid var(--cic-rule-strong);
+  font-weight: 600;
+}
+.cic-btn-ghost:hover {
+  border-color: var(--cic-accent-mint);
+  filter: none;
+  background: var(--cic-accent-soft);
+}
+.cic-demo-inline {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+  margin: 0 0 8px;
+}
+.cic-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 2px solid var(--cic-rule-strong);
+}
+.cic-timeline-item {
+  position: relative;
+  padding: 0 0 20px 18px;
+}
+.cic-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cic-accent-mint);
+}
+.cic-timeline-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--cic-muted);
+}
+.cic-rail-footer {
+  margin-top: auto;
+  padding: 12px 14px 18px;
+  border-top: 1px solid var(--cic-rule);
+}
+.cic-rail-m365 {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--cic-ink);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.cic-rail-m365:hover {
+  color: var(--cic-accent-mint);
+}
+.cic-demo-path .cic-demo-steps {
+  margin: 12px 0 0;
+  padding-left: 18px;
+}
+.cic-demo-path .cic-demo-steps a {
+  color: var(--cic-accent-mint);
+}
+.cic-m365-consent-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.cic-m365-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: var(--cic-accent-soft);
+  color: var(--cic-accent-mint);
+  border: 1px solid var(--cic-rule-strong);
+}
+.cic-outlook-window {
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  overflow: hidden;
+  background: var(--cic-paper-2);
+}
+.cic-outlook-bar {
+  background: var(--cic-surface-2);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: var(--cic-muted);
+  border-bottom: 1px solid var(--cic-rule);
+}
+.cic-outlook-field {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--cic-rule);
+  font-size: 0.9rem;
+}
+.cic-outlook-field span {
+  color: var(--cic-muted);
+}
+.cic-outlook-body {
+  margin: 0;
+  padding: 14px 12px;
+  white-space: pre-wrap;
+  font-family: var(--cic-sans);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.cic-outlook-cal {
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  overflow: hidden;
+}
+.cic-outlook-cal-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--cic-surface-2);
+  border-bottom: 1px solid var(--cic-rule);
+  font-weight: 700;
+}
+.cic-outlook-cal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cic-outlook-cal-item {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cic-rule);
+}
+.cic-outlook-cal-kind {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cic-accent-mint);
+}
+.cic-cal-dof_alert .cic-outlook-cal-kind {
+  color: var(--cic-soon);
+}
+.cic-cal-deadline .cic-outlook-cal-kind {
+  color: var(--cic-urgent);
+}
+.cic-case-grid {
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .cic-case-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

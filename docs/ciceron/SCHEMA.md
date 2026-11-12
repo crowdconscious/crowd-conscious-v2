@@ -13,6 +13,7 @@ Prompt 1 creates the foundation under schema `ciceron`. Groups below marked
 | Legal graph | `legal_entities`, `legal_edges` |
 | Monitoring | `dof_notes` (+ ingest_status), `classifications`, `matches`, `alerts`, `digests`, `source_incidents` (305) |
 | Court | `case_files`, `case_events`, `deadlines`, `connector_runs`, `non_working_days` |
+| Expedientes / M365 sim (308–309) | `deadline_rules`, `deadline_reminders`, `saved_views`, `firm_integrations`, `firm_archive_items`, `simulated_calendar_events`, `client_notify_drafts` (+ columns on `deadlines` / `case_events`) |
 | AI | `prompt_versions`, `ai_runs`, `ai_outputs`, `output_citations` |
 | Oversight | `review_tasks`, `review_decisions`, `deliveries`, `audit_events` |
 | Drafting | `drafts`, `draft_versions`, `comments`, `assignments` |

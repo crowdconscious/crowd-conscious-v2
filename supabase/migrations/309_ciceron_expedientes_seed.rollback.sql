@@ -1,0 +1,68 @@
+-- 309_ciceron_expedientes_seed.rollback.sql (branch / non-prod only)
+
+DELETE FROM ciceron.saved_views
+WHERE id = 'e5700000-0000-4000-8000-000000000001'::uuid;
+
+DELETE FROM ciceron.simulated_calendar_events
+WHERE id IN (
+  'e5600000-0000-4000-8000-000000000001'::uuid,
+  'e5600000-0000-4000-8000-000000000002'::uuid,
+  'e5600000-0000-4000-8000-000000000003'::uuid,
+  'e5600000-0000-4000-8000-000000000004'::uuid
+);
+
+DELETE FROM ciceron.firm_integrations
+WHERE id = 'e5500000-0000-4000-8000-000000000001'::uuid;
+
+DELETE FROM ciceron.firm_archive_items
+WHERE firm_id = 'a1000000-0000-4000-8000-000000000001'::uuid
+  AND is_sample = true;
+
+DELETE FROM ciceron.chunks
+WHERE id IN (
+  'e5300000-0000-4000-8000-000000000001'::uuid,
+  'e5300000-0000-4000-8000-000000000002'::uuid,
+  'e5300000-0000-4000-8000-000000000003'::uuid,
+  'e5300000-0000-4000-8000-000000000004'::uuid,
+  'e5300000-0000-4000-8000-000000000005'::uuid
+);
+
+DELETE FROM ciceron.document_versions
+WHERE id IN (
+  'e5200000-0000-4000-8000-000000000001'::uuid,
+  'e5200000-0000-4000-8000-000000000002'::uuid,
+  'e5200000-0000-4000-8000-000000000003'::uuid,
+  'e5200000-0000-4000-8000-000000000004'::uuid,
+  'e5200000-0000-4000-8000-000000000005'::uuid
+);
+
+DELETE FROM ciceron.documents
+WHERE id IN (
+  'e5100000-0000-4000-8000-000000000001'::uuid,
+  'e5100000-0000-4000-8000-000000000002'::uuid,
+  'e5100000-0000-4000-8000-000000000003'::uuid,
+  'e5100000-0000-4000-8000-000000000004'::uuid,
+  'e5100000-0000-4000-8000-000000000005'::uuid
+);
+
+DELETE FROM ciceron.sources WHERE source_key = 'firm_archive_sim';
+
+DELETE FROM ciceron.deadline_reminders
+WHERE id = 'e4000000-0000-4000-8000-000000000011'::uuid;
+
+DELETE FROM ciceron.alerts
+WHERE id = 'e4000000-0000-4000-8000-000000000001'::uuid;
+
+DELETE FROM ciceron.deadlines
+WHERE id = 'e3000000-0000-4000-8000-000000000001'::uuid;
+
+DELETE FROM ciceron.case_events
+WHERE id IN (
+  'e2000000-0000-4000-8000-000000000001'::uuid,
+  'e2000000-0000-4000-8000-000000000002'::uuid,
+  'e2000000-0000-4000-8000-000000000003'::uuid
+);
+
+DELETE FROM ciceron.deadline_rules
+WHERE firm_id = 'a1000000-0000-4000-8000-000000000001'::uuid
+  AND is_sample = true;
