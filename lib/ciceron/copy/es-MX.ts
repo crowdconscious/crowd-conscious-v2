@@ -331,6 +331,59 @@ export const copy = {
     colStats: 'Estadísticas',
     colError: 'Error',
   },
+
+  adminMetricas: {
+    title: 'Métricas',
+    lead:
+      'Indicadores de activación, hábito, precisión, revisión, valor y expansión, más el costo de IA por despacho. Tasas con muestra insuficiente se muestran como guion.',
+    overall: 'Resumen general',
+    byFirm: 'Por despacho',
+    weeklyTrend: 'Tendencia semanal',
+    sampleSize: 'n',
+    dashHint: 'Guion (—) = denominador por debajo del umbral.',
+    activation: 'Activación',
+    habit: 'Hábito (Hoy ≥4 días hábiles)',
+    alertPrecision: 'Precisión de alertas',
+    reviewTurnaround: 'Tiempo de revisión (mediana)',
+    valueMoments: 'Momentos de valor',
+    expansion: 'Expansión',
+    cost: 'Costo de IA',
+    week: 'Semana',
+    firm: 'Despacho',
+    demoSource: 'Datos de demostración',
+    schemaSource: 'Vistas SQL del esquema ciceron',
+    linkFuentes: 'Fuentes',
+  },
+
+  engagement: {
+    morningTitle: 'Resumen de la mañana',
+    morningLead: 'Coincidencias, revisiones y plazos que afectan a sus clientes.',
+    morningEmpty:
+      'Sin novedades para sus clientes.',
+    morningPreview: 'Vista previa del resumen (sin envío programado).',
+    emailSimulated:
+      'Correo simulado: la lista de permitidos está vacía. No se envía nada.',
+    weeklyTitle: 'Resumen semanal para socios',
+    weeklyLead:
+      'Lo publicado, lo aprobado y enviado, plazos confirmados y tiempo de revisión.',
+    onboardingTitle: 'Primeros pasos',
+    onboardingLead:
+      'Complete estos tres pasos para ver el valor de Cicerón.ai en su despacho.',
+    onboardingDescribe: 'Describir un cliente',
+    onboardingAlert: 'Ver la primera alerta coincidente',
+    onboardingReview: 'Enviar una alerta por revisión',
+    onboardingDone: 'Lista de inicio completa.',
+    continueTitle: 'Continuar donde lo dejó',
+    continueFallback: 'Continuar',
+    savedViewsTitle: 'Vistas guardadas',
+    feedbackSuggestTitle: 'Ajuste sugerido al perfil de vigilancia',
+    feedbackApply: 'Aplicar ajuste',
+    budgetPausedTitle: 'Investigación en pausa',
+    budgetPausedBody:
+      'Se alcanzó el presupuesto mensual de IA. El monitoreo del Diario Oficial continúa.',
+    openBriefing: 'Ver resumen de la mañana',
+    openWeekly: 'Ver resumen semanal',
+  },
 } as const
 
 export type CiceronCopy = typeof copy

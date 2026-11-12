@@ -4,6 +4,7 @@ import {
   CICERON_EMBEDDING_MODEL,
 } from '@/lib/ciceron/db/types'
 import { recordAiRun } from '@/lib/ciceron/gateway/ai-runs'
+import { assertGatewayBudget } from '@/lib/ciceron/gateway/budget'
 import { estimateTokens } from '@/lib/ciceron/dof/chunk'
 
 /** text-embedding-3-small list price (USD / 1M tokens) — planning estimate. */
@@ -21,7 +22,12 @@ export type EmbedResult =
     }
   | {
       ok: false
-      reason: 'missing_api_key' | 'empty_input' | 'provider_error' | 'gateway_unavailable'
+      reason:
+        | 'missing_api_key'
+        | 'empty_input'
+        | 'provider_error'
+        | 'gateway_unavailable'
+        | 'budget'
       message: string
       inputTokens?: number
     }
@@ -58,6 +64,31 @@ export async function embedTexts(
 ): Promise<EmbedResult> {
   const purpose = opts.purpose ?? 'embed_chunks'
   const inputTokens = texts.reduce((n, t) => n + estimateTokens(t), 0)
+
+  const budget = await assertGatewayBudget({
+    firmId: opts.firmId,
+    purpose,
+  })
+  if (!budget.ok) {
+    if (opts.recordRun !== false) {
+      await recordAiRun({
+        purpose: `${purpose}:skipped_budget`,
+        model: CICERON_EMBEDDING_MODEL,
+        inputTokens: 0,
+        outputTokens: 0,
+        costEstimateUsd: 0,
+        firmId: opts.firmId,
+        matterId: opts.matterId,
+        userId: opts.userId,
+      })
+    }
+    return {
+      ok: false,
+      reason: 'budget',
+      message: budget.message,
+      inputTokens: 0,
+    }
+  }
 
   if (!texts.length) {
     if (opts.recordRun !== false) {

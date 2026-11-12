@@ -287,14 +287,97 @@ export type CiceronDatabase = {
         Row: {
           firm_id: string
           monthly_budget_usd: number
+          threshold_alert_50_at: string | null
+          threshold_alert_80_at: string | null
+          threshold_alert_100_at: string | null
           updated_at: string
         }
         Insert: {
           firm_id: string
           monthly_budget_usd?: number
+          threshold_alert_50_at?: string | null
+          threshold_alert_80_at?: string | null
+          threshold_alert_100_at?: string | null
           updated_at?: string
         }
         Update: Partial<CiceronDatabase['ciceron']['Tables']['firm_ai_budgets']['Insert']>
+      }
+      firm_onboarding: {
+        Row: {
+          firm_id: string
+          described_client: boolean
+          saw_matched_alert: boolean
+          sent_alert_through_review: boolean
+          completed_at: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          described_client?: boolean
+          saw_matched_alert?: boolean
+          sent_alert_through_review?: boolean
+          completed_at?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['firm_onboarding']['Insert']>
+      }
+      briefing_previews: {
+        Row: {
+          id: string
+          firm_id: string
+          user_id: string
+          preview_date: string
+          kind: 'morning' | 'weekly_socio'
+          line_count: number
+          empty_state: boolean
+          reviewed_count: number
+          payload: Record<string, unknown>
+          email_simulated: boolean
+          is_demo: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          user_id: string
+          preview_date: string
+          kind: 'morning' | 'weekly_socio'
+          line_count?: number
+          empty_state?: boolean
+          reviewed_count?: number
+          payload?: Record<string, unknown>
+          email_simulated?: boolean
+          is_demo?: boolean
+          created_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['briefing_previews']['Insert']>
+      }
+      engagement_resume: {
+        Row: {
+          firm_id: string
+          user_id: string
+          room: string
+          href: string
+          label: string
+          entity_type: string | null
+          entity_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          user_id: string
+          room: string
+          href: string
+          label: string
+          entity_type?: string | null
+          entity_id?: string | null
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['engagement_resume']['Insert']>
       }
       audit_events: {
         Row: {

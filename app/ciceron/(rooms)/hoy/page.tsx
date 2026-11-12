@@ -3,20 +3,39 @@ import { redirect } from 'next/navigation'
 import { DisclosureCard } from '../../_components/DisclosureCard'
 import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { ReviewBadge } from '../../_components/ReviewBadge'
+import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
+import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
+import { loadOnboarding } from '@/lib/ciceron/engagement/onboarding'
+import { loadFeedbackSuggestion } from '@/lib/ciceron/engagement/feedback-loop'
+import { loadHoyEngagement } from '@/lib/ciceron/engagement/resume'
+import { loadFirmBudgetStatus } from '@/lib/ciceron/gateway/budget'
+import { recordCiceronEvent } from '@/lib/ciceron/events'
 
 export default async function HoyPage() {
   const persona = await getCiceronDemoSession()
   if (!persona) redirect(CICERON_BASE)
 
-  const [briefing, { deadlines }] = await Promise.all([
-    loadHoyBriefing(persona),
-    loadDeadlines(persona),
-  ])
+  const [briefing, { deadlines }, onboarding, suggestion, engagement, budget] =
+    await Promise.all([
+      loadHoyBriefing(persona),
+      loadDeadlines(persona),
+      loadOnboarding(persona),
+      loadFeedbackSuggestion(persona),
+      loadHoyEngagement(persona),
+      loadFirmBudgetStatus(persona.firmId),
+    ])
+
+  await recordCiceronEvent({
+    name: 'room_opened',
+    firmId: persona.firmId,
+    userId: persona.id,
+    properties: { room: 'hoy', is_demo: true },
+  })
 
   const matchItems = [...briefing.byClient.values()].flat()
 
@@ -24,6 +43,64 @@ export default async function HoyPage() {
     <div>
       <h1 className="cic-h1">{copy.hoy.title}</h1>
       <p className="cic-lead">{copy.hoy.lead}</p>
+
+      <p className="cic-hoy-links">
+        <Link href="/ciceron/hoy/briefing">{copy.engagement.openBriefing}</Link>
+        {(persona.role === 'socio' || persona.role === 'admin') && (
+          <>
+            {' · '}
+            <Link href="/ciceron/hoy/resumen-semanal">{copy.engagement.openWeekly}</Link>
+          </>
+        )}
+      </p>
+
+      {budget.researchPaused ? (
+        <section className="cic-section cic-budget-paused" aria-labelledby="hoy-budget">
+          <h2 id="hoy-budget" className="cic-h2">
+            {copy.engagement.budgetPausedTitle}
+          </h2>
+          <p>{copy.engagement.budgetPausedBody}</p>
+          {budget.alertMessage ? (
+            <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+              {budget.alertMessage}
+            </p>
+          ) : null}
+        </section>
+      ) : budget.alertMessage ? (
+        <p className="cic-muted" role="status" style={{ fontSize: '0.9rem' }}>
+          {budget.alertMessage}
+        </p>
+      ) : null}
+
+      <OnboardingChecklist state={onboarding} />
+
+      {engagement.resume ? (
+        <section className="cic-section" aria-labelledby="hoy-resume">
+          <h2 id="hoy-resume" className="cic-h2">
+            {copy.engagement.continueTitle}
+          </h2>
+          <p>
+            <Link href={engagement.resume.href}>{engagement.resume.label}</Link>
+          </p>
+        </section>
+      ) : null}
+
+      {engagement.savedViews.length > 0 ? (
+        <section className="cic-section" aria-labelledby="hoy-views">
+          <h2 id="hoy-views" className="cic-h2">
+            {copy.engagement.savedViewsTitle}
+          </h2>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {engagement.savedViews.map((v) => (
+              <li key={v.id}>
+                <Link href={v.href}>{v.name}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {suggestion ? <FeedbackSuggest suggestion={suggestion} /> : null}
 
       <section className="cic-section" aria-labelledby="hoy-outlook">
         <div className="cic-card cic-demo-path">

@@ -34,11 +34,24 @@ export async function submitMatchFeedback(formData: FormData) {
     })
     .eq('id', matchId)
 
-  await db.from('events').insert({
-    name: verdict === 'relevante' ? 'match_feedback_relevant' : 'match_feedback_not_relevant',
-    firm_id: persona.firmId,
-    user_id: persona.id,
-    properties: { match_id: matchId, reason },
+  const { recordCiceronEvent } = await import('@/lib/ciceron/events')
+  await recordCiceronEvent({
+    name: 'alert_feedback',
+    firmId: persona.firmId,
+    userId: persona.id,
+    properties: {
+      verdict: verdict === 'relevante' ? 'relevant' : 'not_relevant',
+      match_id: matchId,
+      reason_code: reason
+        ? reason
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/\p{M}/gu, '')
+            .replace(/[^a-z0-9]+/g, '_')
+            .slice(0, 80) || undefined
+        : undefined,
+      is_demo: true,
+    },
   })
 
   revalidatePath('/ciceron/monitor-dof')
@@ -248,16 +261,19 @@ export async function prepareClientAlert(formData: FormData) {
     status: 'pendiente',
   })
 
-  await db.from('events').insert({
-    name: 'prepare_client_alert',
-    firm_id: persona.firmId,
-    user_id: persona.id,
+  const { recordCiceronEvent: recordDraftEvent } = await import('@/lib/ciceron/events')
+  await recordDraftEvent({
+    name: 'draft_created',
+    firmId: persona.firmId,
+    userId: persona.id,
     properties: {
-      match_id: matchId,
-      ai_output_id: outputId,
-      label: 'Datos de demostración',
+      output_type: 'client_alert',
+      matter_id: matter.id,
+      is_demo: true,
     },
   })
+  const { markOnboardingStep } = await import('@/lib/ciceron/engagement/onboarding')
+  await markOnboardingStep(persona, 'saw_matched_alert')
 
   revalidatePath('/ciceron/revision')
   revalidatePath('/ciceron/hoy')
