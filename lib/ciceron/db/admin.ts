@@ -4,6 +4,12 @@
  */
 import { createClient } from '@supabase/supabase-js'
 
+type CiceronQueryResult = {
+  data: unknown
+  error: { message: string } | null
+  count?: number | null
+}
+
 type CiceronQuery = {
   select: (columns?: string, opts?: { count?: 'exact'; head?: boolean }) => CiceronQuery
   insert: (values: Record<string, unknown> | Record<string, unknown>[]) => CiceronQuery
@@ -16,9 +22,10 @@ type CiceronQuery = {
   gte: (column: string, value: string | number) => CiceronQuery
   in: (column: string, values: readonly string[]) => CiceronQuery
   is: (column: string, value: null) => CiceronQuery
+  or: (filters: string) => CiceronQuery
   order: (column: string, opts?: { ascending?: boolean }) => CiceronQuery
   limit: (count: number) => CiceronQuery
-  then: Promise<{ data: unknown; error: { message: string } | null }>['then']
+  then: Promise<CiceronQueryResult>['then']
 }
 
 type SchemaCapable = {

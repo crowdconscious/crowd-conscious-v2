@@ -258,7 +258,7 @@ export async function matchDofNote(noteId: string): Promise<{
 
     const supporting = judged.supporting_chunk_ids.filter((id) => chunkIdSet.has(id))
 
-    const { data: upserted } = await db
+    const { data: upserted, error: upsertError } = await db
       .from('matches')
       .upsert(
         {
@@ -277,19 +277,45 @@ export async function matchDofNote(noteId: string): Promise<{
       .select('id')
       .limit(1)
 
-    const matchId =
+    if (upsertError) {
+      console.warn('[ciceron] match upsert failed', upsertError.message)
+      continue
+    }
+
+    let matchId =
       Array.isArray(upserted) && upserted[0]
         ? (upserted[0] as { id: string }).id
         : null
+
+    // Prefer-return can be empty even when the upsert landed; resolve by key.
+    if (!matchId) {
+      const { data: existing } = await db
+        .from('matches')
+        .select('id')
+        .eq('dof_note_id', noteId)
+        .eq('watch_profile_id', cand.profile.id)
+        .limit(1)
+      matchId =
+        Array.isArray(existing) && existing[0]
+          ? (existing[0] as { id: string }).id
+          : null
+    }
+
     if (matchId) {
       await createTier0Alerts({
         matchId,
         clientId: cand.profile.client_id,
         headline: `${note.title} — ${judged.reason}`.slice(0, 400),
       })
-      matchCount += 1
     }
   }
+
+  // Authoritative count = rows in DB for this note (not just this-pass upserts).
+  const { count: dbMatchCount } = await db
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('dof_note_id', noteId)
+  matchCount = dbMatchCount ?? 0
 
   await db
     .from('dof_notes')
