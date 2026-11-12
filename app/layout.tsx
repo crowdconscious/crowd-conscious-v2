@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { headers } from "next/headers";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../src/app/globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SITE_URL } from "@/lib/seo/site";
-import { ConversionCelebration } from "@/components/anon/ConversionCelebration";
+import { CivicRootChrome } from "@/components/CivicRootChrome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -126,15 +123,11 @@ export const metadata: Metadata = {
   verification: {},
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // middleware sets x-pathname on request headers for every matched path
-  const pathname = (await headers()).get("x-pathname") ?? "";
-  const isCiceron = pathname.startsWith("/ciceron");
-
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -178,19 +171,9 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-slate-900`}
       >
-        {!isCiceron ? (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(organizationJsonLd),
-            }}
-          />
-        ) : null}
         <LanguageProvider>
           {children}
-          {!isCiceron ? <ConversionCelebration /> : null}
-          {!isCiceron ? <Analytics /> : null}
-          {!isCiceron ? <SpeedInsights /> : null}
+          <CivicRootChrome organizationJsonLd={organizationJsonLd} />
         </LanguageProvider>
       </body>
     </html>

@@ -215,14 +215,14 @@ Pending items need Francisco before (or as) the named prompt starts.
   2. `PROMPT_MATCH_V2` requires a concrete client↔note regulatory link in the reason; `match.ts` uses v2.
   3. `PROMPT_CLASSIFY_V2` adds `display_title`; store on `classifications` (+ payload) and replace weak `dof_notes.title`.
   4. Classification writes `legal_edges` for creates/amends/repeals (`creates` added to edge_type check).
-  5. Scripts: `embed-watch-profiles.ts`, `backfill-classify-match.ts` (oldest→newest, US$60 hard stop unless `--confirm-over-cap`), `export-labelled-set.ts`, `score-labelled-set.ts`. Template `docs/ciceron/MATCH-REVIEW.md` filled after CTO backfill — do not invent live matches.
+  5. Scripts: `embed-watch-profiles.ts`, `backfill-classify-match.ts` (oldest→newest, hard US$60 code cap — no CLI override), `export-labelled-set.ts`, `score-labelled-set.ts`. Template `docs/ciceron/MATCH-REVIEW.md` filled after CTO backfill — do not invent live matches.
 - **Consequences:** Migration `321`. Agents do not apply migrations or run backfill against production.
 
 ---
 
 ### 2026-11-12 — No Crowd Conscious analytics / JSON-LD on `/ciceron`
 - **Context:** Pending P7 asked whether to accept root-layout Analytics, SpeedInsights, ConversionCelebration, and Organization JSON-LD leaking onto the hosted Cicéron demo.
-- **Decision:** Reject leakage. `app/layout.tsx` reads `x-pathname` (set by `middleware.ts`) via `headers()` and skips Analytics, SpeedInsights, ConversionCelebration, and the Crowd Conscious `organizationJsonLd` script when the path starts with `/ciceron`.
+- **Decision:** Reject leakage. `components/CivicRootChrome.tsx` (client) uses `usePathname()` and renders nothing under `/ciceron`. Root layout must not call `headers()` for this gate (would force the whole site dynamic and miss client navigations).
 - **Consequences:** Cicéron routes stay free of civic product telemetry and schema.org org markup. P7 closed.
 
 ### 2026-11-12 — Brand board overrides light-theme / no-gradients note
@@ -246,9 +246,17 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Consequences:** CTO turns the flag on explicitly (steps in the cron route comment).
 
 ### 2026-11-12 — Guided-story resume clears completion
-- **Context:** After finishing or dismissing the six-step tour, «Reanudar recorrido» left `completed_at` set, so the finale panel stuck.
-- **Decision:** Migration `325` rewrites `update_guided_story` so a non-dismiss call to steps 1–6 after dismiss/completion clears `completed_at`, resets `completed_steps` to the resume step, and returns `restarted`. Finale UI also exposes resume; the slim resume bar shows for dismissed or completed sessions.
+- **Context:** After finishing the six-step tour, «Reanudar recorrido» left `completed_at` set, so the finale panel stuck.
+- **Decision:** Migration `325` clears `completed_at` and resets steps only when the story was **finished**. Mid-tour dismiss keeps `completed_steps`. Finale UI exposes resume; the slim resume bar shows for dismissed or completed sessions.
 - **Consequences:** CTO applies `325` after `324`. Agents do not apply.
+
+### 2026-11-12 — CTO review hardening (PR #92 follow-up)
+- **Context:** Root `headers()` made the whole site dynamic; backfill estimate paged at 1000; `--confirm-over-cap` disabled the cap; admin switch could not return to admin.
+- **Decision:**
+  1. Civic chrome gated by client `usePathname()` (`CivicRootChrome`).
+  2. Backfill uses exact counts + paged fetch; live loop aborts at US$60; no CLI override.
+  3. Migration `326`: `switch_demo_persona` allows admin only when invite `default_persona` is admin; `dof_spend_since` aggregate for cron caps.
+- **Consequences:** Agents do not apply migrations or raise the code cap.
 
 ---
 

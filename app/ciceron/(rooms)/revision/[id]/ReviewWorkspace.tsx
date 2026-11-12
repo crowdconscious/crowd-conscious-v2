@@ -31,11 +31,13 @@ export function ReviewWorkspace({
   neighborIds: { prev: string | null; next: string | null }
 }) {
   const router = useRouter()
-  const initialBody = markPassedDatesInText(
-    detail.currentBody,
-    todayInMexicoCity()
-  )
-  const [body, setBody] = useState(initialBody)
+  // Stored body is what Approve / Edit / four-eyes compare against.
+  // Past-date annotations are display-only so opening Edit without changes
+  // does not turn the Socia into a "corrector".
+  const storedBody = detail.currentBody
+  const annotatedBody = markPassedDatesInText(storedBody, todayInMexicoCity())
+  const hasPassedDateNotes = annotatedBody !== storedBody
+  const [body, setBody] = useState(storedBody)
   const [editing, setEditing] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
@@ -61,6 +63,7 @@ export function ReviewWorkspace({
         onApprove()
       } else if (e.key === 'e' || e.key === 'E') {
         e.preventDefault()
+        setBody(detail.currentBody)
         setEditing(true)
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
@@ -90,7 +93,7 @@ export function ReviewWorkspace({
   }
 
   function onApprove() {
-    if (editing && body !== detail.currentBody) {
+    if (editing && body !== storedBody) {
       run(() =>
         decideReviewAction({
           taskId: detail.id,
@@ -106,6 +109,11 @@ export function ReviewWorkspace({
         decision: 'approved',
       })
     )
+  }
+
+  function onStartEdit() {
+    setBody(storedBody)
+    setEditing(true)
   }
 
   function onSaveEdit() {
@@ -230,8 +238,15 @@ export function ReviewWorkspace({
               aria-label={copy.revision.draftPane}
             />
           ) : (
-            <article className="cic-legal cic-review-body">{body}</article>
+            <article className="cic-legal cic-review-body">{annotatedBody}</article>
           )}
+
+          {!editing && hasPassedDateNotes ? (
+            <p className="cic-muted" role="note" style={{ fontSize: '0.85rem', marginTop: 8 }}>
+              Las marcas «fecha vencida» son informativas al abrir el borrador; no forman
+              parte del texto almacenado ni de una corrección.
+            </p>
+          ) : null}
 
           <div className="cic-review-actions">
             <button
@@ -240,7 +255,7 @@ export function ReviewWorkspace({
               disabled={pending || detail.closed}
               onClick={onApprove}
             >
-              {editing && body !== detail.modelBody
+              {editing && body !== storedBody
                 ? copy.revision.approveEdits
                 : copy.revision.approve}
             </button>
@@ -248,7 +263,14 @@ export function ReviewWorkspace({
               type="button"
               className="cic-btn cic-btn-secondary"
               disabled={pending || detail.closed}
-              onClick={() => setEditing((v) => !v)}
+              onClick={() => {
+                if (editing) {
+                  setBody(storedBody)
+                  setEditing(false)
+                } else {
+                  onStartEdit()
+                }
+              }}
             >
               {editing ? copy.components.cancel : 'Editar'}
             </button>

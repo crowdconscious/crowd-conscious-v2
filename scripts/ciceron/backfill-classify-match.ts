@@ -5,30 +5,40 @@
  * Usage:
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --limit=8
- *   npx tsx scripts/ciceron/backfill-classify-match.ts --confirm-over-cap
  *
- * Do NOT run against production without CTO confirmation of the cost printout.
+ * Hard US$60 cap (code constant). Do NOT run against production without CTO review
+ * of the dry-run estimate. Raising the cap requires editing _cost-cap.ts.
  */
 import { createClient } from '@supabase/supabase-js'
 import { runClassifyMatchBatch } from '../../lib/ciceron/dof/classify-match'
 import {
+  abortIfSpendAtCap,
   assertUnderCap,
+  COST_CAP_USD,
   estimateFromRates,
+  fetchAllRows,
   parseFlags,
   type AiRunRate,
 } from './_cost-cap'
 
+type NoteRow = {
+  id: string
+  note_date: string
+  classify_status: string
+  match_status: string
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loadRates(sb: any): Promise<AiRunRate[]> {
-  const { data } = await sb
-    .from('ai_runs')
-    .select('purpose, cost_estimate_usd')
-    .in('purpose', ['dof_classify', 'dof_match_relevance'])
-    .limit(400)
-  const rows = (Array.isArray(data) ? data : []) as {
+  const rows = await fetchAllRows<{
     purpose: string
     cost_estimate_usd: number | null
-  }[]
+  }>(
+    sb
+      .from('ai_runs')
+      .select('purpose, cost_estimate_usd')
+      .in('purpose', ['dof_classify', 'dof_match_relevance'])
+  )
   const by = new Map<string, number[]>()
   for (const r of rows) {
     if (r.cost_estimate_usd == null) continue
@@ -53,52 +63,69 @@ async function main() {
   }
   const sb = createClient(url, key, { db: { schema: 'ciceron' } })
 
-  const { data: notes, error } = await sb
-    .from('dof_notes')
-    .select('id, note_date, ingest_status, classify_status, match_status')
-    .in('ingest_status', ['ready', 'embedding_pending'])
-    .order('note_date', { ascending: true })
-  if (error) {
-    console.error(error.message)
+  // Exact counts (head) so the estimate is not capped by PostgREST's 1000-row page.
+  const [{ count: ingestedCount, error: ingestedErr }, { count: pendingCount, error: pendingErr }] =
+    await Promise.all([
+      sb
+        .from('dof_notes')
+        .select('id', { count: 'exact', head: true })
+        .in('ingest_status', ['ready', 'embedding_pending']),
+      sb
+        .from('dof_notes')
+        .select('id', { count: 'exact', head: true })
+        .in('ingest_status', ['ready', 'embedding_pending'])
+        .or(
+          'classify_status.in.(pending,failed),match_status.in.(pending,failed)'
+        ),
+    ])
+  if (ingestedErr || pendingErr) {
+    console.error(ingestedErr?.message ?? pendingErr?.message)
     process.exit(1)
   }
-  const rows = (Array.isArray(notes) ? notes : []) as {
-    id: string
-    note_date: string
-    classify_status: string
-    match_status: string
-  }[]
-  const pending = rows.filter(
-    (r) =>
-      r.classify_status === 'pending' ||
-      r.classify_status === 'failed' ||
-      r.match_status === 'pending' ||
-      r.match_status === 'failed'
+
+  const { count: needClassifyCount, error: classifyErr } = await sb
+    .from('dof_notes')
+    .select('id', { count: 'exact', head: true })
+    .in('ingest_status', ['ready', 'embedding_pending'])
+    .in('classify_status', ['pending', 'failed'])
+  if (classifyErr) {
+    console.error(classifyErr.message)
+    process.exit(1)
+  }
+
+  // Page all pending rows for edition list (and pendingNotes accuracy).
+  const pending = await fetchAllRows<NoteRow>(
+    sb
+      .from('dof_notes')
+      .select('id, note_date, classify_status, match_status')
+      .in('ingest_status', ['ready', 'embedding_pending'])
+      .or(
+        'classify_status.in.(pending,failed),match_status.in.(pending,failed)'
+      )
+      .order('note_date', { ascending: true })
   )
+
   const rates = await loadRates(sb)
-  const classifyEst = estimateFromRates(
-    rates,
-    'dof_classify',
-    pending.filter((p) => p.classify_status !== 'classified').length,
-    0.004
-  )
-  const matchEst = estimateFromRates(
-    rates,
-    'dof_match_relevance',
-    pending.length * 2,
-    0.006
-  )
+  const needClassify = needClassifyCount ?? pending.filter((p) => p.classify_status !== 'classified').length
+  const pendingNotes = pendingCount ?? pending.length
+  const classifyEst = estimateFromRates(rates, 'dof_classify', needClassify, 0.004)
+  // One relevance call per pending note × watch-profile candidate batch ≈ 2 avg
+  const matchEst = estimateFromRates(rates, 'dof_match_relevance', pendingNotes * 2, 0.006)
   const estimateUsd = Number((classifyEst + matchEst).toFixed(4))
+  const editions = [...new Set(pending.map((r) => r.note_date))].sort()
 
   console.log(
     JSON.stringify({
       dryRun: flags.dryRun,
-      ingestedNotes: rows.length,
-      pendingNotes: pending.length,
-      editions: [...new Set(rows.map((r) => r.note_date))].sort(),
+      ingestedNotes: ingestedCount ?? 0,
+      pendingNotes,
+      needClassify,
+      editions,
+      editionCount: editions.length,
       estimateUsd,
       classifyEst,
       matchEst,
+      capUsd: COST_CAP_USD,
       ratesSampled: rates,
     })
   )
@@ -106,7 +133,6 @@ async function main() {
   assertUnderCap({
     estimateUsd,
     dryRun: flags.dryRun,
-    confirmOverCap: flags.confirmOverCap,
     label: 'backfill-classify-match',
   })
 
@@ -124,16 +150,16 @@ async function main() {
       limit: batchLimit,
       onlyPending: true,
     })
-    // Process oldest first: temporarily re-order by flipping — batch helper
-    // currently newest-first; for oldest→newest we iterate by date groups.
     totalCost += stats.costUsd
     console.log(
       JSON.stringify({
         round: rounds,
         ...stats,
         totalCostUsd: Number(totalCost.toFixed(6)),
+        capUsd: COST_CAP_USD,
       })
     )
+    abortIfSpendAtCap({ spentUsd: totalCost, label: 'backfill-classify-match' })
     if (stats.remaining === 0 || stats.processed === 0) break
     if (rounds > 800) {
       console.error('Stopping after 800 rounds — resume later')

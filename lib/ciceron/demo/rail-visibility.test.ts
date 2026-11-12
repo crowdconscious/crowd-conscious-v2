@@ -18,7 +18,7 @@ describe('ciceron rail visibility', () => {
 
   it('hides admin links for admin role when invite is not an admin mint', () => {
     assert.equal(
-      isProspectDemoSession({ role: 'admin', inviteIsAdminMint: false }),
+      isProspectDemoSession({ role: 'admin', inviteMintedForAdmin: false }),
       true
     )
     assert.equal(
@@ -32,7 +32,7 @@ describe('ciceron rail visibility', () => {
 
   it('shows admin links only for admin role on admin-mint invite', () => {
     assert.equal(
-      isProspectDemoSession({ role: 'admin', inviteIsAdminMint: true }),
+      isProspectDemoSession({ role: 'admin', inviteMintedForAdmin: true }),
       false
     )
     assert.equal(
@@ -45,9 +45,12 @@ describe('ciceron rail visibility', () => {
   })
 
   it('treats unknown invite mint as non-prospect when role is admin', () => {
-    // Layouts pass inviteIsAdminMint only when known; admin role without a
+    // Layouts pass inviteMintedForAdmin when known; admin role without a
     // prospect flag still shows links (ops cookie path).
     assert.equal(isProspectDemoSession({ role: 'admin' }), false)
-    assert.equal(isProspectDemoSession({ role: 'admin', inviteIsAdminMint: null }), false)
+    assert.equal(
+      isProspectDemoSession({ role: 'admin', inviteMintedForAdmin: null }),
+      false
+    )
   })
 })

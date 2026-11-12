@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { addTermDays, toIsoDate } from '@/lib/ciceron/case-files/business-days'
 
 /**
- * Mirrors migration 322 intent: after freshness, sample deadlines should sit
+ * Mirrors migration 324 intent: after freshness, sample deadlines should sit
  * at roughly 2 / 6 / 14 business days from today, never overdue.
  */
 describe('freshness deadline offsets', () => {

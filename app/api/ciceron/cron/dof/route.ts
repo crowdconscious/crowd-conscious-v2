@@ -44,27 +44,15 @@ async function spendTodayUsd(): Promise<number> {
   // Midnight America/Mexico_City (UTC−6 year-round) as UTC instant
   const day = todayInMexicoCity()
   const startIso = `${day}T06:00:00.000Z`
-  const { data } = await db
-    .from('ai_runs')
-    .select('cost_estimate_usd, purpose')
-    .gte('created_at', startIso)
-    .limit(5000)
-  const rows = (Array.isArray(data) ? data : []) as {
-    cost_estimate_usd: number | null
-    purpose: string | null
-  }[]
-  return rows.reduce((s, r) => {
-    const purpose = r.purpose ?? ''
-    if (
-      !(
-        purpose.startsWith('dof_') ||
-        purpose === 'watch_profile_embed'
-      )
-    ) {
-      return s
-    }
-    return s + (Number(r.cost_estimate_usd) || 0)
-  }, 0)
+  // Aggregate RPC (migration 326) — avoids a capped 5000-row select.
+  const { data, error } = await db.rpc('dof_spend_since', {
+    p_since: startIso,
+  })
+  if (error) {
+    console.warn('[ciceron] dof_spend_since failed', error.message)
+    return 0
+  }
+  return Number(data) || 0
 }
 
 /**
@@ -149,12 +137,31 @@ async function handle(req: NextRequest) {
   }
 
   if (body.classifyMatchOnly || req.nextUrl.searchParams.get('classify') === '1') {
+    const spentBefore = await spendTodayUsd()
+    if (spentBefore >= cap) {
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        reason: 'daily_spend_cap',
+        spentUsd: spentBefore,
+        capUsd: cap,
+        mode: 'classify_match',
+      })
+    }
     const stats = await runClassifyMatchBatch({
       limit: 6,
       noteDate: targetDate,
       onlyPending: true,
     })
-    return NextResponse.json({ ok: true, mode: 'classify_match', ...stats })
+    const spentAfter = await spendTodayUsd()
+    return NextResponse.json({
+      ok: true,
+      mode: 'classify_match',
+      ...stats,
+      spentUsd: spentAfter,
+      capUsd: cap,
+      capped: spentAfter >= cap,
+    })
   }
 
   const result = await runDofIngestDay({
@@ -162,6 +169,19 @@ async function handle(req: NextRequest) {
     cursor: body.cursor,
     attempt: body.attempt ?? 1,
   })
+
+  const spentAfterIngest = await spendTodayUsd()
+  if (spentAfterIngest >= cap) {
+    return NextResponse.json({
+      ok: result.status !== 'failed',
+      ...result,
+      classifyMatch: null,
+      spentUsd: spentAfterIngest,
+      capUsd: cap,
+      capped: true,
+      classifySkipped: 'daily_spend_cap',
+    })
+  }
 
   if (result.requeue && process.env.VERCEL_URL && process.env.CRON_SECRET) {
     const url = `https://${process.env.VERCEL_URL}/api/ciceron/cron/dof`
@@ -181,6 +201,18 @@ async function handle(req: NextRequest) {
 
   let classifyMatch: Awaited<ReturnType<typeof runClassifyMatchBatch>> | null = null
   if (!result.requeue && result.status === 'succeeded' && process.env.ANTHROPIC_API_KEY) {
+    const spentBeforeClassify = await spendTodayUsd()
+    if (spentBeforeClassify >= cap) {
+      return NextResponse.json({
+        ok: true,
+        ...result,
+        classifyMatch: null,
+        spentUsd: spentBeforeClassify,
+        capUsd: cap,
+        capped: true,
+        classifySkipped: 'daily_spend_cap',
+      })
+    }
     classifyMatch = await runClassifyMatchBatch({
       limit: 4,
       noteDate: result.targetDate,
@@ -188,9 +220,13 @@ async function handle(req: NextRequest) {
     })
   }
 
+  const spentFinal = await spendTodayUsd()
   return NextResponse.json({
     ok: result.status !== 'failed',
     ...result,
     classifyMatch,
+    spentUsd: spentFinal,
+    capUsd: cap,
+    capped: spentFinal >= cap,
   })
 }

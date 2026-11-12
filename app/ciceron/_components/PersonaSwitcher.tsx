@@ -26,7 +26,9 @@ export function PersonaSwitcher({
               ? copy.demoBar.socio
               : p.role === 'pasante'
                 ? copy.demoBar.pasante
-                : copy.demoBar.asociado
+                : p.role === 'admin'
+                  ? copy.roleAdmin
+                  : copy.demoBar.asociado
           const active = p.id === currentPersonaId
           return (
             <form key={p.id} action={switchCiceronPersona}>

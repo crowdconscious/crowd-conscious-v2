@@ -169,7 +169,7 @@ export async function advanceGuidedStory(
     }
     const db = tryCreateCiceronAdminClient()
     if (db) {
-      // p_dismiss=false clears dismissed flags (see migration 321 resume fix)
+      // p_dismiss=false clears dismissed; finished tours restart via migration 325
       await db.rpc('update_guided_story', {
         p_token_hash: hashSessionToken(session.token),
         p_step: Math.min(Math.max(Number(step) || 1, 1), 6),

@@ -4,7 +4,6 @@
  * Usage:
  *   npx tsx scripts/ciceron/embed-watch-profiles.ts --dry-run
  *   npx tsx scripts/ciceron/embed-watch-profiles.ts
- *   npx tsx scripts/ciceron/embed-watch-profiles.ts --confirm-over-cap
  *
  * Do NOT run against production without CTO approval.
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, AI Gateway auth.
@@ -45,7 +44,7 @@ async function loadRates(sb: any): Promise<AiRunRate[]> {
 }
 
 async function main() {
-  const { dryRun, confirmOverCap } = parseFlags(process.argv.slice(2))
+  const { dryRun } = parseFlags(process.argv.slice(2))
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
   if (!url || !key) {
@@ -96,7 +95,6 @@ async function main() {
   assertUnderCap({
     estimateUsd,
     dryRun,
-    confirmOverCap,
     label: 'embed-watch-profiles',
   })
 

@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { CiceronShell } from '../_components/CiceronShell'
 import { CICERON_BASE } from '@/lib/ciceron/config'
-import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { isProspectDemoSession } from '@/lib/ciceron/demo/rail-visibility'
 import {
   getCiceronDemoSessionFull,
+  inviteMintedForAdmin,
   sessionMeta,
   switchablePersonasForFirm,
 } from '@/lib/ciceron/demo/session'
@@ -22,18 +22,21 @@ export default async function CiceronAdminLayout({
   }
 
   const persona = session.persona
-  const guidedStory = await loadGuidedStory(session)
-  const switchable = switchablePersonasForFirm(persona.firmId).map((p) => ({
+  const [guidedStory, inviteMintedAdmin] = await Promise.all([
+    loadGuidedStory(session),
+    inviteMintedForAdmin(session.inviteCodeId),
+  ])
+  const switchable = switchablePersonasForFirm(persona.firmId, {
+    includeAdmin: inviteMintedAdmin,
+  }).map((p) => ({
     id: p.id,
     role: p.role,
     displayName: p.displayName,
   }))
 
-  const inviteIsAdminMint =
-    persona.role === 'admin' && persona.id === CICERON_SEED.personas.admin
   const isProspectSession = isProspectDemoSession({
     role: persona.role,
-    inviteIsAdminMint,
+    inviteMintedForAdmin: inviteMintedAdmin,
   })
 
   return (

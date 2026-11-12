@@ -283,6 +283,7 @@ export async function switchPersona(
     if (!persona || persona.firmId !== full.persona.firmId) {
       return { ok: false, message: 'Persona no disponible.' }
     }
+    // Offline public invites never mint admin — block admin switch offline.
     if (!['socio', 'asociado', 'pasante'].includes(persona.role)) {
       return { ok: false, message: 'Solo Socia, Asociado o Pasante.' }
     }
@@ -339,6 +340,27 @@ export function sessionMeta(persona: DemoPersona) {
   }
 }
 
-export function switchablePersonasForFirm(firmId: string): DemoPersona[] {
-  return offlineSwitchablePersonas(firmId)
+export function switchablePersonasForFirm(
+  firmId: string,
+  opts?: { includeAdmin?: boolean }
+): DemoPersona[] {
+  return offlineSwitchablePersonas(firmId, opts)
+}
+
+/** True when the invite that opened the session was minted for the admin persona. */
+export async function inviteMintedForAdmin(
+  inviteCodeId: string | null
+): Promise<boolean> {
+  if (!inviteCodeId) return false
+  const db = tryCreateCiceronAdminClient()
+  if (!db) return false
+  const { data } = await db
+    .from('invite_codes')
+    .select('default_persona_id')
+    .eq('id', inviteCodeId)
+    .maybeSingle()
+  const row = data as { default_persona_id?: string } | null
+  if (!row?.default_persona_id) return false
+  const persona = offlinePersonaById(row.default_persona_id)
+  return persona?.role === 'admin'
 }

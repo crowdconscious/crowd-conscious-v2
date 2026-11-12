@@ -99,13 +99,23 @@ BEGIN
     AND d.is_sample = true
     AND d.status IN ('confirmado', 'descartado');
 
-  -- Remove simulated deliveries for this firm (before deleting decisions)
+  -- Remove simulated deliveries for this firm
   DELETE FROM ciceron.deliveries d
   USING ciceron.matters m
   WHERE d.matter_id = m.id
     AND m.firm_id = p_firm_id
     AND d.is_simulated = true;
   GET DIAGNOSTICS deliveries_removed = ROW_COUNT;
+
+  -- Also drop any delivery (simulated or not) that references a demo review
+  -- decision, otherwise deleting those decisions fails the FK.
+  DELETE FROM ciceron.deliveries d
+  USING ciceron.review_decisions rd
+  JOIN ciceron.review_tasks rt ON rt.id = rd.review_task_id
+  JOIN ciceron.matters m ON m.id = rt.matter_id
+  WHERE d.review_decision_id = rd.id
+    AND m.firm_id = p_firm_id
+    AND rt.is_demo = true;
 
   -- Clear demo decisions so seeded tasks can be approved again
   DELETE FROM ciceron.review_decisions rd

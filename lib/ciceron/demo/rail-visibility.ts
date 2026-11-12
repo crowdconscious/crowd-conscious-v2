@@ -7,11 +7,11 @@ export type RailVisibilityInput = {
   /** Membership role key (`admin` | `socio` | …). */
   role: string
   /**
-   * True when the invite that opened the session was minted for a non-admin
-   * default persona (prospect path). Null/undefined = unknown → treat as
-   * prospect unless role is admin and invite is known admin mint.
+   * True when the invite that opened the session was minted with
+   * default_persona = admin. Null/undefined = unknown → treat as
+   * non-prospect only when role is already admin (ops path).
    */
-  inviteIsAdminMint?: boolean | null
+  inviteMintedForAdmin?: boolean | null
 }
 
 /**
@@ -20,7 +20,7 @@ export type RailVisibilityInput = {
  */
 export function isProspectDemoSession(input: RailVisibilityInput): boolean {
   if (input.role !== 'admin') return true
-  if (input.inviteIsAdminMint === false) return true
+  if (input.inviteMintedForAdmin === false) return true
   return false
 }
 

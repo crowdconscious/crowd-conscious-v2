@@ -13,10 +13,8 @@ npx tsx scripts/ciceron/embed-watch-profiles.ts --dry-run
 npx tsx scripts/ciceron/embed-watch-profiles.ts
 
 # 3) Backfill classify+match oldest→newest
-# Hard stop if estimate > US$60 unless --confirm-over-cap
+# Hard US$60 code cap (edit COST_CAP_USD in _cost-cap.ts only if CTO approves)
 npx tsx scripts/ciceron/backfill-classify-match.ts
-# If estimate > 60 after reviewing dry-run:
-npx tsx scripts/ciceron/backfill-classify-match.ts --confirm-over-cap
 ```
 
 After backfill, populate each client section with the top matches (title, date, reason naming the concrete link, official link). **Flag any client with fewer than three matches** before the law-firm demo.

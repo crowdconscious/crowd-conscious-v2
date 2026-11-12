@@ -1,6 +1,7 @@
--- 325: Guided-story resume must reopen a finished or dismissed tour.
+-- 325: Guided-story resume must reopen a *finished* tour.
 -- update_guided_story previously kept completed_at when p_step returned to 1–6,
--- so «Reanudar recorrido» left the finale panel stuck on completed.
+-- so «Reanudar recorrido» left the finale panel stuck.
+-- Mid-tour dismiss only clears dismissed; it must NOT wipe completed_steps.
 
 CREATE OR REPLACE FUNCTION ciceron.update_guided_story(
   p_token_hash text,
@@ -50,8 +51,9 @@ BEGIN
   SELECT * INTO prog FROM ciceron.guided_story_progress WHERE session_id = sess.id FOR UPDATE;
   steps := COALESCE(prog.completed_steps, ARRAY[]::int[]);
 
-  -- Resume after dismiss/finish: clear completion and restart from the requested step.
-  IF p_step BETWEEN 1 AND 6 AND (prog.completed_at IS NOT NULL OR COALESCE(prog.dismissed, false)) THEN
+  -- Only wipe completion when the story was finished (completed_at set).
+  -- A mid-tour dismiss keeps completed_steps and just undismisses.
+  IF p_step BETWEEN 1 AND 6 AND prog.completed_at IS NOT NULL THEN
     restarting := true;
     steps := ARRAY[p_step]::int[];
   ELSIF p_step BETWEEN 1 AND 6 AND NOT (p_step = ANY (steps)) THEN
