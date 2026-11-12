@@ -9,6 +9,7 @@ import {
   type ReviewState,
 } from '@/lib/ciceron/demo/fixtures'
 import { officialDofUrl } from '@/lib/ciceron/dof/dates'
+import { resolveDisplayTitle } from '@/lib/ciceron/dof/display-title'
 
 export type MonitorItem = {
   id: string
@@ -28,6 +29,10 @@ export type MonitorItem = {
   review: ReviewState
   subjectAreas: string[]
   feedback: 'relevante' | 'no_relevante' | null
+  /** True only when a review_tasks row exists for this match/output. */
+  hasReviewTask: boolean
+  /** Procurement / contratación lane — shown separately when profile opts in. */
+  isProcurement: boolean
 }
 
 function formatEsDate(iso: string): string {
@@ -73,6 +78,8 @@ export async function loadMonitorMatches(
         review: n.review,
         subjectAreas: [],
         feedback: null,
+        hasReviewTask: n.review === 'en_revision',
+        isProcurement: false,
       })),
       totalClassified: fixtureDofNotes.length,
     }
@@ -155,6 +162,8 @@ export async function loadMonitorMatches(
             review: n.review,
             subjectAreas: [],
             feedback: null,
+            hasReviewTask: n.review === 'en_revision',
+            isProcurement: false,
           })),
           totalClassified: fixtureDofNotes.length,
         }
@@ -179,7 +188,7 @@ export async function loadMonitorMatches(
 
     const { data: classRows } = await db
       .from('classifications')
-      .select('dof_note_id, labels, document_type, summary, authority')
+      .select('dof_note_id, labels, document_type, summary, authority, payload')
       .in('dof_note_id', noteIds)
       .is('chunk_id', null)
     const classMap = new Map(
@@ -189,8 +198,46 @@ export async function loadMonitorMatches(
         document_type: string | null
         summary: string | null
         authority: string | null
+        payload?: { display_title?: string } | null
       }[]).map((c) => [c.dof_note_id, c])
     )
+
+    // Review badge only when a review_tasks row exists for the same client matter
+    // with output_type client_alert — never for bare Tier 0 alerts.
+    const reviewMatchIds = new Set<string>()
+    {
+      const { data: tasks } = await db
+        .from('review_tasks')
+        .select('id, matter_id, status, output_type')
+        .in('status', ['pendiente', 'en_curso'])
+        .eq('output_type', 'client_alert')
+        .limit(200)
+      const taskMatterIds = new Set(
+        ((Array.isArray(tasks) ? tasks : []) as { matter_id: string }[]).map(
+          (t) => t.matter_id
+        )
+      )
+      if (taskMatterIds.size) {
+        const { data: matters } = await db
+          .from('matters')
+          .select('id, client_id')
+          .in('id', [...taskMatterIds])
+          .eq('firm_id', firmId)
+        const clientsWithReview = new Set(
+          ((Array.isArray(matters) ? matters : []) as { client_id: string }[]).map(
+            (m) => m.client_id
+          )
+        )
+        for (const m of matchRows) {
+          const clientId = profileToClient.get(m.watch_profile_id)
+          // Only badge when the match already entered the review path (feedback or
+          // explicit client_alert task for that client). Tier 0 alone → no badge.
+          if (clientId && clientsWithReview.has(clientId) && m.feedback === 'relevante') {
+            reviewMatchIds.add(m.id)
+          }
+        }
+      }
+    }
 
     const chunkIds = [
       ...new Set(matchRows.flatMap((m) => m.supporting_chunk_ids ?? [])),
@@ -216,6 +263,13 @@ export async function loadMonitorMatches(
       .limit(500)
     const classifiedCount = Array.isArray(classifiedRows) ? classifiedRows.length : 0
 
+    const PROCUREMENT_TYPES = new Set([
+      'licitacion',
+      'convocatoria',
+      'fallo',
+      'contratacion_publica',
+    ])
+
     let items: MonitorItem[] = matchRows.map((m) => {
       const note = noteMap.get(m.dof_note_id)
       const cls = classMap.get(m.dof_note_id)
@@ -227,28 +281,46 @@ export async function loadMonitorMatches(
         'Sin pasaje almacenado.'
       const iso = note?.note_date ?? '2026-11-10'
       const code = note?.note_code ?? ''
+      const docType = cls?.document_type || 'otro'
+      const payloadTitle =
+        cls?.payload && typeof cls.payload === 'object'
+          ? (cls.payload as { display_title?: string }).display_title
+          : null
+      const title = resolveDisplayTitle({
+        noteTitle: note?.title,
+        displayTitle: payloadTitle,
+        summary: cls?.summary,
+        authority: cls?.authority || note?.authority,
+        documentType: docType,
+        noteCode: code,
+      })
+      const hasReviewTask = reviewMatchIds.has(m.id)
       return {
         id: m.id,
         matchId: m.id,
         noteId: m.dof_note_id,
-        title: note?.title || 'Nota del DOF',
+        title,
         clientName: clientMap.get(clientId) ?? 'Cliente',
         clientId,
         reason: m.reason ?? '',
         action: m.suggested_action ?? '',
         passage,
         authority: cls?.authority || note?.authority || '—',
-        type: cls?.document_type || 'otro',
+        type: docType,
         date: formatEsDate(iso),
         dateIso: iso,
         officialUrl: code ? officialDofUrl(code, iso) : 'https://www.dof.gob.mx/',
-        review: (m.feedback === 'relevante'
-          ? 'aprobado'
-          : m.feedback === 'no_relevante'
-            ? 'rechazado'
-            : 'en_revision') as ReviewState,
+        review: (hasReviewTask
+          ? 'en_revision'
+          : m.feedback === 'relevante'
+            ? 'aprobado'
+            : m.feedback === 'no_relevante'
+              ? 'rechazado'
+              : 'borrador') as ReviewState,
         subjectAreas: cls?.labels ?? [],
         feedback: m.feedback,
+        hasReviewTask,
+        isProcurement: PROCUREMENT_TYPES.has(docType),
       }
     })
 
@@ -296,31 +368,63 @@ export async function loadMonitorMatches(
         review: n.review,
         subjectAreas: [],
         feedback: null,
+        hasReviewTask: n.review === 'en_revision',
+        isProcurement: false,
       })),
       totalClassified: fixtureDofNotes.length,
     }
   }
 }
 
+function mexicoCityTodayIso(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
+
 export async function loadHoyBriefing(persona: DemoPersona) {
   const { items, source, totalClassified } = await loadMonitorMatches(persona)
-  const today = new Date()
-  const todayIso = new Date(today.getTime() - 6 * 3600_000).toISOString().slice(0, 10)
-  const yesterday = new Date(today.getTime() - 30 * 3600_000).toISOString().slice(0, 10)
+  const todayIso = mexicoCityTodayIso()
 
-  const todayItems = items.filter((i) => i.dateIso === todayIso)
-  const unopenedYesterday = items.filter(
-    (i) => i.dateIso === yesterday && i.feedback === null
-  )
+  // Latest processed (classified) edition in the corpus — not "today" unless it is.
+  let editionIso: string | null = null
+  const db = tryCreateCiceronAdminClient()
+  if (db) {
+    try {
+      const { data: latest } = await db
+        .from('dof_notes')
+        .select('note_date')
+        .eq('classify_status', 'classified')
+        .order('note_date', { ascending: false })
+        .limit(1)
+      if (Array.isArray(latest) && latest[0]) {
+        editionIso = (latest[0] as { note_date: string }).note_date
+      }
+    } catch {
+      // keep null
+    }
+  }
+  if (!editionIso) {
+    editionIso = items.map((i) => i.dateIso).sort().at(-1) ?? todayIso
+  }
+
+  const editionItems = items.filter((i) => i.dateIso === editionIso)
+  const displayItems = editionItems
+  const unopenedYesterday = items
+    .filter((i) => i.dateIso < editionIso! && i.feedback === null)
+    .slice(0, 8)
 
   const byClient = new Map<string, MonitorItem[]>()
-  for (const i of todayItems.length ? todayItems : items.slice(0, 12)) {
+  for (const i of displayItems) {
+    if (i.isProcurement) continue
     const list = byClient.get(i.clientName) ?? []
     list.push(i)
     byClient.set(i.clientName, list)
   }
 
-  const db = tryCreateCiceronAdminClient()
   let reviews: {
     id: string
     clientName: string
@@ -392,14 +496,21 @@ export async function loadHoyBriefing(persona: DemoPersona) {
     }
   }
 
+  const matchCount = [...byClient.values()].reduce((n, list) => n + list.length, 0)
+  const editionIsToday = editionIso === todayIso
+
   return {
     source,
     byClient,
-    todayCount: todayItems.length,
+    todayCount: matchCount,
     totalClassified,
     unopenedYesterday,
     reviews,
-    emptyToday: todayItems.length === 0,
+    /** True only when the latest processed edition has zero client matches. */
+    emptyToday: matchCount === 0,
+    editionIso,
+    editionIsToday,
+    editionLabel: formatEsDate(editionIso),
   }
 }
 

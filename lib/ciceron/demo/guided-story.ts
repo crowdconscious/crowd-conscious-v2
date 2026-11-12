@@ -128,7 +128,7 @@ export async function loadGuidedStory(
 export async function advanceGuidedStory(
   session: DemoSession,
   step: GuidedStoryStep,
-  opts?: { dismiss?: boolean }
+  opts?: { dismiss?: boolean; resume?: boolean }
 ): Promise<GuidedStoryState> {
   if (opts?.dismiss) {
     if (session.offline || !isSessionTokenShape(session.token)) {
@@ -155,6 +155,34 @@ export async function advanceGuidedStory(
       },
     })
     return { ...OFFLINE_STATE, dismissed: true }
+  }
+
+  if (opts?.resume) {
+    if (session.offline || !isSessionTokenShape(session.token)) {
+      const resumed = { ...OFFLINE_STATE, dismissed: false, currentStep: 1 }
+      await writeOfflineStoryCookie(resumed)
+      return resumed
+    }
+    const db = tryCreateCiceronAdminClient()
+    if (db) {
+      // p_dismiss=false clears dismissed flags (see migration 321 resume fix)
+      await db.rpc('update_guided_story', {
+        p_token_hash: hashSessionToken(session.token),
+        p_step: Math.min(Math.max(Number(step) || 1, 1), 6),
+        p_dismiss: false,
+      })
+    }
+    await recordCiceronEvent({
+      name: 'guided_story_step',
+      firmId: session.persona.firmId,
+      userId: session.persona.id,
+      properties: {
+        step: String(step),
+        story_action: 'resume',
+        is_demo: true,
+      },
+    })
+    return loadGuidedStory({ ...session, storyDismissed: false })
   }
 
   const labelCode =
