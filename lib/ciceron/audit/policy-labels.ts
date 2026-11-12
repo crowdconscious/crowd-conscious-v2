@@ -34,28 +34,28 @@ export const POLICY_LABELS_ES: Record<string, { label: string; reasonFallback: s
     reasonFallback: 'Se alcanzó el presupuesto mensual de IA del despacho.',
   },
   rbac_role: {
-    label: 'RBAC — rol insuficiente',
+    label: 'Permisos por rol — rol insuficiente',
     reasonFallback: 'Su rol no autoriza esta acción.',
   },
   rbac_membership: {
-    label: 'RBAC — membresía',
+    label: 'Permisos por rol — membresía',
     reasonFallback: 'El actor no es miembro de este despacho.',
   },
   abac_conflict_wall: {
-    label: 'ABAC — muro de conflicto',
+    label: 'Permisos por asunto — muro de conflicto',
     reasonFallback:
       'Muro de conflicto: no puede acceder a material de un cliente en conflicto.',
   },
   abac_matter_assignment: {
-    label: 'ABAC — asignación al asunto',
+    label: 'Permisos por asunto — asignación al asunto',
     reasonFallback: 'No tiene asignación a este asunto.',
   },
   abac_sensitivity: {
-    label: 'ABAC — sensibilidad del documento',
+    label: 'Permisos por asunto — sensibilidad del documento',
     reasonFallback: 'Se requiere una concesión vigente para este nivel de sensibilidad.',
   },
   abac_grant_expired: {
-    label: 'ABAC — permiso expirado',
+    label: 'Permisos por asunto — permiso expirado',
     reasonFallback: 'El permiso temporal para este recurso ya expiró.',
   },
   invite_expired: {
@@ -68,7 +68,7 @@ export const POLICY_LABELS_ES: Record<string, { label: string; reasonFallback: s
   },
 }
 
-/** Known English seed reasons → Spanish (usted). */
+/** Known English / legacy acronym seed reasons → Spanish (usted), no RBAC/ABAC. */
 const REASON_OVERRIDES_ES: Record<string, string> = {
   'Actor is not a member of this matter':
     'El actor no es miembro de este asunto.',
@@ -82,11 +82,27 @@ const REASON_OVERRIDES_ES: Record<string, string> = {
     'Se rechazó una entrega duplicada.',
   'Pasante cannot confirm delivery':
     'El pasante no puede confirmar una entrega.',
+  'Solo socio, asociado o administrador puede aprobar una revisión (RBAC: rol).':
+    'Solo socio, asociado o administrador puede aprobar una revisión (permisos por rol).',
+  'Solo socio, asociado o administrador puede confirmar un plazo (RBAC: rol).':
+    'Solo socio, asociado o administrador puede confirmar un plazo (permisos por rol).',
+  'Solo socio, asociado o administrador puede registrar una entrega al cliente (RBAC: rol).':
+    'Solo socio, asociado o administrador puede registrar una entrega al cliente (permisos por rol).',
+  'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (ABAC: atributo de conflicto).':
+    'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (permisos por asunto).',
+  'El permiso temporal para este documento ya expiró (ABAC: concesión con vigencia).':
+    'El permiso temporal para este documento ya expiró (permisos por asunto: concesión con vigencia).',
 }
 
 export function policyLabelEs(policyId: string | null | undefined): string {
   if (!policyId) return '—'
   return POLICY_LABELS_ES[policyId]?.label ?? policyId
+}
+
+function stripAccessAcronyms(text: string): string {
+  return text
+    .replace(/\bRBAC\b/gi, 'permisos por rol')
+    .replace(/\bABAC\b/gi, 'permisos por asunto')
 }
 
 export function policyReasonEs(
@@ -98,13 +114,13 @@ export function policyReasonEs(
     if (override) return override
     // Already Spanish or unknown — show as-is if it looks Spanish-ish, else map by id
     if (/[áéíóúñ¿¡]|el |la |quien |solo |debe /i.test(policyReason)) {
-      return policyReason
+      return stripAccessAcronyms(policyReason)
     }
   }
   if (policyId && POLICY_LABELS_ES[policyId]) {
     return POLICY_LABELS_ES[policyId].reasonFallback
   }
-  return policyReason ?? '—'
+  return policyReason ? stripAccessAcronyms(policyReason) : '—'
 }
 
 export function formatPolicyCell(

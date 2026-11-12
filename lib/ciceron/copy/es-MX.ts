@@ -73,7 +73,7 @@ export const copy = {
     },
     finale: {
       title: 'Qué fue real y qué fue muestra',
-      body: 'Real: notas del Diario Oficial del corpus ingerido. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
+      body: 'Real: notas del Diario Oficial del corpus incorporado. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
       realLabel: 'Datos reales',
       sampleLabel: 'Datos de demostración',
       realItems: 'Notas DOF del corpus; citas verificadas a esos textos.',
@@ -93,11 +93,15 @@ export const copy = {
     abacBody:
       'Asociada Atributos Vega: el acceso depende de asignación al asunto, muros de conflicto, sensibilidad del documento y concesiones con vigencia.',
     tryIt: 'Probar',
+    tryRbac: 'Probar permisos por rol',
+    tryAbac: 'Probar permisos por asunto',
     allowed: 'Permitido',
     denied: 'Denegado',
     policy: 'Regla',
     reason: 'Motivo',
     model: 'Modelo',
+    modelRbac: 'Permisos por rol',
+    modelAbac: 'Permisos por asunto',
     rpcError: 'No se pudo evaluar el acceso en este momento. Intente de nuevo.',
   },
 
@@ -313,6 +317,7 @@ export const copy = {
     lead: 'Respuestas fundadas en el corpus, con citas verificadas.',
     ask: 'Formule su pregunta',
     askPlaceholder: '¿Qué dispone el acuerdo respecto a…?',
+    suggested: 'Preguntas sugeridas (validadas sobre el corpus de demostración)',
     coverage: 'Corpus actual: DOF de demostración (cobertura limitada).',
     stubAnswer:
       'La investigación con citas verificadas se habilita en un paso posterior. Por ahora puede explorar el corpus desde el Monitor DOF.',

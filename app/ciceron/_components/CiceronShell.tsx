@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { CICERON_ROOMS } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import type { GuidedStoryState } from '@/lib/ciceron/demo/guided-story-pure'
+import { shouldShowAdminRailLinks } from '@/lib/ciceron/demo/rail-visibility'
 import { CiceronLockup } from './CiceronLogo'
 import { CommandPalette } from './CommandPalette'
 import { GuidedStoryPanel, GuidedStoryResumeBar } from './GuidedStory'
@@ -60,9 +61,10 @@ function ShellInner({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const showAdminLinks =
-    !meta.isProspectSession &&
-    (meta.roleKey === 'admin' || meta.role === copy.roleAdmin)
+  const showAdminLinks = shouldShowAdminRailLinks({
+    roleKey: meta.roleKey ?? (meta.role === copy.roleAdmin ? 'admin' : ''),
+    isProspectSession: Boolean(meta.isProspectSession),
+  })
 
   return (
     <div className="ciceron-root" lang="es">

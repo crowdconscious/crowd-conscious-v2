@@ -13,20 +13,32 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 describe('Prompt 9 access showcase', () => {
-  it('offline RBAC try shows role denial with Spanish rule', () => {
+  it('offline role-based try shows role denial with Spanish rule', () => {
     const res = offlineTryAccess('rbac')
     assert.equal(res.allowed.ok, true)
     assert.equal(res.denied.ok, false)
     assert.equal(res.denied.policyId, 'rbac_role')
-    assert.match(String(res.denied.policyReason), /RBAC/)
-    assert.match(formatPolicyCell(res.denied.policyId, res.denied.policyReason), /RBAC/)
+    assert.match(String(res.denied.policyReason), /permisos por rol/i)
+    assert.doesNotMatch(String(res.denied.policyReason), /RBAC/)
+    assert.match(
+      formatPolicyCell(res.denied.policyId, res.denied.policyReason),
+      /Permisos por rol/
+    )
+    assert.doesNotMatch(
+      formatPolicyCell(res.denied.policyId, res.denied.policyReason),
+      /RBAC/
+    )
   })
 
-  it('offline ABAC try shows conflict wall', () => {
+  it('offline attribute-based try shows conflict wall', () => {
     const res = offlineTryAccess('abac')
     assert.equal(res.denied.ok, false)
     assert.equal(res.denied.policyId, 'abac_conflict_wall')
-    assert.equal(policyLabelEs('abac_conflict_wall'), 'ABAC — muro de conflicto')
+    assert.equal(
+      policyLabelEs('abac_conflict_wall'),
+      'Permisos por asunto — muro de conflicto'
+    )
+    assert.doesNotMatch(String(res.denied.policyReason), /ABAC/)
   })
 
   it('RPC error state is not an offline fixture', () => {

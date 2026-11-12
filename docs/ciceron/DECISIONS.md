@@ -220,10 +220,14 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
-## Pending
+### 2026-11-12 — No Crowd Conscious analytics / JSON-LD on `/ciceron`
+- **Context:** Pending P7 asked whether to accept root-layout Analytics, SpeedInsights, ConversionCelebration, and Organization JSON-LD leaking onto the hosted Cicéron demo.
+- **Decision:** Reject leakage. `app/layout.tsx` reads `x-pathname` (set by `middleware.ts`) via `headers()` and skips Analytics, SpeedInsights, ConversionCelebration, and the Crowd Conscious `organizationJsonLd` script when the path starts with `/ciceron`.
+- **Consequences:** Cicéron routes stay free of civic product telemetry and schema.org org markup. P7 closed.
 
-### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo
-- **Needed by:** Prompt 2 acceptance wording.
+---
+
+## Pending
 
 ### P8 — Counsel clearance for any future public case-file lookup
 - **Needed by:** before enabling `PublicLookupConnector` (still required; Prompt 6 keeps the stub).

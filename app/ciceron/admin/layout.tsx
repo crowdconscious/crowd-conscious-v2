@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { CiceronShell } from '../_components/CiceronShell'
 import { CICERON_BASE } from '@/lib/ciceron/config'
+import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
+import { isProspectDemoSession } from '@/lib/ciceron/demo/rail-visibility'
 import {
   getCiceronDemoSessionFull,
   sessionMeta,
@@ -27,6 +29,13 @@ export default async function CiceronAdminLayout({
     displayName: p.displayName,
   }))
 
+  const inviteIsAdminMint =
+    persona.role === 'admin' && persona.id === CICERON_SEED.personas.admin
+  const isProspectSession = isProspectDemoSession({
+    role: persona.role,
+    inviteIsAdminMint,
+  })
+
   return (
     <CiceronShell
       meta={{
@@ -34,6 +43,7 @@ export default async function CiceronAdminLayout({
         personaId: persona.id,
         switchablePersonas: switchable,
         guidedStory,
+        isProspectSession,
       }}
     >
       {children}

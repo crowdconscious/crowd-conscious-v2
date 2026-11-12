@@ -1,4 +1,4 @@
-/** Pure RBAC/ABAC showcase helpers (safe for client + tests). */
+/** Pure access-showcase helpers (permisos por rol / por asunto; safe for client + tests). */
 
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { CICERON_P9_SEED } from '@/lib/ciceron/demo/seed-ids'
@@ -49,14 +49,14 @@ export function offlineTryAccess(scenario: 'rbac' | 'abac'): TryAccessDemoResult
       ok: true,
       scenario: 'rbac',
       explainer:
-        'RBAC decide por rol: la socia puede aprobar; el pasante no, aunque comparta el asunto.',
+        'Permisos por rol: la socia puede aprobar; el pasante no, aunque comparta el asunto.',
       allowed: { ok: true, model: 'rbac', actorRole: 'socio' },
       denied: {
         ok: false,
         model: 'rbac',
         policyId: 'rbac_role',
         policyReason:
-          'Solo socio, asociado o administrador puede aprobar una revisión (RBAC: rol).',
+          'Solo socio, asociado o administrador puede aprobar una revisión (permisos por rol).',
         actorRole: 'pasante',
       },
     }
@@ -65,14 +65,14 @@ export function offlineTryAccess(scenario: 'rbac' | 'abac'): TryAccessDemoResult
     ok: true,
     scenario: 'abac',
     explainer:
-      'ABAC decide por atributos: asignación al asunto, muro de conflicto, sensibilidad y vigencia del permiso.',
+      'Permisos por asunto: asignación al asunto, muro de conflicto, sensibilidad y vigencia del permiso.',
     allowed: { ok: true, model: 'abac', actorRole: 'asociado' },
     denied: {
       ok: false,
       model: 'abac',
       policyId: 'abac_conflict_wall',
       policyReason:
-        'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (ABAC: atributo de conflicto).',
+        'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (permisos por asunto).',
       actorRole: 'asociado',
     },
   }

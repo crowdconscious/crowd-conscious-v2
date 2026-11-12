@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { CiceronShell } from '../_components/CiceronShell'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadM365Status } from '@/lib/ciceron/case-files/data'
+import { isProspectDemoSession } from '@/lib/ciceron/demo/rail-visibility'
 import {
   getCiceronDemoSessionFull,
   sessionMeta,
@@ -9,6 +10,7 @@ import {
 } from '@/lib/ciceron/demo/session'
 import { loadGuidedStory } from '@/lib/ciceron/demo/guided-story'
 import { loadReviewBadgeCount } from '@/lib/ciceron/review/data'
+import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 
 export default async function CiceronRoomsLayout({
   children,
@@ -33,6 +35,15 @@ export default async function CiceronRoomsLayout({
     displayName: p.displayName,
   }))
 
+  // Prospect = non-admin role, or invite that is not an admin mint.
+  // Public demo invites never mint admin; runtime admin mints use admin persona.
+  const inviteIsAdminMint =
+    persona.role === 'admin' && persona.id === CICERON_SEED.personas.admin
+  const isProspectSession = isProspectDemoSession({
+    role: persona.role,
+    inviteIsAdminMint,
+  })
+
   return (
     <CiceronShell
       meta={{
@@ -42,6 +53,7 @@ export default async function CiceronRoomsLayout({
         reviewBadge,
         switchablePersonas: switchable,
         guidedStory,
+        isProspectSession,
       }}
     >
       {children}
