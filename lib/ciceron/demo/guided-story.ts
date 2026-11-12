@@ -159,7 +159,11 @@ export async function advanceGuidedStory(
 
   if (opts?.resume) {
     if (session.offline || !isSessionTokenShape(session.token)) {
-      const resumed = { ...OFFLINE_STATE, dismissed: false, currentStep: 1 }
+      const resumed: GuidedStoryState = {
+        ...OFFLINE_STATE,
+        dismissed: false,
+        currentStep: 1,
+      }
       await writeOfflineStoryCookie(resumed)
       return resumed
     }

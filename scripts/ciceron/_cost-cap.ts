@@ -11,6 +11,13 @@ export type AiRunRate = {
   sampleSize: number
 }
 
+/** Loose client shape so scripts are not coupled to supabase-js generic variance. */
+export type CostCapDb = {
+  from: (table: string) => {
+    select: (cols: string) => PromiseLike<{ data: unknown; error: unknown }> & Record<string, unknown>
+  }
+}
+
 export function estimateFromRates(
   rates: AiRunRate[],
   purpose: string,

@@ -18,9 +18,8 @@ import {
   type AiRunRate,
 } from './_cost-cap'
 
-async function loadRates(
-  sb: ReturnType<typeof createClient>
-): Promise<AiRunRate[]> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function loadRates(sb: any): Promise<AiRunRate[]> {
   const { data } = await sb
     .from('ai_runs')
     .select('purpose, cost_estimate_usd')
