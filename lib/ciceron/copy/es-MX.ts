@@ -231,6 +231,10 @@ export const copy = {
     emptyFiltered: 'No hay coincidencias con estos filtros.',
     sourceSchema: 'Datos del corpus DOF',
     sourceFixture: 'Vista de demostración (sin coincidencias en base aún)',
+    regulatorySection: 'Coincidencias regulatorias',
+    procurementSection: 'Contratación pública',
+    procurementLead:
+      'Licitaciones, convocatorias y fallos. Solo aparecen cuando el perfil del cliente tiene vigilancia de contratación pública activada.',
   },
 
   expedientes: {

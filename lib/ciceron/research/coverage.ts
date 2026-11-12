@@ -1,5 +1,7 @@
 /** Honest corpus coverage for Investigación. Prefer live DB counts when available. */
 
+import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
+
 /** Fallback dates when the database is unreachable (offline demo). */
 export const CICERON_CORPUS_DOF_DATES = [
   '2026-11-04',
@@ -40,6 +42,62 @@ export function corpusCoverageLine(locale: 'es' = 'es'): string {
     { dates: [...CICERON_CORPUS_DOF_DATES] },
     locale
   )
+}
+
+/**
+ * Live stats from dof_notes: distinct note_date for classified or ready
+ * (incl. embedding_pending) rows, plus max(updated_at). Null when DB unavailable.
+ */
+export async function loadCorpusCoverageStats(): Promise<CorpusCoverageStats | null> {
+  const db = tryCreateCiceronAdminClient()
+  if (!db) return null
+  try {
+    const { data, error } = await db
+      .from('dof_notes')
+      .select('note_date, updated_at, ingest_status, classify_status')
+      .in('ingest_status', ['ready', 'embedding_pending'])
+      .limit(5000)
+    if (error || !Array.isArray(data)) return null
+
+    type Row = {
+      note_date?: string | null
+      updated_at?: string | null
+      ingest_status?: string | null
+      classify_status?: string | null
+    }
+    const rows = data as Row[]
+    const eligible = rows.filter((r) => {
+      const ingest = r.ingest_status ?? ''
+      const classify = r.classify_status ?? ''
+      if (classify === 'classified') return true
+      return ingest === 'ready' || ingest === 'embedding_pending'
+    })
+    if (!eligible.length) return { dates: [], lastUpdatedAt: null }
+
+    const dates = [
+      ...new Set(
+        eligible
+          .map((r) => (r.note_date ? String(r.note_date).slice(0, 10) : ''))
+          .filter(Boolean)
+      ),
+    ].sort()
+    let lastUpdatedAt: string | null = null
+    for (const r of eligible) {
+      const u = r.updated_at ? String(r.updated_at) : null
+      if (!u) continue
+      if (!lastUpdatedAt || u > lastUpdatedAt) lastUpdatedAt = u
+    }
+    return { dates, lastUpdatedAt }
+  } catch {
+    return null
+  }
+}
+
+/** Coverage line preferring live DB stats; offline constants only as fallback. */
+export async function loadCorpusCoverageLine(locale: 'es' = 'es'): Promise<string> {
+  const live = await loadCorpusCoverageStats()
+  if (live) return corpusCoverageLineFromStats(live, locale)
+  return corpusCoverageLine(locale)
 }
 
 function formatEs(iso: string): string {

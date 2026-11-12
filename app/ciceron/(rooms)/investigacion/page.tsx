@@ -4,7 +4,8 @@ import { copy } from '@/lib/ciceron/copy/es-MX'
 import { loadClientsRoom } from '@/lib/ciceron/demo/data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { loadFirmBudgetStatus, budgetStatusFromSpend } from '@/lib/ciceron/gateway/budget'
-import { corpusCoverageLine } from '@/lib/ciceron/research/coverage'
+import { loadCorpusCoverageLine } from '@/lib/ciceron/research/coverage'
+import { suggestedQuestionsForDesk } from '@/lib/ciceron/research/suggested-questions'
 import { loadResearchHistory } from './actions'
 import { ResearchDesk } from './ResearchDesk'
 
@@ -27,7 +28,10 @@ export default async function InvestigacionPage({
     c.matters.map((m) => ({ id: m.id, title: `${c.name} — ${m.title}` }))
   )
   const history = await loadResearchHistory(null)
-  const coverage = corpusCoverageLine('es')
+  const [coverage, suggestedQuestions] = await Promise.all([
+    loadCorpusCoverageLine('es'),
+    Promise.resolve(suggestedQuestionsForDesk()),
+  ])
 
   return (
     <div>
@@ -46,7 +50,12 @@ export default async function InvestigacionPage({
           ) : null}
         </section>
       ) : (
-        <ResearchDesk coverage={coverage} matters={matters} history={history} />
+        <ResearchDesk
+          coverage={coverage}
+          matters={matters}
+          history={history}
+          suggestedQuestions={suggestedQuestions}
+        />
       )}
     </div>
   )
