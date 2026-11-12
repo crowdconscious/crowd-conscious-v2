@@ -108,6 +108,10 @@ sans for interface,
 one restrained accent, generous spacing, no gradients, no emoji, no chat
 bubbles, no
 gamification. A dense table view is always available.
+- Brand board override (accepted): the hosted `/ciceron` demo uses the
+Cicerón.ai dark navy + mint board (including accent gradients on primary
+controls and the mark). That board overrides the earlier “light theme
+first, no gradients” experience note for this surface only.
 - Keyboard first: command palette, shortcuts in lists and in the review
 queue.
 - Honest empty, loading and error states. Never show zero-count vanity
