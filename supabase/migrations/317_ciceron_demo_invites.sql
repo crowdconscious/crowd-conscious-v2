@@ -3,10 +3,13 @@
 -- Additive. Agents do not apply to production.
 -- Depends on 302+ (demo_personas, firms).
 --
--- Invite pepper: CICERON_INVITE_PEPPER is required at runtime (app fail-closed).
--- Pepper value is never stored in this repository. Seeded hashes use pepper_version=1
--- and were produced offline. Only intentionally public demo codes are seeded:
--- DESPACHO-DEMO and DESPACHO-PASANTE. Non-public codes are never seeded here.
+-- Two-pepper scheme:
+--   pepper_version=1 → CICERON_INVITE_PEPPER — ONLY the intentionally public
+--     demo codes DESPACHO-DEMO and DESPACHO-PASANTE (public by design).
+--   pepper_version=2 → CICERON_INVITE_PEPPER_V2 — every invite minted at
+--     runtime (ops script). Secret; never committed.
+-- Pepper values are never stored in this repository. Fail closed if the
+-- needed pepper env is missing. Non-public codes are never seeded here.
 
 -- ---------------------------------------------------------------------------
 -- invite_codes — hashed; never store plaintext codes
@@ -40,9 +43,9 @@ CREATE INDEX IF NOT EXISTS invite_codes_pepper_version_idx ON ciceron.invite_cod
 COMMENT ON TABLE ciceron.invite_codes IS
   'Prompt 9: invite codes stored as sha256(pepper:CODE). Plaintext never persisted.';
 COMMENT ON COLUMN ciceron.invite_codes.code_hash IS
-  'Lowercase hex sha256 of CICERON_INVITE_PEPPER || ":" || upper(code). Pepper not in repo.';
+  'Lowercase hex sha256 of pepper || ":" || upper(code). Pepper chosen by pepper_version; never in repo.';
 COMMENT ON COLUMN ciceron.invite_codes.pepper_version IS
-  'Which offline pepper generation produced code_hash. Public demo seeds use 1.';
+  '1 = CICERON_INVITE_PEPPER (public demo codes only). 2 = CICERON_INVITE_PEPPER_V2 (runtime mints).';
 COMMENT ON COLUMN ciceron.invite_codes.prospect_label IS
   'Sales label for the prospect (e.g. firm name or contact). Not shown to the demo user.';
 
@@ -169,8 +172,9 @@ CREATE POLICY guided_story_admin_select ON ciceron.guided_story_progress
 
 -- ---------------------------------------------------------------------------
 -- Seed ONLY intentionally public demo invites (pepper_version = 1).
--- Hashes produced offline; CICERON_INVITE_PEPPER in the environment must match.
--- Non-public invites (admin, other roles) are created at runtime by an admin action.
+-- These codes are public by design; CICERON_INVITE_PEPPER in the deploy env
+-- must match the hashes below. Non-public invites use pepper_version=2 via
+-- scripts/ciceron/create-invite.ts (never seeded in SQL).
 -- ---------------------------------------------------------------------------
 INSERT INTO ciceron.invite_codes (
   id, code_hash, pepper_version, prospect_label, firm_id, default_persona_id,

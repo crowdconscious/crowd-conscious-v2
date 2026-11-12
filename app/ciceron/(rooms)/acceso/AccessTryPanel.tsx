@@ -39,6 +39,61 @@ function ResultCard({
   )
 }
 
+function ScenarioResults({
+  result,
+}: {
+  result: {
+    ok: boolean
+    error?: string
+    explainer: string
+    allowed: {
+      ok: boolean
+      policyId?: string | null
+      policyReason?: string | null
+      model?: string | null
+    }
+    denied: {
+      ok: boolean
+      policyId?: string | null
+      policyReason?: string | null
+      model?: string | null
+    }
+  }
+}) {
+  if (result.error || result.ok === false) {
+    return (
+      <div className="cic-policy-box is-denied" role="alert" style={{ marginTop: 12 }}>
+        <strong>{copy.access.rpcError}</strong>
+        {result.error ? (
+          <p className="cic-muted" style={{ margin: '8px 0 0', fontSize: '0.85rem' }}>
+            {result.error}
+          </p>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <ResultCard
+        ok={result.allowed.ok}
+        policyId={result.allowed.policyId}
+        policyReason={result.allowed.policyReason}
+        model={result.allowed.model}
+      />
+      <ResultCard
+        ok={result.denied.ok}
+        policyId={result.denied.policyId}
+        policyReason={result.denied.policyReason}
+        model={result.denied.model}
+      />
+      <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.9rem' }}>
+        {result.explainer}
+      </p>
+    </>
+  )
+}
+
 export function AccessTryPanel() {
   const [state, action, pending] = useActionState(tryAccessAction, null)
 
@@ -55,25 +110,7 @@ export function AccessTryPanel() {
             {copy.access.tryIt} RBAC
           </button>
         </form>
-        {state?.scenario === 'rbac' ? (
-          <>
-            <ResultCard
-              ok={state.result.allowed.ok}
-              policyId={state.result.allowed.policyId}
-              policyReason={state.result.allowed.policyReason}
-              model={state.result.allowed.model}
-            />
-            <ResultCard
-              ok={state.result.denied.ok}
-              policyId={state.result.denied.policyId}
-              policyReason={state.result.denied.policyReason}
-              model={state.result.denied.model}
-            />
-            <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.9rem' }}>
-              {state.result.explainer}
-            </p>
-          </>
-        ) : null}
+        {state?.scenario === 'rbac' ? <ScenarioResults result={state.result} /> : null}
       </section>
 
       <section className="cic-section" aria-labelledby="abac-title">
@@ -87,25 +124,7 @@ export function AccessTryPanel() {
             {copy.access.tryIt} ABAC
           </button>
         </form>
-        {state?.scenario === 'abac' ? (
-          <>
-            <ResultCard
-              ok={state.result.allowed.ok}
-              policyId={state.result.allowed.policyId}
-              policyReason={state.result.allowed.policyReason}
-              model={state.result.allowed.model}
-            />
-            <ResultCard
-              ok={state.result.denied.ok}
-              policyId={state.result.denied.policyId}
-              policyReason={state.result.denied.policyReason}
-              model={state.result.denied.model}
-            />
-            <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.9rem' }}>
-              {state.result.explainer}
-            </p>
-          </>
-        ) : null}
+        {state?.scenario === 'abac' ? <ScenarioResults result={state.result} /> : null}
       </section>
     </div>
   )

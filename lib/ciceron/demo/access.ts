@@ -8,16 +8,17 @@ import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { CICERON_P9_SEED } from '@/lib/ciceron/demo/seed-ids'
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
-import { offlinePersonaById } from '@/lib/ciceron/demo/personas'
 import {
   ACCESS_SHOWCASE,
+  accessDemoRpcError,
+  buildTryAccessDemoArgs,
   offlineTryAccess,
   type AccessResult,
   type TryAccessDemoResult,
 } from '@/lib/ciceron/demo/access-pure'
 
 export type { AccessResult, TryAccessDemoResult }
-export { ACCESS_SHOWCASE, offlineTryAccess }
+export { ACCESS_SHOWCASE, accessDemoRpcError, buildTryAccessDemoArgs, offlineTryAccess }
 
 function parseAccess(data: unknown): AccessResult {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -95,29 +96,37 @@ export async function evaluateAccess(opts: {
   return parseAccess(data)
 }
 
+/**
+ * Run the RBAC/ABAC showcase. Offline fixtures only when no DB client is configured.
+ * When DB is configured and the RPC fails, returns an error state (not offline examples).
+ * Passes the real session persona as p_caller for simulated-denial attribution.
+ */
 export async function tryAccessDemo(
   persona: DemoPersona,
   scenario: 'rbac' | 'abac'
 ): Promise<TryAccessDemoResult> {
   const db = tryCreateCiceronAdminClient()
-  const actor =
-    scenario === 'abac'
-      ? offlinePersonaById(CICERON_P9_SEED.personas.abacAsociado) ?? persona
-      : offlinePersonaById(CICERON_SEED.personas.socio) ?? persona
-
   if (!db) return offlineTryAccess(scenario)
 
+  const args = buildTryAccessDemoArgs(persona, scenario)
+
   try {
-    const { data, error } = await db.rpc('try_access_demo', {
-      p_actor: actor.id,
-      p_firm_id: actor.firmId,
-      p_scenario: scenario,
-    })
-    if (error || !data || typeof data !== 'object') {
-      return offlineTryAccess(scenario)
+    const { data, error } = await db.rpc('try_access_demo', args)
+    if (error) {
+      return accessDemoRpcError(scenario, error.message)
+    }
+    if (!data || typeof data !== 'object') {
+      return accessDemoRpcError(scenario, 'Respuesta de acceso no válida.')
     }
     const row = data as Record<string, unknown>
-    if (row.ok === false) return offlineTryAccess(scenario)
+    if (row.ok === false) {
+      return accessDemoRpcError(
+        scenario,
+        typeof row.policy_reason === 'string'
+          ? row.policy_reason
+          : 'No se pudo evaluar el acceso.'
+      )
+    }
     return {
       ok: true,
       scenario,
@@ -128,7 +137,10 @@ export async function tryAccessDemo(
       allowed: parseAccess(row.allowed),
       denied: parseAccess(row.denied),
     }
-  } catch {
-    return offlineTryAccess(scenario)
+  } catch (err) {
+    return accessDemoRpcError(
+      scenario,
+      err instanceof Error ? err.message : 'Error al evaluar el acceso.'
+    )
   }
 }

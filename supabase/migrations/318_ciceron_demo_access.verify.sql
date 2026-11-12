@@ -130,29 +130,36 @@ BEGIN
     RAISE EXCEPTION 'FAIL: expected abac_grant_expired, got %', res;
   END IF;
 
-  -- try_access_demo rbac: simulated denial records real caller
-  SELECT count(*) INTO audit_before FROM ciceron.audit_events
-  WHERE outcome = 'denied'
-    AND policy_id = 'rbac_role'
-    AND user_id = socio
-    AND payload ? 'simulated_by';
+  -- try_access_demo rbac: p_caller (session) attributes simulated denial
+  DECLARE
+    caller uuid := 'b1000000-0000-4000-8000-000000000005'::uuid; -- asociado2 session
+  BEGIN
+    SELECT count(*) INTO audit_before FROM ciceron.audit_events
+    WHERE outcome = 'denied'
+      AND policy_id = 'rbac_role'
+      AND user_id = caller
+      AND payload ? 'simulated_by'
+      AND (payload->>'simulated_by') = caller::text;
 
-  res := ciceron.try_access_demo(socio, firm, 'rbac');
-  IF COALESCE(res->>'ok', 'false') <> 'true' THEN
-    RAISE EXCEPTION 'FAIL: try_access_demo rbac: %', res;
-  END IF;
-  IF COALESCE(res->'denied'->>'ok', 'true') <> 'false' THEN
-    RAISE EXCEPTION 'FAIL: try_access_demo rbac denied side';
-  END IF;
+    -- Showcase actor = socio; simulated denial actor = pasante; caller = session
+    res := ciceron.try_access_demo(socio, firm, 'rbac', caller);
+    IF COALESCE(res->>'ok', 'false') <> 'true' THEN
+      RAISE EXCEPTION 'FAIL: try_access_demo rbac: %', res;
+    END IF;
+    IF COALESCE(res->'denied'->>'ok', 'true') <> 'false' THEN
+      RAISE EXCEPTION 'FAIL: try_access_demo rbac denied side';
+    END IF;
 
-  SELECT count(*) INTO audit_after FROM ciceron.audit_events
-  WHERE outcome = 'denied'
-    AND policy_id = 'rbac_role'
-    AND user_id = socio
-    AND payload ? 'simulated_by';
-  IF audit_after <= audit_before THEN
-    RAISE EXCEPTION 'FAIL: simulated denial missing simulated_by on real caller';
-  END IF;
+    SELECT count(*) INTO audit_after FROM ciceron.audit_events
+    WHERE outcome = 'denied'
+      AND policy_id = 'rbac_role'
+      AND user_id = caller
+      AND payload ? 'simulated_by'
+      AND (payload->>'simulated_by') = caller::text;
+    IF audit_after <= audit_before THEN
+      RAISE EXCEPTION 'FAIL: simulated denial missing p_caller as simulated_by';
+    END IF;
+  END;
 
   IF has_function_privilege(
     'authenticated',

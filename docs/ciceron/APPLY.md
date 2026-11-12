@@ -18,9 +18,11 @@ Francisco applies; agents do not:
 5. Verify: `318_ciceron_demo_access.verify.sql`
 6. **`319_ciceron_demo_ops.sql`** — freshness (no cron), reset, sales view, story RPC, event property keys
 7. Verify: `319_ciceron_demo_ops.verify.sql`
-8. **`320_ciceron_hardening_prompt9.sql`** — approve separately: revoke `set_actor` from authenticated; split `firm_onboarding` writes
-9. Verify: `320_ciceron_hardening_prompt9.verify.sql`
-10. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; **no Cicerón Vercel crons for demo freshness**
+8. Set env before merge/traffic: `CICERON_INVITE_PEPPER` (v1 public codes) and `CICERON_INVITE_PEPPER_V2` (runtime mints). Existing demo users must re-enter their invite code once after 317 is applied (new session cookie shape).
+9. Mint non-public invites with `npx tsx scripts/ciceron/create-invite.ts --persona=admin --label="…"`.
+10. **`320_ciceron_hardening_prompt9.sql`** — approve separately: revoke `set_actor` from authenticated; split `firm_onboarding` writes
+11. Verify: `320_ciceron_hardening_prompt9.verify.sql`
+12. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; **no Cicerón Vercel crons for demo freshness**
 
 Rollback (branch only, reverse): `320` → `319` → `318` → `317` → `316` → …
 

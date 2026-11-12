@@ -5,12 +5,11 @@ import { CICERON_DEMO_COOKIE, CICERON_FIRM_NAME } from '@/lib/ciceron/config'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import type { CiceronMembershipRole } from '@/lib/ciceron/db/types'
 import {
-  hashInviteCode,
   hashSessionToken,
+  inviteHashCandidates,
   isSessionTokenShape,
   mintSessionToken,
   normalizeInviteCode,
-  requireInvitePepper,
 } from '@/lib/ciceron/demo/invite-hash'
 import {
   offlinePersonaById,
@@ -92,8 +91,9 @@ export async function redeemInviteCode(opts: {
 
   const db = tryCreateCiceronAdminClient()
   if (db) {
+    let candidates: { version: 1 | 2; hash: string }[]
     try {
-      requireInvitePepper()
+      candidates = inviteHashCandidates(normalized)
     } catch {
       return {
         ok: false,
@@ -104,44 +104,67 @@ export async function redeemInviteCode(opts: {
     }
     try {
       const token = mintSessionToken()
-      const { data, error } = await db.rpc('redeem_invite', {
-        p_code_hash: hashInviteCode(normalized),
-        p_token_hash: hashSessionToken(token),
-        p_work_email: opts.workEmail?.trim() || null,
-        p_session_ttl_hours: 24,
-      })
-      if (error) {
-        return { ok: false, error: 'invalid', policyReason: error.message }
-      }
-      const row = data as Record<string, unknown> | null
-      if (!row || row.ok === false) {
-        return {
-          ok: false,
-          error: 'invalid',
-          policyId: typeof row?.policy_id === 'string' ? row.policy_id : undefined,
-          policyReason:
-            typeof row?.policy_reason === 'string' ? row.policy_reason : undefined,
+      const tokenHash = hashSessionToken(token)
+      let lastDeny: Record<string, unknown> | null = null
+
+      // Try each configured pepper version until a hash matches a row.
+      for (const candidate of candidates) {
+        const { data, error } = await db.rpc('redeem_invite', {
+          p_code_hash: candidate.hash,
+          p_token_hash: tokenHash,
+          p_work_email: opts.workEmail?.trim() || null,
+          p_session_ttl_hours: 24,
+        })
+        if (error) {
+          return { ok: false, error: 'invalid', policyReason: error.message }
+        }
+        const row = data as Record<string, unknown> | null
+        if (row && row.ok === true) {
+          const personaId = String(row.persona_id)
+          const offline = offlinePersonaById(personaId)
+          const session: DemoSession = {
+            sessionId: String(row.session_id),
+            inviteCodeId: String(row.invite_code_id),
+            storyDismissed: false,
+            token,
+            offline: false,
+            persona: offline ?? {
+              id: personaId,
+              firmId: String(row.firm_id),
+              role: row.role as CiceronMembershipRole,
+              displayName: 'Usuario Demo',
+              inviteCode: '',
+              firmName: CICERON_FIRM_NAME,
+              firmSlug: 'despacho-demo',
+            },
+          }
+          return { ok: true, session, token }
+        }
+        lastDeny = row
+        // Soft miss — try next pepper version. Hard denials (expired, etc.) stop.
+        const policyId =
+          typeof row?.policy_id === 'string' ? row.policy_id : 'invite_invalid'
+        if (policyId !== 'invite_invalid' && policyId !== 'invite_hash') {
+          return {
+            ok: false,
+            error: 'invalid',
+            policyId,
+            policyReason:
+              typeof row?.policy_reason === 'string' ? row.policy_reason : undefined,
+          }
         }
       }
-      const personaId = String(row.persona_id)
-      const offline = offlinePersonaById(personaId)
-      const session: DemoSession = {
-        sessionId: String(row.session_id),
-        inviteCodeId: String(row.invite_code_id),
-        storyDismissed: false,
-        token,
-        offline: false,
-        persona: offline ?? {
-          id: personaId,
-          firmId: String(row.firm_id),
-          role: row.role as CiceronMembershipRole,
-          displayName: 'Usuario Demo',
-          inviteCode: '',
-          firmName: CICERON_FIRM_NAME,
-          firmSlug: 'despacho-demo',
-        },
+
+      return {
+        ok: false,
+        error: 'invalid',
+        policyId:
+          typeof lastDeny?.policy_id === 'string' ? lastDeny.policy_id : 'invite_invalid',
+        policyReason:
+          typeof lastDeny?.policy_reason === 'string'
+            ? lastDeny.policy_reason
+            : undefined,
       }
-      return { ok: true, session, token }
     } catch (err) {
       return {
         ok: false,

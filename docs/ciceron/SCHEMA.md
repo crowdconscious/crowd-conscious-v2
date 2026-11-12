@@ -20,7 +20,7 @@ Prompt 1 creates the foundation under schema `ciceron`. Groups below marked
 | Analytics | `events` |
 | Prompt 7 | `firm_settings`, `evaluation_candidates`, `in_app_notifications`; audit columns `outcome` / `policy_id` / `policy_reason` / `snapshot_ref` |
 | Prompt 8 | `firm_onboarding`, `briefing_previews`, `engagement_resume`; `firm_ai_budgets.threshold_alert_*`; views `metric_*`; RPC `record_product_event`; `316` events RPC-only writes |
-| Prompt 9 | `invite_codes` (hashed + `pepper_version`; public codes only seeded), `demo_sessions`, `guided_story_progress`, `client_conflicts`, `access_grants`, `demo_freshness_runs`; `documents.sensitivity_level` / `matter_id` / `is_demo` (sensitivity/conflict RPC-enforced via `evaluate_access`); view `sales_invite_progress`; RPCs `redeem_invite`, `evaluate_access`, `refresh_demo_dates`, `reset_demo_firm` (admin-only, expires sessions); `320` hardening (`set_actor` service_role-only; `firm_onboarding` split policies) |
+| Prompt 9 | `invite_codes` (hashed + `pepper_version` 1=public / 2=runtime); `demo_sessions`, `guided_story_progress`, `client_conflicts`, `access_grants`, `demo_freshness_runs`; `documents.sensitivity_level` / `matter_id` / `is_demo` (sensitivity/conflict RPC-enforced via `evaluate_access`); view `sales_invite_progress`; RPCs `redeem_invite`, `evaluate_access`, `try_access_demo(…, p_caller)`, `refresh_demo_dates`, `reset_demo_firm` (admin-only, expires sessions); ops `scripts/ciceron/create-invite.ts`; `320` hardening (`set_actor` service_role-only; `firm_onboarding` split policies) |
 
 Embeddings: `extensions.vector(1536)` on `chunks.embedding` and `watch_profiles.embedding`; store `embedding_model` (`text-embedding-3-small`).
 

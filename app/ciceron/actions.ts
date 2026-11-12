@@ -94,7 +94,8 @@ export async function tryAccessAction(
         ok: false,
         scenario: 'rbac',
         explainer: '',
-        allowed: { ok: false },
+        error: 'Sin sesión.',
+        allowed: { ok: false, policyReason: 'Sin sesión.' },
         denied: { ok: false, policyReason: 'Sin sesión.' },
       },
     }

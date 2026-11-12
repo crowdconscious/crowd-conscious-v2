@@ -418,14 +418,17 @@ GRANT EXECUTE ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, 
 
 -- ---------------------------------------------------------------------------
 -- try_access_demo — explainer panel: run allowed + denied pairs
--- Simulated denials audit the real caller via p_simulated_by.
+-- p_caller = real session persona; used as p_simulated_by on every simulated
+-- evaluate_access call (when the evaluated actor differs from the caller).
 -- ---------------------------------------------------------------------------
 DROP FUNCTION IF EXISTS ciceron.try_access_demo(uuid, uuid, text);
+DROP FUNCTION IF EXISTS ciceron.try_access_demo(uuid, uuid, text, uuid);
 
 CREATE OR REPLACE FUNCTION ciceron.try_access_demo(
   p_actor uuid,
   p_firm_id uuid,
-  p_scenario text
+  p_scenario text,
+  p_caller uuid DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -442,14 +445,19 @@ DECLARE
   matter_viento uuid := 'd1000000-0000-4000-8000-000000000004'::uuid;
   client_farma uuid := 'c1000000-0000-4000-8000-000000000002'::uuid;
   pasante uuid := 'b1000000-0000-4000-8000-000000000003'::uuid;
+  sim_by uuid;
 BEGIN
+  -- Real session persona for audit attribution on simulated evaluations.
+  sim_by := COALESCE(p_caller, p_actor);
+
   IF p_scenario = 'rbac' THEN
     allowed_res := ciceron.evaluate_access(
-      p_actor, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true, NULL
+      p_actor, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true,
+      CASE WHEN sim_by IS DISTINCT FROM p_actor THEN sim_by ELSE NULL END
     );
-    -- Denial simulated as pasante; audit attributes the real caller.
+    -- Denial simulated as pasante; always attribute the real caller.
     denied_res := ciceron.evaluate_access(
-      pasante, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true, p_actor
+      pasante, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true, sim_by
     );
     RETURN jsonb_build_object(
       'ok', true,
@@ -461,16 +469,19 @@ BEGIN
     );
   ELSIF p_scenario = 'abac' THEN
     allowed_res := ciceron.evaluate_access(
-      p_actor, p_firm_id, 'read', 'document', doc_ok, NULL, matter_nexora, true, NULL
+      p_actor, p_firm_id, 'read', 'document', doc_ok, NULL, matter_nexora, true,
+      CASE WHEN sim_by IS DISTINCT FROM p_actor THEN sim_by ELSE NULL END
     );
     denied_res := ciceron.evaluate_access(
       p_actor, p_firm_id, 'read', 'document', doc_expired,
-      client_farma, matter_viento, true, NULL
+      client_farma, matter_viento, true,
+      CASE WHEN sim_by IS DISTINCT FROM p_actor THEN sim_by ELSE NULL END
     );
     IF COALESCE(denied_res->>'ok', 'true') = 'true' THEN
       denied_res := ciceron.evaluate_access(
         p_actor, p_firm_id, 'read', 'document', doc_sens,
-        NULL, matter_nexora, true, NULL
+        NULL, matter_nexora, true,
+        CASE WHEN sim_by IS DISTINCT FROM p_actor THEN sim_by ELSE NULL END
       );
     END IF;
     RETURN jsonb_build_object(
@@ -491,9 +502,9 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION ciceron.try_access_demo(uuid, uuid, text)
+REVOKE ALL ON FUNCTION ciceron.try_access_demo(uuid, uuid, text, uuid)
   FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION ciceron.try_access_demo(uuid, uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION ciceron.try_access_demo(uuid, uuid, text, uuid) TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- Seed: ABAC persona + docs + conflict + grants (e3 prefix)

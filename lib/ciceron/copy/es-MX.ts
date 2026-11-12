@@ -98,6 +98,7 @@ export const copy = {
     policy: 'Regla',
     reason: 'Motivo',
     model: 'Modelo',
+    rpcError: 'No se pudo evaluar el acceso en este momento. Intente de nuevo.',
   },
 
   proteccion: {

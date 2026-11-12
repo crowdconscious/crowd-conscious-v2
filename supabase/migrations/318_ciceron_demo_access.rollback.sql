@@ -2,6 +2,7 @@
 -- Drops only Prompt 9 access objects. Does not delete from audit_events.
 -- Does not drop demo_personas / memberships from earlier prompts.
 
+DROP FUNCTION IF EXISTS ciceron.try_access_demo(uuid, uuid, text, uuid);
 DROP FUNCTION IF EXISTS ciceron.try_access_demo(uuid, uuid, text);
 DROP FUNCTION IF EXISTS ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean, uuid);
 DROP FUNCTION IF EXISTS ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean);

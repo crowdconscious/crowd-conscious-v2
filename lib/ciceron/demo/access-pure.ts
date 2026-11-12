@@ -3,6 +3,11 @@
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { CICERON_P9_SEED } from '@/lib/ciceron/demo/seed-ids'
 
+export type SessionPersonaRef = {
+  id: string
+  firmId: string
+}
+
 export type AccessResult = {
   ok: boolean
   policyId?: string | null
@@ -18,6 +23,23 @@ export type TryAccessDemoResult = {
   explainer: string
   allowed: AccessResult
   denied: AccessResult
+  /** Set when a configured DB client failed the RPC (not used for offline fixtures). */
+  error?: string
+}
+
+/** Error state when DB is configured but try_access_demo fails. */
+export function accessDemoRpcError(
+  scenario: 'rbac' | 'abac',
+  message: string
+): TryAccessDemoResult {
+  return {
+    ok: false,
+    scenario,
+    explainer: '',
+    error: message,
+    allowed: { ok: false, policyReason: message },
+    denied: { ok: false, policyReason: message },
+  }
 }
 
 /** Offline fixture denials when DB RPCs are unavailable (screenshots / local). */
@@ -63,3 +85,25 @@ export const ACCESS_SHOWCASE = {
   farmaClientId: CICERON_SEED.clientsExtra.farma,
   nexoraMatterId: CICERON_SEED.matters.nexoraCnbv,
 } as const
+
+/**
+ * Args for try_access_demo: showcase actor + real session caller for simulated_by.
+ */
+export function buildTryAccessDemoArgs(
+  sessionPersona: SessionPersonaRef,
+  scenario: 'rbac' | 'abac'
+): {
+  p_actor: string
+  p_firm_id: string
+  p_scenario: 'rbac' | 'abac'
+  p_caller: string
+} {
+  const showcaseId =
+    scenario === 'abac' ? ACCESS_SHOWCASE.abacPersonaId : ACCESS_SHOWCASE.rbacPersonaId
+  return {
+    p_actor: showcaseId,
+    p_firm_id: sessionPersona.firmId,
+    p_scenario: scenario,
+    p_caller: sessionPersona.id,
+  }
+}
