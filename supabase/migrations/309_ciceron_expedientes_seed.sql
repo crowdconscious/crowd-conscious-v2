@@ -1,7 +1,21 @@
 -- 309_ciceron_expedientes_seed.sql
 -- Prompt 6 seed: Datos de demostración (is_sample / is_demo).
--- Additive. Applied by CTO after review. Requires 302 + 308.
+-- Additive. Applied by CTO after review. Requires 302 + 308 + 310.
+-- Apply AFTER 310_ciceron_expedientes_fixups.sql (saved_views.is_sample).
 -- Archive chunk embeddings left NULL; embedding_model NULL until gateway backfill.
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'ciceron'
+      AND table_name = 'saved_views'
+      AND column_name = 'is_sample'
+  ) THEN
+    RAISE EXCEPTION
+      'Apply 310_ciceron_expedientes_fixups.sql before 309_ciceron_expedientes_seed.sql (saved_views.is_sample missing)';
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- Deadline rules (labelled examples; admins edit later)

@@ -20,9 +20,11 @@ DROP POLICY IF EXISTS firm_integrations_select ON ciceron.firm_integrations;
 DROP TRIGGER IF EXISTS firm_integrations_set_updated_at ON ciceron.firm_integrations;
 DROP TABLE IF EXISTS ciceron.firm_integrations;
 
+-- 306 already owned ciceron.saved_views (Monitor DOF). 308 only added
+-- saved_views_own + saved_views_user_id_idx (CREATE TABLE IF NOT EXISTS skipped).
+-- Never drop the table or the updated_at trigger (both predate 308).
 DROP POLICY IF EXISTS saved_views_own ON ciceron.saved_views;
-DROP TRIGGER IF EXISTS saved_views_set_updated_at ON ciceron.saved_views;
-DROP TABLE IF EXISTS ciceron.saved_views;
+DROP INDEX IF EXISTS ciceron.saved_views_user_id_idx;
 
 DROP POLICY IF EXISTS deadline_reminders_select ON ciceron.deadline_reminders;
 DROP TABLE IF EXISTS ciceron.deadline_reminders;

@@ -5,9 +5,12 @@ import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { MatterBreadcrumb } from '../../_components/MatterBreadcrumb'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { loadCaseList } from '@/lib/ciceron/case-files/data'
+import { loadCaseList, loadM365Status } from '@/lib/ciceron/case-files/data'
+import {
+  loadSavedViews,
+  savedViewHref,
+} from '@/lib/ciceron/case-files/saved-views'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
-import { loadM365Status } from '@/lib/ciceron/case-files/data'
 
 export default async function ExpedientesPage({
   searchParams,
@@ -18,13 +21,14 @@ export default async function ExpedientesPage({
   if (!persona) redirect(CICERON_BASE)
 
   const sp = await searchParams
-  const [{ cases, schemaReady }, m365] = await Promise.all([
+  const [{ cases, schemaReady }, m365, saved] = await Promise.all([
     loadCaseList(persona, {
       q: sp.q,
       urgency: (sp.urgency as 'urgent' | 'soon' | 'normal' | undefined) || undefined,
       clientId: sp.client,
     }),
     loadM365Status(persona),
+    loadSavedViews(persona, 'expedientes'),
   ])
 
   return (
@@ -98,17 +102,34 @@ export default async function ExpedientesPage({
               </select>
             </label>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <button type="submit" className="cic-btn">
               {copy.expedientes.filters}
             </button>
-            <Link
-              href="/ciceron/expedientes?urgency=soon"
-              className="cic-btn cic-btn-ghost"
-              style={{ fontSize: '0.85rem' }}
-            >
-              {copy.expedientes.viewUrgent}
-            </Link>
+            {saved.views.length > 0 ? (
+              <span className="cic-muted" style={{ fontSize: '0.75rem' }}>
+                {copy.expedientes.savedViews}:
+              </span>
+            ) : null}
+            {saved.views.map((view) => (
+              <Link
+                key={view.id}
+                href={savedViewHref(view)}
+                className="cic-btn cic-btn-ghost"
+                style={{ fontSize: '0.85rem' }}
+              >
+                {view.name}
+              </Link>
+            ))}
+            {saved.views.length === 0 ? (
+              <Link
+                href="/ciceron/expedientes?urgency=soon"
+                className="cic-btn cic-btn-ghost"
+                style={{ fontSize: '0.85rem' }}
+              >
+                {copy.expedientes.viewUrgent}
+              </Link>
+            ) : null}
           </div>
         </form>
       </section>
