@@ -153,9 +153,9 @@ BEGIN
     RAISE EXCEPTION 'FAIL: ensure_bulletin_manual_check returned null';
   END IF;
 
-  -- Assignee must be firm member
+  -- Assignee must be firm member (actor = firm socio)
   assign_res := ciceron.assign_bulletin_manual_check(
-    firm, mid, outsider, 'c1000000-0000-4000-8000-000000000011'::uuid
+    firm, mid, 'b1000000-0000-4000-8000-000000000001'::uuid, outsider
   );
   IF COALESCE((assign_res->>'ok')::boolean, true) THEN
     RAISE EXCEPTION 'FAIL: assign_bulletin_manual_check should deny non-member assignee';
