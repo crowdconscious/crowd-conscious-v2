@@ -153,6 +153,94 @@ describe('orchestrator', () => {
     assert.notEqual(result.status, 'ok')
   })
 
+  it('requires tier A/B and terms_ok before fetch', async () => {
+    const persistence = memoryPersistence()
+    const tierC = await runBulletinSource({
+      firmId: 'firm',
+      source: source({
+        adapterKey: 'queretaro',
+        sourceKey: 'qro',
+        stateCode: 'QRO',
+        proposedTier: 'C',
+        enabled: true,
+        verifiedBy: 'Verifier Demo',
+        verifiedOn: '2026-11-01',
+        termsReviewedOn: '2026-11-01',
+        termsOk: true,
+      }),
+      catalogue: [],
+      publicationDate: '2026-11-12',
+      persistence,
+    })
+    assert.equal(tierC.status, 'manual')
+    assert.equal(tierC.failureStage, 'manual_required')
+
+    const noTerms = await runBulletinSource({
+      firmId: 'firm',
+      source: source({
+        adapterKey: 'queretaro',
+        sourceKey: 'qro',
+        stateCode: 'QRO',
+        proposedTier: 'B',
+        enabled: true,
+        verifiedBy: 'Verifier Demo',
+        verifiedOn: '2026-11-01',
+        termsReviewedOn: '2026-11-01',
+        termsOk: false,
+      }),
+      catalogue: [],
+      publicationDate: '2026-11-12',
+      persistence,
+    })
+    assert.equal(noTerms.status, 'manual')
+    assert.equal(noTerms.failureStage, 'terms')
+  })
+
+  it('fails count check on zero rows unless page declares empty day', async () => {
+    const persistence = memoryPersistence()
+    const failed = await runBulletinSource({
+      firmId: 'firm',
+      source: source({
+        adapterKey: 'queretaro',
+        sourceKey: 'qro',
+        stateCode: 'QRO',
+        enabled: true,
+        verifiedBy: 'Verifier Demo',
+        verifiedOn: '2026-11-01',
+        termsReviewedOn: '2026-11-01',
+        termsOk: true,
+      }),
+      catalogue: [],
+      publicationDate: '2026-11-12',
+      persistence,
+      fixtureBody:
+        '<html><body><h1 class="court">Juzgado</h1><table><tr><th>Expediente</th></tr></table></body></html>',
+    })
+    assert.equal(failed.status, 'failed')
+    assert.equal(failed.failureStage, 'count_check')
+
+    const emptyOk = await runBulletinSource({
+      firmId: 'firm',
+      source: source({
+        adapterKey: 'queretaro',
+        sourceKey: 'qro',
+        stateCode: 'QRO',
+        enabled: true,
+        verifiedBy: 'Verifier Demo',
+        verifiedOn: '2026-11-01',
+        termsReviewedOn: '2026-11-01',
+        termsOk: true,
+      }),
+      catalogue: [],
+      publicationDate: '2026-11-12',
+      persistence,
+      fixtureBody:
+        '<html><body data-empty-day="true"><p>Sin acuerdos para la fecha.</p><table><tr><th>Expediente</th></tr></table></body></html>',
+    })
+    assert.equal(emptyOk.status, 'ok')
+    assert.equal(emptyOk.entriesParsed, 0)
+  })
+
   it('matches catalogue against queretaro fixture in dry path with fixture override', async () => {
     const persistence = memoryPersistence()
     const body = readFileSync(join(fixturesRoot, 'queretaro-lista.html'), 'utf8')

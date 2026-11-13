@@ -94,8 +94,6 @@ export const jaliscoAdapter: BulletinAdapter = {
   },
 
   countCheck(entries, ctx): BulletinCountCheck {
-    const base = defaultCountCheck(entries, ctx)
-    // For Jalisco extract fixtures we expect a data-expected-count when present.
-    return base
+    return defaultCountCheck(entries, ctx, { body: ctx.fixtureBody })
   },
 }

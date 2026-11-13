@@ -101,9 +101,15 @@ CREATE INDEX IF NOT EXISTS bulletin_matter_catalogue_firm_idx
   ON ciceron.bulletin_matter_catalogue (firm_id, state_code)
   WHERE is_active;
 
-CREATE INDEX IF NOT EXISTS bulletin_matter_catalogue_matter_idx
-  ON ciceron.bulletin_matter_catalogue (matter_id)
-  WHERE matter_id IS NOT NULL;
+-- Full (non-partial) covering indexes for FK / firm lookups
+CREATE INDEX IF NOT EXISTS bulletin_matter_catalogue_firm_id_idx
+  ON ciceron.bulletin_matter_catalogue (firm_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_matter_catalogue_matter_id_idx
+  ON ciceron.bulletin_matter_catalogue (matter_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_matter_catalogue_case_file_id_idx
+  ON ciceron.bulletin_matter_catalogue (case_file_id);
 
 COMMENT ON TABLE ciceron.bulletin_matter_catalogue IS
   'Per-firm catalogue of state-court matters to search in bulletins. Real catalogues are client data (rule 9d).';
@@ -200,6 +206,12 @@ CREATE TABLE IF NOT EXISTS ciceron.bulletin_entries (
 CREATE INDEX IF NOT EXISTS bulletin_entries_run_idx
   ON ciceron.bulletin_entries (run_id);
 
+CREATE INDEX IF NOT EXISTS bulletin_entries_firm_id_idx
+  ON ciceron.bulletin_entries (firm_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_entries_source_id_idx
+  ON ciceron.bulletin_entries (source_id);
+
 CREATE INDEX IF NOT EXISTS bulletin_entries_retain_idx
   ON ciceron.bulletin_entries (retain_until);
 
@@ -224,7 +236,8 @@ CREATE TABLE IF NOT EXISTS ciceron.bulletin_hits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   firm_id uuid NOT NULL REFERENCES ciceron.firms(id) ON DELETE CASCADE,
   run_id uuid NOT NULL REFERENCES ciceron.bulletin_runs(id) ON DELETE CASCADE,
-  entry_id uuid NOT NULL REFERENCES ciceron.bulletin_entries(id) ON DELETE CASCADE,
+  -- RESTRICT: retention purge blanks raw_excerpt; do not cascade-delete hits (rule 9d).
+  entry_id uuid NOT NULL REFERENCES ciceron.bulletin_entries(id) ON DELETE RESTRICT,
   catalogue_id uuid REFERENCES ciceron.bulletin_matter_catalogue(id) ON DELETE SET NULL,
   matter_id uuid REFERENCES ciceron.matters(id) ON DELETE SET NULL,
   case_file_id uuid REFERENCES ciceron.case_files(id) ON DELETE SET NULL,
@@ -247,9 +260,20 @@ CREATE INDEX IF NOT EXISTS bulletin_hits_firm_date_idx
 CREATE INDEX IF NOT EXISTS bulletin_hits_run_idx
   ON ciceron.bulletin_hits (run_id);
 
-CREATE INDEX IF NOT EXISTS bulletin_hits_matter_idx
-  ON ciceron.bulletin_hits (matter_id)
-  WHERE matter_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS bulletin_hits_matter_id_idx
+  ON ciceron.bulletin_hits (matter_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_hits_entry_id_idx
+  ON ciceron.bulletin_hits (entry_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_hits_catalogue_id_idx
+  ON ciceron.bulletin_hits (catalogue_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_hits_case_file_id_idx
+  ON ciceron.bulletin_hits (case_file_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_hits_review_task_id_idx
+  ON ciceron.bulletin_hits (review_task_id);
 
 COMMENT ON TABLE ciceron.bulletin_hits IS
   'Bulletin matches. Informative, not a legal notification (rule 9d). Always paired with source link via entry.';
@@ -297,6 +321,12 @@ CREATE TABLE IF NOT EXISTS ciceron.bulletin_manual_checks (
 
 CREATE INDEX IF NOT EXISTS bulletin_manual_checks_firm_date_idx
   ON ciceron.bulletin_manual_checks (firm_id, check_date DESC, status);
+
+CREATE INDEX IF NOT EXISTS bulletin_manual_checks_run_id_idx
+  ON ciceron.bulletin_manual_checks (run_id);
+
+CREATE INDEX IF NOT EXISTS bulletin_manual_checks_source_id_idx
+  ON ciceron.bulletin_manual_checks (source_id);
 
 COMMENT ON TABLE ciceron.bulletin_manual_checks IS
   'Manual bulletin checks for disabled/D/E sources or failed runs past fallback time (rule 9c).';
@@ -431,12 +461,24 @@ DECLARE
   eid uuid;
   hid uuid;
   retain date;
+  run_firm uuid;
 BEGIN
   IF p_match_kind IS NULL OR p_match_kind NOT IN ('exact', 'possible') THEN
     RAISE EXCEPTION 'match_kind must be exact or possible';
   END IF;
   IF p_reason IS NULL OR char_length(trim(p_reason)) < 1 THEN
     RAISE EXCEPTION 'reason required';
+  END IF;
+
+  SELECT firm_id INTO run_firm
+  FROM ciceron.bulletin_runs
+  WHERE id = p_run_id;
+
+  IF run_firm IS NULL THEN
+    RAISE EXCEPTION 'bulletin run not found';
+  END IF;
+  IF run_firm IS DISTINCT FROM p_firm_id THEN
+    RAISE EXCEPTION 'run firm_id does not match hit firm_id';
   END IF;
 
   retain := p_publication_date + make_interval(days => GREATEST(COALESCE(p_retention_days, 14), 1));
@@ -551,6 +593,24 @@ BEGIN
     );
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM ciceron.memberships ms
+    WHERE ms.firm_id = p_firm_id AND ms.user_id = p_assignee
+  ) THEN
+    PERFORM ciceron.write_audit_event(
+      p_firm_id, p_actor, 'bulletin_manual_assign', 'bulletin_manual_checks', p_check_id,
+      jsonb_build_object('assignee', p_assignee),
+      'denied', 'rbac_assignee_firm',
+      'El asignado debe ser miembro del mismo despacho.',
+      jsonb_build_object('entity_type', 'bulletin_manual_checks', 'entity_id', p_check_id)
+    );
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'rbac_assignee_firm',
+      'policy_reason', 'El asignado debe ser miembro del mismo despacho.'
+    );
+  END IF;
+
   UPDATE ciceron.bulletin_manual_checks
   SET status = 'asignado',
       assigned_to = p_assignee,
@@ -658,6 +718,46 @@ $$;
 REVOKE ALL ON FUNCTION ciceron.complete_bulletin_manual_check(uuid, uuid, uuid, text)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION ciceron.complete_bulletin_manual_check(uuid, uuid, uuid, text)
+  TO service_role;
+
+-- Retention: blank raw_excerpt on expired entries; never cascade-delete hits (rule 9d).
+CREATE OR REPLACE FUNCTION ciceron.purge_bulletin_entry_excerpts(
+  p_as_of date DEFAULT CURRENT_DATE,
+  p_limit int DEFAULT 5000
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ciceron
+AS $$
+DECLARE
+  n int;
+BEGIN
+  WITH doomed AS (
+    SELECT id
+    FROM ciceron.bulletin_entries
+    WHERE retain_until < p_as_of
+      AND raw_excerpt IS NOT NULL
+    ORDER BY retain_until ASC
+    LIMIT GREATEST(COALESCE(p_limit, 5000), 1)
+    FOR UPDATE SKIP LOCKED
+  )
+  UPDATE ciceron.bulletin_entries e
+  SET raw_excerpt = NULL
+  FROM doomed d
+  WHERE e.id = d.id;
+
+  GET DIAGNOSTICS n = ROW_COUNT;
+  RETURN jsonb_build_object('ok', true, 'blanked', n, 'as_of', p_as_of);
+END;
+$$;
+
+COMMENT ON FUNCTION ciceron.purge_bulletin_entry_excerpts(date, int) IS
+  'Retention helper: blanks raw_excerpt on expired bulletin_entries. Does not delete hits or entries. Invoke manually or from a future job; no cron ships in 327.';
+
+REVOKE ALL ON FUNCTION ciceron.purge_bulletin_entry_excerpts(date, int)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION ciceron.purge_bulletin_entry_excerpts(date, int)
   TO service_role;
 
 -- ---------------------------------------------------------------------------

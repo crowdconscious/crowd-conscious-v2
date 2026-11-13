@@ -1,6 +1,7 @@
 -- Rollback 327_ciceron_boletines.sql
 -- Drops bulletin RPCs and tables. Safe only if no production client data depends on them.
 
+DROP FUNCTION IF EXISTS ciceron.purge_bulletin_entry_excerpts(date, int);
 DROP FUNCTION IF EXISTS ciceron.complete_bulletin_manual_check(uuid, uuid, uuid, text);
 DROP FUNCTION IF EXISTS ciceron.assign_bulletin_manual_check(uuid, uuid, uuid, uuid);
 DROP FUNCTION IF EXISTS ciceron.ensure_bulletin_manual_check(uuid, uuid, date, text, uuid, boolean);

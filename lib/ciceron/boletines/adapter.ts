@@ -26,16 +26,52 @@ export interface BulletinAdapter {
   countCheck(entries: ParsedBulletinEntry[], ctx: AdapterContext): BulletinCountCheck
 }
 
+/** True when the page body explicitly declares no entries for the day. */
+export function pageDeclaresEmptyDay(body: string | null | undefined): boolean {
+  if (!body) return false
+  if (/data-empty-day\s*=\s*["']?(?:true|1|yes)/i.test(body)) return true
+  const text = body
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+  return (
+    /sin\s+acuerdos/.test(text) ||
+    /no\s+hay\s+acuerdos/.test(text) ||
+    /no\s+se\s+publicaron?\s+acuerdos/.test(text) ||
+    /sin\s+entradas/.test(text) ||
+    /lista\s+vac[ií]a/.test(text) ||
+    /0\s+acuerdos/.test(text) ||
+    /no\s+hay\s+publicaci[oó]n/.test(text)
+  )
+}
+
 export function defaultCountCheck(
   entries: ParsedBulletinEntry[],
-  _ctx: AdapterContext
+  ctx: AdapterContext,
+  opts?: { body?: string; emptyDayDeclared?: boolean }
 ): BulletinCountCheck {
-  // Without an advertised total, require at least one structural row when body parsed ok.
-  // Empty-but-valid days are allowed; the orchestrator distinguishes fetch/parse failure.
+  const actual = entries.length
+  if (actual === 0) {
+    const emptyDay =
+      opts?.emptyDayDeclared === true ||
+      pageDeclaresEmptyDay(opts?.body) ||
+      pageDeclaresEmptyDay(ctx.fixtureBody)
+    if (!emptyDay) {
+      return {
+        ok: false,
+        expected: null,
+        actual: 0,
+        message:
+          'Zero parsed rows and the page does not explicitly declare no entries that day (count check failed).',
+      }
+    }
+  }
   return {
     ok: true,
     expected: null,
-    actual: entries.length,
+    actual,
   }
 }
 
@@ -46,6 +82,7 @@ export async function fetchSourceLanding(
   const src = ctx.source
   const allowed =
     src.robotsOk &&
+    src.termsOk &&
     !src.hasCaptcha &&
     !src.needsLogin &&
     (extra?.allowed ?? true)
@@ -54,11 +91,13 @@ export async function fetchSourceLanding(
     return politeFetch(src.landingUrl, {
       ...extra,
       allowed: false,
-      disallowReason: src.hasCaptcha
-        ? 'Source has captcha — manual only (rule 9b)'
-        : src.needsLogin
-          ? 'Source requires login — not used in demo (rule 9e)'
-          : 'robots/terms flags block fetch',
+      disallowReason: !src.termsOk
+        ? 'terms_ok=false — fetch refused until terms review (rule 9b)'
+        : src.hasCaptcha
+          ? 'Source has captcha — manual only (rule 9b)'
+          : src.needsLogin
+            ? 'Source requires login — not used in demo (rule 9e)'
+            : 'robots/terms flags block fetch',
       fixtureBody: ctx.fixtureBody,
     })
   }

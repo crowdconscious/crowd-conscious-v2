@@ -11,11 +11,12 @@
  *     --url https://example.gob.mx/listas \
  *     [--source-name "Label from REGISTRY.csv"]
  *
- * User-Agent includes a contact placeholder; replace before production use.
+ * User-Agent contact: CICERON_BULLETIN_CONTACT env, else ciceron@crowdconscious.app.
  */
 
-const USER_AGENT =
-  'CiceronBulletinProbe/0.1 (+contact: REPLACE_WITH_CONTACT@example.com; read-only registry probe; one request at a time)'
+import { bulletinUserAgent } from '@/lib/ciceron/boletines/fetcher'
+
+const USER_AGENT = bulletinUserAgent('probe')
 
 const TIMEOUT_MS = 25_000
 

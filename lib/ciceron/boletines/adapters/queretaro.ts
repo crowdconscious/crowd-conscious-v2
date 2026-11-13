@@ -132,6 +132,6 @@ export const queretaroAdapter: BulletinAdapter = {
   },
 
   countCheck(entries, ctx): BulletinCountCheck {
-    return defaultCountCheck(entries, ctx)
+    return defaultCountCheck(entries, ctx, { body: ctx.fixtureBody })
   },
 }

@@ -87,15 +87,12 @@ function requiresManual(source: BulletinSourceRow): {
   stage: BulletinFailureStage
   message: string
 } | null {
-  if (
-    source.proposedTier === 'D' ||
-    source.proposedTier === 'E' ||
-    source.proposedTier === 'not_verified'
-  ) {
+  // Automated fetch only for nominated tier A/B sources (rule 9b).
+  if (source.proposedTier !== 'A' && source.proposedTier !== 'B') {
     return {
       manual: true,
       stage: 'manual_required',
-      message: `Fuente tier ${source.proposedTier}: revisión manual con enlace a la fuente (regla 9b/9c).`,
+      message: `Fuente tier ${source.proposedTier}: solo A/B se automatizan; revisión manual con enlace (regla 9b/9c).`,
     }
   }
   if (!source.enabled) {
@@ -104,6 +101,14 @@ function requiresManual(source: BulletinSourceRow): {
       stage: 'disabled',
       message:
         'Fuente no habilitada (enabled=false). Sin verificación nominada ni revisión de términos no se descarga (regla 9b).',
+    }
+  }
+  if (!source.termsOk) {
+    return {
+      manual: true,
+      stage: 'terms',
+      message:
+        'terms_ok=false — el orquestador no descarga hasta revisión de términos (regla 9b).',
     }
   }
   if (!source.verifiedBy || !source.verifiedOn || !source.termsReviewedOn) {
@@ -246,7 +251,8 @@ export async function runBulletinSource(
   }
 
   const parsed = adapter.parse(fetched.body, ctx)
-  if (!parsed.ok) {
+  // Hard parse failure only when zero rows; some entries + parse error → partial (rule 9c).
+  if (!parsed.ok && parsed.entries.length === 0) {
     return finish({
       status: 'failed',
       failureStage: 'parse',
@@ -256,7 +262,10 @@ export async function runBulletinSource(
     })
   }
 
-  const counted = adapter.countCheck(parsed.entries, ctx)
+  const counted = adapter.countCheck(parsed.entries, {
+    ...ctx,
+    fixtureBody: fetched.body,
+  })
   if (!counted.ok) {
     return finish({
       status: 'failed',
@@ -270,12 +279,14 @@ export async function runBulletinSource(
 
   const hits = matchEntries(parsed.entries as ParsedBulletinEntry[], catalogue)
   const status: BulletinRunStatus =
-    parsed.error && parsed.entries.length === 0 ? 'partial' : 'ok'
+    (!parsed.ok || Boolean(parsed.error)) && parsed.entries.length > 0
+      ? 'partial'
+      : 'ok'
 
   return finish({
     status,
     failureStage: status === 'partial' ? 'parse' : null,
-    failureMessage: status === 'partial' ? parsed.error ?? null : null,
+    failureMessage: status === 'partial' ? parsed.error ?? 'Parse incomplete' : null,
     entriesParsed: parsed.entries.length,
     hits,
     bulletinNumber: parsed.bulletinNumber,
