@@ -1,144 +1,60 @@
 /**
- * Shared dry-run cost estimate helpers for Cicéron production data jobs.
- * Estimates use measured rates from ciceron.ai_runs when available.
- *
- * Hard stop: US$60 cumulative spend. Raising the cap requires a code change
- * (no CLI override). Pre-flight estimate over the cap is a warning for
- * backfill — the live loop stops before a batch that would overshoot.
+ * CLI wrappers around lib/ciceron/dof/backfill-cost.ts for box scripts.
+ * Prefer importing from lib for app/route code.
  */
 
-import { MODELS } from '../../lib/agents/config'
-import { estimateAnthropicCostUsd } from '../../lib/ciceron/gateway/costs'
 import {
   DEFAULT_REQUEST_TIMEOUT_MS,
   parseRequestTimeoutMs,
 } from '../../lib/ciceron/gateway/request-timeout'
+import {
+  COST_CAP_USD,
+  ESTIMATE_MARGIN,
+  FALLBACK_PER_NOTE_USD,
+  MAX_BACKFILL_BATCH_LIMIT,
+  TYPICAL_CLASSIFY_OUTPUT_TOKENS,
+  TYPICAL_MATCH_OUTPUT_TOKENS,
+  TYPICAL_NOTE_INPUT_TOKENS,
+  estimateFromRates,
+  estimateNotesUsd,
+  fetchAllRows,
+  isSpendAtCap,
+  loadRecentBackfillRates,
+  perNoteCostFromRates,
+  projectBatchAffordable,
+  sumBackfillSpendSince,
+  tokenFloorUsd,
+  type AiRunRate,
+  type PerNoteCostSample,
+} from '../../lib/ciceron/dof/backfill-cost'
 
-export const COST_CAP_USD = 60
-
-/** Max `--limit` batch size for classify/match backfill rounds. */
-export const MAX_BACKFILL_BATCH_LIMIT = 50
-
-/** Modest uplift on measured per-note cost for dry-run / batch projection. */
-export const ESTIMATE_MARGIN = 1.15
-
-/** Fallback when ai_runs has too few samples (≈ today's measured blend). */
-export const FALLBACK_PER_NOTE_USD = 0.012
-
-export const TYPICAL_NOTE_INPUT_TOKENS = 10_000
-export const TYPICAL_CLASSIFY_OUTPUT_TOKENS = 800
-export const TYPICAL_MATCH_OUTPUT_TOKENS = 700
-
-export type AiRunRate = {
-  purpose: string
-  avgCostUsd: number
-  sampleSize: number
-  /** Present when caller also buckets large-token runs. */
-  avgCostUsdLarge?: number | null
-  largeSampleSize?: number
+export {
+  COST_CAP_USD,
+  ESTIMATE_MARGIN,
+  FALLBACK_PER_NOTE_USD,
+  MAX_BACKFILL_BATCH_LIMIT,
+  TYPICAL_CLASSIFY_OUTPUT_TOKENS,
+  TYPICAL_MATCH_OUTPUT_TOKENS,
+  TYPICAL_NOTE_INPUT_TOKENS,
+  estimateFromRates,
+  estimateNotesUsd,
+  fetchAllRows,
+  isSpendAtCap,
+  loadRecentBackfillRates,
+  perNoteCostFromRates,
+  projectBatchAffordable,
+  sumBackfillSpendSince,
+  tokenFloorUsd,
+  type AiRunRate,
+  type PerNoteCostSample,
 }
 
 /** Loose client shape so scripts are not coupled to supabase-js generic variance. */
 export type CostCapDb = {
   from: (table: string) => {
-    select: (cols: string) => PromiseLike<{ data: unknown; error: unknown }> & Record<string, unknown>
+    select: (cols: string) => PromiseLike<{ data: unknown; error: unknown }> &
+      Record<string, unknown>
   }
-}
-
-export function tokenFloorUsd(purpose: 'dof_classify' | 'dof_match_relevance'): number {
-  if (purpose === 'dof_classify') {
-    return estimateAnthropicCostUsd(
-      MODELS.FAST,
-      TYPICAL_NOTE_INPUT_TOKENS,
-      TYPICAL_CLASSIFY_OUTPUT_TOKENS
-    )
-  }
-  return estimateAnthropicCostUsd(
-    MODELS.FAST,
-    TYPICAL_NOTE_INPUT_TOKENS,
-    TYPICAL_MATCH_OUTPUT_TOKENS
-  )
-}
-
-/**
- * Generic unit estimate for any purpose (embed, classify, match, …).
- * Uses measured average when sampleSize ≥ 3; otherwise `fallbackPerUnit`.
- */
-export function estimateFromRates(
-  rates: AiRunRate[],
-  purpose: string,
-  units: number,
-  fallbackPerUnit: number
-): number {
-  const hit = rates.find((r) => r.purpose === purpose && r.sampleSize >= 3)
-  const per = hit?.avgCostUsd ?? fallbackPerUnit
-  return Number((per * units).toFixed(4))
-}
-
-export type PerNoteCostSample = {
-  perNoteUsd: number
-  matchCallsPerNote: number
-  classifyCalls: number
-  matchCalls: number
-  totalUsd: number
-  windowDays: number
-}
-
-/**
- * Measured blend: (classify + match spend) / classify calls over recent days.
- * Matches ops observation (~1.1 match calls, ~$0.0117 / note).
- */
-export function perNoteCostFromRates(
-  rates: AiRunRate[],
-  opts?: { matchCallsPerNoteFallback?: number }
-): PerNoteCostSample {
-  const classify = rates.find((r) => r.purpose === 'dof_classify')
-  const match = rates.find((r) => r.purpose === 'dof_match_relevance')
-  const matchCallsPerNoteFallback = opts?.matchCallsPerNoteFallback ?? 1.1
-
-  const classifyAvg = classify && classify.sampleSize >= 3 ? classify.avgCostUsd : null
-  const matchAvg = match && match.sampleSize >= 3 ? match.avgCostUsd : null
-
-  // Infer match/classify ratio from sample sizes when both exist.
-  let matchCallsPerNote = matchCallsPerNoteFallback
-  if (
-    classify &&
-    match &&
-    classify.sampleSize >= 3 &&
-    match.sampleSize >= 3
-  ) {
-    matchCallsPerNote = match.sampleSize / classify.sampleSize
-  }
-
-  let perNoteUsd = FALLBACK_PER_NOTE_USD
-  if (classifyAvg != null && matchAvg != null) {
-    perNoteUsd = classifyAvg + matchCallsPerNote * matchAvg
-  } else if (classifyAvg != null) {
-    perNoteUsd = classifyAvg + matchCallsPerNote * (matchAvg ?? tokenFloorUsd('dof_match_relevance') * 0.25)
-  }
-
-  return {
-    perNoteUsd: Number(perNoteUsd.toFixed(6)),
-    matchCallsPerNote: Number(matchCallsPerNote.toFixed(3)),
-    classifyCalls: classify?.sampleSize ?? 0,
-    matchCalls: match?.sampleSize ?? 0,
-    totalUsd: Number(
-      (
-        (classifyAvg ?? 0) * (classify?.sampleSize ?? 0) +
-        (matchAvg ?? 0) * (match?.sampleSize ?? 0)
-      ).toFixed(6)
-    ),
-    windowDays: 0,
-  }
-}
-
-export function estimateNotesUsd(opts: {
-  pendingNotes: number
-  perNoteUsd: number
-  margin?: number
-}): number {
-  const margin = opts.margin ?? ESTIMATE_MARGIN
-  return Number((opts.pendingNotes * opts.perNoteUsd * margin).toFixed(4))
 }
 
 /**
@@ -189,7 +105,7 @@ export function abortIfSpendAtCap(opts: {
   spentUsd: number
   label: string
 }): void {
-  if (opts.spentUsd < COST_CAP_USD) return
+  if (!isSpendAtCap(opts.spentUsd)) return
   console.error(
     JSON.stringify({
       ok: false,
@@ -202,43 +118,13 @@ export function abortIfSpendAtCap(opts: {
   process.exit(2)
 }
 
-/**
- * Before starting a batch: stop cleanly if even one note at measured cost
- * would push past the remaining budget (avoids overshoot).
- */
-export function projectBatchAffordable(opts: {
-  spentUsd: number
-  batchLimit: number
-  perNoteUsd: number
-  margin?: number
-  label: string
-}): { ok: true; batchLimit: number; batchEstUsd: number } | { ok: false; reason: string; remainingBudgetUsd: number } {
-  const margin = opts.margin ?? ESTIMATE_MARGIN
-  const remaining = COST_CAP_USD - opts.spentUsd
-  const unit = opts.perNoteUsd * margin
-  if (remaining <= 0 || unit <= 0 || remaining < unit) {
-    return {
-      ok: false,
-      reason: 'batch_would_exceed_cap',
-      remainingBudgetUsd: Number(remaining.toFixed(6)),
-    }
-  }
-  const maxNotes = Math.max(1, Math.floor(remaining / unit))
-  const batchLimit = Math.min(opts.batchLimit, maxNotes)
-  return {
-    ok: true,
-    batchLimit,
-    batchEstUsd: Number((batchLimit * unit).toFixed(4)),
-  }
-}
-
 export function parseFlags(argv: string[]) {
   if (argv.includes('--confirm-over-cap')) {
     console.error(
       JSON.stringify({
         ok: false,
         error: 'confirm_over_cap_removed',
-        hint: 'US$60 is a hard code cap. Edit COST_CAP_USD in _cost-cap.ts if CTO approves a higher budget.',
+        hint: 'US$60 is a hard code cap. Edit COST_CAP_USD in lib/ciceron/dof/backfill-cost.ts if CTO approves a higher budget.',
       })
     )
     process.exit(2)
@@ -257,7 +143,11 @@ export function parseFlags(argv: string[]) {
       process.exit(1)
     }
     limit = Number(limitRaw)
-    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_BACKFILL_BATCH_LIMIT) {
+    if (
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > MAX_BACKFILL_BATCH_LIMIT
+    ) {
       console.error(
         JSON.stringify({
           ok: false,
@@ -271,7 +161,10 @@ export function parseFlags(argv: string[]) {
     }
   }
 
-  const sinceRaw = argv.find((a) => a.startsWith('--since='))?.split('=')[1]?.trim()
+  const sinceRaw = argv
+    .find((a) => a.startsWith('--since='))
+    ?.split('=')[1]
+    ?.trim()
   let sinceIso: string | undefined
   if (sinceRaw) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(sinceRaw)) {
@@ -288,7 +181,8 @@ export function parseFlags(argv: string[]) {
     sinceIso = `${sinceRaw}T06:00:00.000Z`
   }
 
-  const tag = argv.find((a) => a.startsWith('--tag='))?.split('=')[1]?.trim() || undefined
+  const tag =
+    argv.find((a) => a.startsWith('--tag='))?.split('=')[1]?.trim() || undefined
 
   const timeoutRaw = argv
     .find((a) => a.startsWith('--request-timeout-ms='))
@@ -318,39 +212,4 @@ export function parseFlags(argv: string[]) {
     retryFailed: argv.includes('--retry-failed'),
     requestTimeoutMs,
   }
-}
-
-/** Page through a PostgREST select until exhausted (default max 1000/page). */
-export async function fetchAllRows<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query: any,
-  pageSize = 1000
-): Promise<T[]> {
-  const out: T[] = []
-  let from = 0
-  for (;;) {
-    const { data, error } = await query.range(from, from + pageSize - 1)
-    if (error) throw new Error(String(error.message ?? error))
-    const rows = (Array.isArray(data) ? data : []) as T[]
-    out.push(...rows)
-    if (rows.length < pageSize) break
-    from += pageSize
-  }
-  return out
-}
-
-/** Sum measured classify/match spend since an instant (cumulative across runs). */
-export async function sumBackfillSpendSince(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sb: any,
-  sinceIso: string
-): Promise<number> {
-  const rows = await fetchAllRows<{ cost_estimate_usd: number | null }>(
-    sb
-      .from('ai_runs')
-      .select('cost_estimate_usd')
-      .in('purpose', ['dof_classify', 'dof_match_relevance'])
-      .gte('created_at', sinceIso)
-  )
-  return rows.reduce((s, r) => s + (Number(r.cost_estimate_usd) || 0), 0)
 }

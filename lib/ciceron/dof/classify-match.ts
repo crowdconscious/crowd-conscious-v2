@@ -23,7 +23,7 @@ function pendingFilter(retryFailed: boolean): string {
   return 'classify_status.eq.pending,match_status.eq.pending'
 }
 
-async function countPendingNotes(opts?: {
+export async function countPendingClassifyMatchNotes(opts?: {
   noteDate?: string
   retryFailed?: boolean
 }): Promise<number> {
@@ -43,6 +43,13 @@ async function countPendingNotes(opts?: {
   return count ?? 0
 }
 
+async function countPendingNotes(opts?: {
+  noteDate?: string
+  retryFailed?: boolean
+}): Promise<number> {
+  return countPendingClassifyMatchNotes(opts)
+}
+
 /**
  * Process ready/embedding_pending notes that still need classify/match.
  * Pending filter is applied in SQL (oldest first). Call again to resume;
@@ -50,6 +57,9 @@ async function countPendingNotes(opts?: {
  *
  * Pass `excludeIds` (mutated) so a live backfill does not retry the same
  * note every round when it stays pending/failed.
+ *
+ * Pass `claimedNotes` (from claimBackfillNotes) to process a pre-claimed set
+ * without re-selecting — required for overlap-safe serverless batches.
  */
 export async function runClassifyMatchBatch(opts?: {
   limit?: number
@@ -59,6 +69,14 @@ export async function runClassifyMatchBatch(opts?: {
   retryFailed?: boolean
   /** Note ids already attempted in this process; skipped and appended to. */
   excludeIds?: Set<string>
+  /** Pre-claimed notes (skip select). Mutually preferred over SQL select. */
+  claimedNotes?: Array<{
+    id: string
+    classify_status: string
+    match_status: string
+  }>
+  /** Called after each note finishes (success or failure). */
+  onNoteSettled?: (noteId: string) => void | Promise<void>
   /** Heartbeat for backfill stall watchdog (called as each note starts/finishes). */
   onProgress?: (info: { noteId: string; phase: 'start' | 'done' }) => void
 }): Promise<ClassifyMatchStats> {
@@ -80,58 +98,67 @@ export async function runClassifyMatchBatch(opts?: {
   const retryFailed = opts?.retryFailed === true
   const excludeIds = opts?.excludeIds
 
-  // Over-fetch so we can skip excludeIds and still fill the batch.
-  const fetchLimit = Math.min(
-    Math.max(limit * 4, limit + (excludeIds?.size ?? 0)),
-    200
-  )
-
-  let query = db
-    .from('dof_notes')
-    .select('id, ingest_status, classify_status, match_status, note_date')
-    .in('ingest_status', ['ready', 'embedding_pending'])
-    .order('note_date', { ascending: true })
-    .limit(fetchLimit)
-
-  if (opts?.noteDate) {
-    query = query.eq('note_date', opts.noteDate)
-  }
-  if (onlyPending) {
-    query = query.or(pendingFilter(retryFailed))
-  }
-  if (excludeIds && excludeIds.size > 0 && excludeIds.size <= 80) {
-    // PostgREST `not.in` — keep list short; larger sets filtered in JS below.
-    const list = Array.from(excludeIds).slice(0, 80).join(',')
-    query = query.not('id', 'in', `(${list})`)
-  }
-
-  const { data, error } = await query
-  if (error) {
-    console.warn('[ciceron] classify-match batch select failed', error.message)
-    return {
-      ...empty,
-      remaining: await countPendingNotes({
-        noteDate: opts?.noteDate,
-        retryFailed,
-      }),
-    }
-  }
-
-  const rows = (Array.isArray(data) ? data : []) as {
+  let batch: Array<{
     id: string
     classify_status: string
     match_status: string
-  }[]
-
-  const batch: typeof rows = []
+  }> = []
   let skippedAttempted = 0
-  for (const row of rows) {
-    if (excludeIds?.has(row.id)) {
-      skippedAttempted += 1
-      continue
+
+  if (opts?.claimedNotes && opts.claimedNotes.length > 0) {
+    batch = opts.claimedNotes.slice(0, limit)
+  } else {
+    // Over-fetch so we can skip excludeIds and still fill the batch.
+    const fetchLimit = Math.min(
+      Math.max(limit * 4, limit + (excludeIds?.size ?? 0)),
+      200
+    )
+
+    let query = db
+      .from('dof_notes')
+      .select('id, ingest_status, classify_status, match_status, note_date')
+      .in('ingest_status', ['ready', 'embedding_pending'])
+      .order('note_date', { ascending: true })
+      .limit(fetchLimit)
+
+    if (opts?.noteDate) {
+      query = query.eq('note_date', opts.noteDate)
     }
-    batch.push(row)
-    if (batch.length >= limit) break
+    if (onlyPending) {
+      query = query.or(pendingFilter(retryFailed))
+    }
+    if (excludeIds && excludeIds.size > 0 && excludeIds.size <= 80) {
+      // PostgREST `not.in` — keep list short; larger sets filtered in JS below.
+      const list = Array.from(excludeIds).slice(0, 80).join(',')
+      query = query.not('id', 'in', `(${list})`)
+    }
+
+    const { data, error } = await query
+    if (error) {
+      console.warn('[ciceron] classify-match batch select failed', error.message)
+      return {
+        ...empty,
+        remaining: await countPendingNotes({
+          noteDate: opts?.noteDate,
+          retryFailed,
+        }),
+      }
+    }
+
+    const rows = (Array.isArray(data) ? data : []) as {
+      id: string
+      classify_status: string
+      match_status: string
+    }[]
+
+    for (const row of rows) {
+      if (excludeIds?.has(row.id)) {
+        skippedAttempted += 1
+        continue
+      }
+      batch.push(row)
+      if (batch.length >= limit) break
+    }
   }
 
   const stats = { ...empty, skippedAttempted }
@@ -151,6 +178,7 @@ export async function runClassifyMatchBatch(opts?: {
       } else {
         stats.classifyFailed += 1
         opts?.onProgress?.({ noteId: row.id, phase: 'done' })
+        await opts?.onNoteSettled?.(row.id)
         continue
       }
     }
@@ -169,6 +197,7 @@ export async function runClassifyMatchBatch(opts?: {
       }
     }
     opts?.onProgress?.({ noteId: row.id, phase: 'done' })
+    await opts?.onNoteSettled?.(row.id)
   }
 
   stats.remaining = await countPendingNotes({
