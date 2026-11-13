@@ -333,7 +333,7 @@ export function sessionMeta(persona: DemoPersona) {
   return {
     firmName: persona.firmName,
     userName: persona.displayName,
-    role: roleLabel(persona.role),
+    role: roleLabel(persona.role, persona.id),
     roleKey: persona.role,
     personaId: persona.id,
     firmId: persona.firmId,

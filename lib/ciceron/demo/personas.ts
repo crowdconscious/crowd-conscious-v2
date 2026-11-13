@@ -72,6 +72,16 @@ const OFFLINE: DemoPersona[] = [
     firmSlug: 'despacho-demo',
   },
   {
+    id: CICERON_SEED.personas.coordinador,
+    firmId: CICERON_SEED.firmDemo,
+    role: 'asociado',
+    displayName: 'Coordinador Demo Salazar',
+    inviteCode: 'nr-coordinador-b1006',
+    firmName: CICERON_FIRM_NAME,
+    firmSlug: 'despacho-demo',
+    accessModel: 'rbac',
+  },
+  {
     id: CICERON_P9_SEED.personas.abacAsociado,
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
@@ -127,10 +137,18 @@ export function offlineSwitchablePersonas(
     (p) => p.firmId === firmId && p.id === CICERON_SEED.personas.asociado
   )
   if (asociado) byRole.set('asociado', asociado)
-  return preferred.map((r) => byRole.get(r)).filter(Boolean) as DemoPersona[]
+  const base = preferred.map((r) => byRole.get(r)).filter(Boolean) as DemoPersona[]
+  const coordinador = OFFLINE.find(
+    (p) => p.firmId === firmId && p.id === CICERON_SEED.personas.coordinador
+  )
+  if (coordinador && !base.some((p) => p.id === coordinador.id)) {
+    base.push(coordinador)
+  }
+  return base
 }
 
-export function roleLabel(role: CiceronMembershipRole): string {
+export function roleLabel(role: CiceronMembershipRole, personaId?: string): string {
+  if (personaId === CICERON_SEED.personas.coordinador) return 'Coordinador'
   switch (role) {
     case 'socio':
       return 'Socia'

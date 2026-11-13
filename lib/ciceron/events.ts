@@ -99,6 +99,8 @@ export const eventPayloadSchemas = {
     .extend({
       room: z.enum([
         'hoy',
+        'boletines',
+        'boletines-coordinador',
         'monitor-dof',
         'expedientes',
         'investigacion',

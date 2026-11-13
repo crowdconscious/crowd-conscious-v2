@@ -20,6 +20,7 @@ export const CICERON_DEMO_LABEL = 'Datos de demostración'
 
 export const CICERON_ROOMS = [
   { href: `${CICERON_BASE}/hoy`, id: 'hoy', badge: 3 },
+  { href: `${CICERON_BASE}/boletines`, id: 'boletines', badge: 4 },
   { href: `${CICERON_BASE}/monitor-dof`, id: 'monitor-dof', badge: 2 },
   { href: `${CICERON_BASE}/expedientes`, id: 'expedientes', badge: 1 },
   { href: `${CICERON_BASE}/investigacion`, id: 'investigacion', badge: 0 },
