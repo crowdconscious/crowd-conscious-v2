@@ -14,12 +14,18 @@ describe('ciceron dof backfill gate', () => {
     assert.equal(isBackfillEnabled('yes'), true)
   })
 
-  it('requires Bearer CRON_SECRET and rejects missing/wrong auth', () => {
+  it('requires Bearer CRON_SECRET via timing-safe compare', () => {
     assert.equal(authorizeCronBearer(null, 's3cret'), false)
     assert.equal(authorizeCronBearer('Bearer s3cret', undefined), false)
     assert.equal(authorizeCronBearer('Bearer s3cret', ''), false)
     assert.equal(authorizeCronBearer('Bearer wrong', 's3cret'), false)
     assert.equal(authorizeCronBearer('s3cret', 's3cret'), false)
     assert.equal(authorizeCronBearer('Bearer s3cret', 's3cret'), true)
+  })
+
+  it('rejects length-mismatched secrets without throwing', () => {
+    assert.equal(authorizeCronBearer('Bearer short', 'a-much-longer-secret'), false)
+    assert.equal(authorizeCronBearer('Bearer a-much-longer-token', 'short'), false)
+    assert.equal(authorizeCronBearer('Bearer abc', 'abc'), true)
   })
 })

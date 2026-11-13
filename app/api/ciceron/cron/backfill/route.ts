@@ -25,7 +25,7 @@ export const maxDuration = 300
  * Gated by CICERON_BACKFILL_ENABLED (default off → 409). Independent of
  * CICERON_INGESTION_ENABLED; do not flip daily DOF ingest from this route.
  *
- * Auth: Authorization: Bearer $CRON_SECRET
+ * Auth: Authorization: Bearer $CRON_SECRET (timing-safe compare).
  *
  * Scheduling: vercel.json cron every 5 minutes (same cadence as other
  * existing jobs on this project). Kill switch must be on for work to run.
@@ -95,33 +95,43 @@ async function handle(req: NextRequest) {
     retryFailed = true
   }
 
-  const totals = await runBackfillBatches({
-    sinceIso: BACKFILL_SINCE_ISO,
-    tag: BACKFILL_TAG,
-    retryFailed,
-    batchLimit,
-    wallClockMs: BACKFILL_WALL_CLOCK_MS,
-    requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
-    useClaims: true,
-  })
+  try {
+    const totals = await runBackfillBatches({
+      sinceIso: BACKFILL_SINCE_ISO,
+      tag: BACKFILL_TAG,
+      retryFailed,
+      batchLimit,
+      wallClockMs: BACKFILL_WALL_CLOCK_MS,
+      requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+      useClaims: true,
+    })
 
-  return NextResponse.json({
-    ok: true,
-    tag: BACKFILL_TAG,
-    since: BACKFILL_SINCE_DAY,
-    processed: totals.processed,
-    classified: totals.classified,
-    failed: totals.failed,
-    matches: totals.matches,
-    matchedNotes: totals.matchedNotes,
-    remaining: totals.remaining,
-    cumulativeSpendUsd: totals.cumulativeSpendUsd,
-    sessionCostUsd: totals.sessionCostUsd,
-    capUsd: COST_CAP_USD,
-    rounds: totals.rounds,
-    done: totals.done,
-    stopReason: totals.stopReason,
-    requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
-    wallClockMs: BACKFILL_WALL_CLOCK_MS,
-  })
+    return NextResponse.json({
+      ok: true,
+      tag: BACKFILL_TAG,
+      since: BACKFILL_SINCE_DAY,
+      processed: totals.processed,
+      classified: totals.classified,
+      failed: totals.failed,
+      matches: totals.matches,
+      matchedNotes: totals.matchedNotes,
+      remaining: totals.remaining,
+      cumulativeSpendUsd: totals.cumulativeSpendUsd,
+      sessionCostUsd: totals.sessionCostUsd,
+      capUsd: COST_CAP_USD,
+      rounds: totals.rounds,
+      done: totals.done,
+      stopReason: totals.stopReason,
+      requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+      wallClockMs: BACKFILL_WALL_CLOCK_MS,
+    })
+  } catch (err) {
+    // runBackfillBatches releases this invocation's claims before rethrowing.
+    const message = err instanceof Error ? err.message : 'backfill_failed'
+    console.warn('[ciceron] backfill cron failed', message)
+    return NextResponse.json(
+      { ok: false, error: 'backfill_failed' },
+      { status: 500 }
+    )
+  }
 }

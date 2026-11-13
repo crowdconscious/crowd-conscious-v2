@@ -260,7 +260,7 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ### 2026-11-13 — Pre-demo classify/match backfill via serverless batches
 - **Context:** Box script for remaining pre-demo DOF notes paused when the host idled; ~1k notes still pending under the US$60 cap.
-- **Decision:** Shared batch module + `/api/ciceron/cron/backfill` (Bearer `CRON_SECRET`, Node, maxDuration 300, ~240s wall clock). Kill switch `CICERON_BACKFILL_ENABLED` (default off → 409). Overlap safety via migration `329` claim lease (`backfill_claim_until` + `claim_dof_backfill_notes`). vercel.json cron every 5 minutes (project already uses that cadence). Does **not** enable `CICERON_INGESTION_ENABLED`.
+- **Decision:** Shared batch module + `/api/ciceron/cron/backfill` (Bearer `CRON_SECRET` via timing-safe compare, Node, maxDuration 300, ~150s wall clock + mid-batch deadline, batch size 3). Kill switch `CICERON_BACKFILL_ENABLED` (default off → 409). Overlap safety via migration `329` claim lease (`backfill_claim_until` + `claim_dof_backfill_notes`). vercel.json cron every 5 minutes (project already uses that cadence). Does **not** enable `CICERON_INGESTION_ENABLED`.
 - **Consequences:** Apply `329` before flipping the kill switch. Daily DOF ingest flags stay untouched. Box script remains for manual runs.
 
 ---

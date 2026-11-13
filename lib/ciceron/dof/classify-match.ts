@@ -13,6 +13,18 @@ export type ClassifyMatchStats = {
   processed: number
   skippedAttempted: number
   remaining: number
+  /** True when a deadline stopped further notes/model calls mid-batch. */
+  stoppedForDeadline: boolean
+  /** Claimed note ids that were not started (caller should release leases). */
+  unstartedNoteIds: string[]
+}
+
+/** Pure: true when wall-clock deadline has been reached. */
+export function isPastDeadline(
+  nowMs: number,
+  deadlineMs: number | null | undefined
+): boolean {
+  return deadlineMs != null && nowMs >= deadlineMs
 }
 
 function pendingFilter(retryFailed: boolean): string {
@@ -79,6 +91,10 @@ export async function runClassifyMatchBatch(opts?: {
   onNoteSettled?: (noteId: string) => void | Promise<void>
   /** Heartbeat for backfill stall watchdog (called as each note starts/finishes). */
   onProgress?: (info: { noteId: string; phase: 'start' | 'done' }) => void
+  /** Absolute deadline (Date.now ms). No new note/model call starts after this. */
+  deadlineMs?: number
+  /** Injected clock for tests / deadline checks. */
+  now?: () => number
 }): Promise<ClassifyMatchStats> {
   const db = tryCreateCiceronAdminClient()
   const empty: ClassifyMatchStats = {
@@ -90,6 +106,8 @@ export async function runClassifyMatchBatch(opts?: {
     processed: 0,
     skippedAttempted: 0,
     remaining: 0,
+    stoppedForDeadline: false,
+    unstartedNoteIds: [],
   }
   if (!db) return empty
 
@@ -97,6 +115,8 @@ export async function runClassifyMatchBatch(opts?: {
   const onlyPending = opts?.onlyPending !== false
   const retryFailed = opts?.retryFailed === true
   const excludeIds = opts?.excludeIds
+  const now = opts?.now ?? Date.now
+  const deadlineMs = opts?.deadlineMs
 
   let batch: Array<{
     id: string
@@ -163,7 +183,14 @@ export async function runClassifyMatchBatch(opts?: {
 
   const stats = { ...empty, skippedAttempted }
 
-  for (const row of batch) {
+  for (let i = 0; i < batch.length; i++) {
+    const row = batch[i]!
+    if (isPastDeadline(now(), deadlineMs)) {
+      stats.stoppedForDeadline = true
+      stats.unstartedNoteIds = batch.slice(i).map((r) => r.id)
+      break
+    }
+
     excludeIds?.add(row.id)
     stats.processed += 1
     opts?.onProgress?.({ noteId: row.id, phase: 'start' })
@@ -183,12 +210,21 @@ export async function runClassifyMatchBatch(opts?: {
       }
     }
 
-    if (
+    const needsMatch =
       row.match_status === 'pending' ||
       (retryFailed && row.match_status === 'failed') ||
       !classifiedOk ||
       row.classify_status !== 'classified'
-    ) {
+
+    if (needsMatch) {
+      if (isPastDeadline(now(), deadlineMs)) {
+        // Do not start a new model call after the deadline.
+        stats.stoppedForDeadline = true
+        opts?.onProgress?.({ noteId: row.id, phase: 'done' })
+        await opts?.onNoteSettled?.(row.id)
+        stats.unstartedNoteIds = batch.slice(i + 1).map((r) => r.id)
+        break
+      }
       const m = await matchDofNote(row.id)
       stats.costUsd += m.costUsd
       if (m.ok) {

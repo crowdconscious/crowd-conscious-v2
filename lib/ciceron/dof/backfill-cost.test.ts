@@ -5,7 +5,12 @@ import {
   isSpendAtCap,
   projectBatchAffordable,
 } from './backfill-cost'
-import { shouldStartAnotherBatch } from './backfill-batch'
+import {
+  BACKFILL_WALL_CLOCK_MS,
+  DEFAULT_BACKFILL_BATCH_LIMIT,
+  shouldStartAnotherBatch,
+} from './backfill-batch'
+import { isPastDeadline } from './classify-match'
 
 describe('ciceron dof backfill cost cap', () => {
   it('hard-stops when spend reaches the US$60 cap', () => {
@@ -13,6 +18,11 @@ describe('ciceron dof backfill cost cap', () => {
     assert.equal(isSpendAtCap(59.99), false)
     assert.equal(isSpendAtCap(60), true)
     assert.equal(isSpendAtCap(60.01), true)
+  })
+
+  it('uses a ~150s wall clock and small default batch size', () => {
+    assert.equal(BACKFILL_WALL_CLOCK_MS, 150_000)
+    assert.equal(DEFAULT_BACKFILL_BATCH_LIMIT, 3)
   })
 
   it('refuses a batch that would exceed remaining budget', () => {
@@ -45,7 +55,7 @@ describe('ciceron dof backfill cost cap', () => {
         spentUsd: 60,
         remainingNotes: 100,
         elapsedMs: 0,
-        wallClockMs: 240_000,
+        wallClockMs: BACKFILL_WALL_CLOCK_MS,
       }),
       { ok: false, reason: 'spend_cap_reached' }
     )
@@ -54,7 +64,7 @@ describe('ciceron dof backfill cost cap', () => {
         spentUsd: 10,
         remainingNotes: 0,
         elapsedMs: 0,
-        wallClockMs: 240_000,
+        wallClockMs: BACKFILL_WALL_CLOCK_MS,
       }),
       { ok: false, reason: 'done' }
     )
@@ -62,8 +72,8 @@ describe('ciceron dof backfill cost cap', () => {
       shouldStartAnotherBatch({
         spentUsd: 10,
         remainingNotes: 50,
-        elapsedMs: 240_000,
-        wallClockMs: 240_000,
+        elapsedMs: BACKFILL_WALL_CLOCK_MS,
+        wallClockMs: BACKFILL_WALL_CLOCK_MS,
       }),
       { ok: false, reason: 'wall_clock' }
     )
@@ -72,9 +82,18 @@ describe('ciceron dof backfill cost cap', () => {
         spentUsd: 10,
         remainingNotes: 50,
         elapsedMs: 1000,
-        wallClockMs: 240_000,
+        wallClockMs: BACKFILL_WALL_CLOCK_MS,
       }),
       { ok: true }
     )
+  })
+
+  it('isPastDeadline blocks new note/model starts at or after the deadline', () => {
+    const deadline = 1_000_000
+    assert.equal(isPastDeadline(deadline - 1, deadline), false)
+    assert.equal(isPastDeadline(deadline, deadline), true)
+    assert.equal(isPastDeadline(deadline + 1, deadline), true)
+    assert.equal(isPastDeadline(deadline + 1, null), false)
+    assert.equal(isPastDeadline(deadline + 1, undefined), false)
   })
 })

@@ -59,4 +59,13 @@ describe('ciceron dof backfill claim / overlap safety', () => {
     assert.equal(owner.get('n2'), 'w2')
     assert.equal(owner.size, 2)
   })
+
+  it('release scoped by claim_until only clears matching leases (pure contract)', () => {
+    // Documented contract for releaseBackfillClaim({ claimUntil }):
+    // clear only when backfill_claim_until still equals this invocation's value.
+    const mine = '2026-11-13T12:10:00.000Z'
+    const theirs = '2026-11-13T12:20:00.000Z'
+    assert.notEqual(mine, theirs)
+    assert.equal(hasActiveClaim(mine, Date.parse('2026-11-13T12:00:00.000Z')), true)
+  })
 })

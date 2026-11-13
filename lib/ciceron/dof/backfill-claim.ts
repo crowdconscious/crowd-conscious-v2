@@ -155,16 +155,40 @@ export async function claimBackfillNotes(
   return claimed
 }
 
-/** Clear lease after a note finishes (success or failure). */
+/**
+ * Clear lease after a note finishes (success or failure).
+ * When `claimUntil` is provided, only clears if the row still holds that lease
+ * (avoids releasing another invocation's claim).
+ */
 export async function releaseBackfillClaim(
   db: ClaimClient,
-  noteId: string
+  noteId: string,
+  opts?: { claimUntil?: string | null }
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db.from('dof_notes') as any)
+  let q: any = db
+    .from('dof_notes')
     .update({ backfill_claim_until: null })
     .eq('id', noteId)
+
+  if (opts?.claimUntil) {
+    q = q.eq('backfill_claim_until', opts.claimUntil)
+  }
+
+  const { error } = await q
   if (error) {
     console.warn('[ciceron] release backfill claim failed', noteId, error.message)
+  }
+}
+
+/** Release every lease this invocation still holds (match claim_until when set). */
+export async function releaseBackfillClaims(
+  db: ClaimClient,
+  claims: ClaimableNote[]
+): Promise<void> {
+  for (const c of claims) {
+    await releaseBackfillClaim(db, c.id, {
+      claimUntil: c.backfill_claim_until ?? null,
+    })
   }
 }

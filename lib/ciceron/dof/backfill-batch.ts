@@ -3,13 +3,16 @@
  * Used by scripts/ciceron/backfill-classify-match.ts and the serverless cron.
  *
  * Each batch: check spend vs cap → claim (optional) → classify/match → tally.
- * The cron loops batches until ~240s elapsed; the script loops until empty/cap.
+ * The cron loops batches until ~150s elapsed (deadline also stops mid-batch);
+ * the script loops until empty/cap.
  */
 
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 import {
   claimBackfillNotes,
   releaseBackfillClaim,
+  releaseBackfillClaims,
+  type ClaimableNote,
 } from '@/lib/ciceron/dof/backfill-claim'
 import {
   BACKFILL_SINCE_ISO,
@@ -23,17 +26,25 @@ import {
 } from '@/lib/ciceron/dof/backfill-cost'
 import {
   countPendingClassifyMatchNotes,
+  isPastDeadline,
   runClassifyMatchBatch,
   type ClassifyMatchStats,
 } from '@/lib/ciceron/dof/classify-match'
-import { setCompleteRequestPolicy } from '@/lib/ciceron/gateway/complete'
+import {
+  resetCompleteRequestPolicy,
+  setCompleteRequestPolicy,
+} from '@/lib/ciceron/gateway/complete'
 import { DEFAULT_REQUEST_TIMEOUT_MS } from '@/lib/ciceron/gateway/request-timeout'
 
-/** Leave headroom under Vercel maxDuration=300s. */
-export const BACKFILL_WALL_CLOCK_MS = 240_000
+/**
+ * Wall-clock budget under Vercel maxDuration=300s.
+ * Checked between batches and as a mid-batch deadline so a long note cannot
+ * push the invocation past the function limit.
+ */
+export const BACKFILL_WALL_CLOCK_MS = 150_000
 
-/** Default notes per serverless/script batch round. */
-export const DEFAULT_BACKFILL_BATCH_LIMIT = 6
+/** Default notes per serverless batch round (keep small under the wall clock). */
+export const DEFAULT_BACKFILL_BATCH_LIMIT = 3
 
 export type BackfillStopReason =
   | 'batch_would_exceed_cap'
@@ -66,7 +77,7 @@ export type RunBackfillBatchesOpts = {
   tag?: string
   retryFailed?: boolean
   batchLimit?: number
-  /** Stop starting new batches after this elapsed ms (default 240s for cron). */
+  /** Stop starting new work after this elapsed ms (default 150s for cron). */
   wallClockMs?: number | null
   requestTimeoutMs?: number
   /** Claim rows so overlapping invocations cannot double-process. */
@@ -163,129 +174,182 @@ export async function runBackfillBatches(
   const excludeIds = opts.excludeIds
   const now = opts.now ?? Date.now
   const startedAt = now()
+  const deadlineMs =
+    wallClockMs != null && wallClockMs > 0 ? startedAt + wallClockMs : undefined
   const maxRounds =
-    opts.maxRounds ??
-    (wallClockMs != null && wallClockMs > 0 ? 40 : 800)
+    opts.maxRounds ?? (wallClockMs != null && wallClockMs > 0 ? 40 : 800)
 
   setCompleteRequestPolicy({
     timeoutMs: opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
   })
 
-  const db = tryCreateCiceronAdminClient()
-  if (!db) {
-    return {
-      ...emptyTotals(sinceIso, tag, 0),
-      done: false,
-      stopReason: 'no_db',
-    }
+  /** Leases still held by this invocation (released on settle / error). */
+  const heldById = new Map<string, ClaimableNote>()
+
+  const releaseHeld = async () => {
+    const db = tryCreateCiceronAdminClient()
+    if (!db || heldById.size === 0) return
+    await releaseBackfillClaims(db, [...heldById.values()])
+    heldById.clear()
   }
 
-  const rates = await loadRecentBackfillRates(db)
-  const sample = perNoteCostFromRates(rates)
-  let spentUsd = await sumBackfillSpendSince(db, sinceIso)
-  const totals = emptyTotals(sinceIso, tag, spentUsd)
-
-  if (isSpendAtCap(spentUsd)) {
-    totals.done = true
-    totals.stopReason = 'spend_cap_reached'
-    return totals
-  }
-
-  for (;;) {
-    const elapsedMs = now() - startedAt
-    // remaining unknown until after a batch; use a positive sentinel for first check
-    const gate = shouldStartAnotherBatch({
-      spentUsd,
-      remainingNotes: totals.rounds === 0 ? 1 : totals.remaining,
-      elapsedMs,
-      wallClockMs,
-    })
-    if (!gate.ok) {
-      totals.stopReason = gate.reason
-      totals.done = gate.reason === 'done' || gate.reason === 'spend_cap_reached'
-      totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
-      break
+  try {
+    const db = tryCreateCiceronAdminClient()
+    if (!db) {
+      return {
+        ...emptyTotals(sinceIso, tag, 0),
+        done: false,
+        stopReason: 'no_db',
+      }
     }
 
-    const projection = projectBatchAffordable({
-      spentUsd,
-      batchLimit: requestedLimit,
-      perNoteUsd: sample.perNoteUsd,
-    })
-    if (!projection.ok) {
-      totals.stopReason = projection.reason
+    const rates = await loadRecentBackfillRates(db)
+    const sample = perNoteCostFromRates(rates)
+    let spentUsd = await sumBackfillSpendSince(db, sinceIso)
+    const totals = emptyTotals(sinceIso, tag, spentUsd)
+
+    if (isSpendAtCap(spentUsd)) {
       totals.done = true
-      totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
-      break
+      totals.stopReason = 'spend_cap_reached'
+      return totals
     }
 
-    // Hard stop before any batch that would exceed the cap (projection above).
-    totals.rounds += 1
+    for (;;) {
+      const elapsedMs = now() - startedAt
+      if (isPastDeadline(now(), deadlineMs)) {
+        totals.stopReason = 'wall_clock'
+        totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
+        break
+      }
 
-    let stats: ClassifyMatchStats
-    if (useClaims) {
-      const claimed = await claimBackfillNotes(db, {
-        limit: projection.batchLimit,
-        retryFailed,
+      const gate = shouldStartAnotherBatch({
+        spentUsd,
+        remainingNotes: totals.rounds === 0 ? 1 : totals.remaining,
+        elapsedMs,
+        wallClockMs,
       })
-      if (claimed.length === 0) {
-        const remaining = await countPendingClassifyMatchNotes({ retryFailed })
-        stats = {
-          classified: 0,
-          classifyFailed: 0,
-          matchedNotes: 0,
-          matchRows: 0,
-          costUsd: 0,
-          processed: 0,
-          skippedAttempted: 0,
-          remaining,
+      if (!gate.ok) {
+        totals.stopReason = gate.reason
+        totals.done =
+          gate.reason === 'done' || gate.reason === 'spend_cap_reached'
+        totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
+        break
+      }
+
+      const projection = projectBatchAffordable({
+        spentUsd,
+        batchLimit: requestedLimit,
+        perNoteUsd: sample.perNoteUsd,
+      })
+      if (!projection.ok) {
+        totals.stopReason = projection.reason
+        totals.done = true
+        totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
+        break
+      }
+
+      // Hard stop before any batch that would exceed the cap (projection above).
+      totals.rounds += 1
+
+      let stats: ClassifyMatchStats
+      if (useClaims) {
+        const claimed = await claimBackfillNotes(db, {
+          limit: projection.batchLimit,
+          retryFailed,
+        })
+        for (const c of claimed) heldById.set(c.id, c)
+
+        if (claimed.length === 0) {
+          const remaining = await countPendingClassifyMatchNotes({
+            retryFailed,
+          })
+          stats = {
+            classified: 0,
+            classifyFailed: 0,
+            matchedNotes: 0,
+            matchRows: 0,
+            costUsd: 0,
+            processed: 0,
+            skippedAttempted: 0,
+            remaining,
+            stoppedForDeadline: false,
+            unstartedNoteIds: [],
+          }
+        } else {
+          stats = await runClassifyMatchBatch({
+            limit: projection.batchLimit,
+            onlyPending: true,
+            retryFailed,
+            claimedNotes: claimed,
+            deadlineMs,
+            now,
+            onProgress: opts.onProgress,
+            onNoteSettled: async (noteId) => {
+              const held = heldById.get(noteId)
+              await releaseBackfillClaim(db, noteId, {
+                claimUntil: held?.backfill_claim_until ?? null,
+              })
+              heldById.delete(noteId)
+            },
+          })
+          // Release leases for notes never started (deadline mid-batch).
+          for (const id of stats.unstartedNoteIds) {
+            const held = heldById.get(id)
+            if (!held) continue
+            await releaseBackfillClaim(db, id, {
+              claimUntil: held.backfill_claim_until ?? null,
+            })
+            heldById.delete(id)
+          }
         }
       } else {
         stats = await runClassifyMatchBatch({
           limit: projection.batchLimit,
           onlyPending: true,
           retryFailed,
-          claimedNotes: claimed,
+          excludeIds,
+          deadlineMs,
+          now,
           onProgress: opts.onProgress,
-          onNoteSettled: async (noteId) => {
-            await releaseBackfillClaim(db, noteId)
-          },
         })
       }
-    } else {
-      stats = await runClassifyMatchBatch({
-        limit: projection.batchLimit,
-        onlyPending: true,
-        retryFailed,
-        excludeIds,
-        onProgress: opts.onProgress,
-      })
+
+      mergeStats(totals, stats)
+      spentUsd = await sumBackfillSpendSince(db, sinceIso)
+      totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
+
+      if (stats.stoppedForDeadline || isPastDeadline(now(), deadlineMs)) {
+        totals.stopReason = 'wall_clock'
+        break
+      }
+      if (isSpendAtCap(spentUsd)) {
+        totals.stopReason = 'spend_cap_reached'
+        totals.done = true
+        break
+      }
+      if (stats.processed === 0) {
+        totals.stopReason = totals.remaining === 0 ? 'done' : 'no_work'
+        totals.done = totals.remaining === 0
+        break
+      }
+      if (stats.remaining === 0) {
+        totals.stopReason = 'done'
+        totals.done = true
+        break
+      }
+      if (totals.rounds >= maxRounds) {
+        totals.stopReason = 'wall_clock'
+        break
+      }
     }
 
-    mergeStats(totals, stats)
-    spentUsd = await sumBackfillSpendSince(db, sinceIso)
-    totals.cumulativeSpendUsd = Number(spentUsd.toFixed(6))
-
-    if (isSpendAtCap(spentUsd)) {
-      totals.stopReason = 'spend_cap_reached'
-      totals.done = true
-      break
-    }
-    if (stats.processed === 0) {
-      totals.stopReason = totals.remaining === 0 ? 'done' : 'no_work'
-      totals.done = totals.remaining === 0
-      break
-    }
-    if (stats.remaining === 0) {
-      totals.stopReason = 'done'
-      totals.done = true
-      break
-    }
-    if (totals.rounds >= maxRounds) {
-      totals.stopReason = 'wall_clock'
-      break
-    }
+    return totals
+  } catch (err) {
+    await releaseHeld().catch(() => {})
+    throw err
+  } finally {
+    // Drop any leftover leases from this invocation (no-op when empty).
+    await releaseHeld().catch(() => {})
+    resetCompleteRequestPolicy()
   }
-
-  return totals
 }
