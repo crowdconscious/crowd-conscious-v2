@@ -103,10 +103,14 @@ const SAMPLE_CATALOGUE: CatalogueMatter[] = [
     matterId: 'd1000000-0000-4000-8000-000000000001',
   },
   {
-    id: 'cat-rios',
+    id: 'cat-fondo-pedregal',
     courtName: 'Juzgado Segundo Familiar',
     expedienteNumber: '88/2025',
-    partyNameVariants: ['María Elena Ríos Vargas'],
+    partyNameVariants: [
+      'Fondo Pedregal Inmuebles, S.A. de C.V.',
+      'Elena Ficticia Pedregal Demo',
+    ],
+    matterId: 'd1000000-0000-4000-8000-000000000006',
   },
 ]
 

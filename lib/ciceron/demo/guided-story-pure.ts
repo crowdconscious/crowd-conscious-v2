@@ -15,15 +15,15 @@ export function guidedStepHref(step: GuidedStoryStep): string {
     case 1:
       return '/ciceron/hoy'
     case 2:
-      return '/ciceron/monitor-dof'
+      return '/ciceron/boletines/coordinador'
     case 3:
-      return '/ciceron/monitor-dof'
-    case 4:
       return '/ciceron/revision'
+    case 4:
+      return '/ciceron/expedientes'
     case 5:
       return '/ciceron/investigacion'
     case 6:
-      return '/ciceron/expedientes'
+      return '/ciceron/fuentes-cobertura'
     case 7:
     default:
       return '/ciceron/hoy'

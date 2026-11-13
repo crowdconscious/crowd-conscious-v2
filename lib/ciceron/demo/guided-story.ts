@@ -97,11 +97,16 @@ export async function loadGuidedStory(
   if (session.storyDismissed) {
     return { ...OFFLINE_STATE, dismissed: true }
   }
+  // Session cookie wins for dismiss so Omitir recorrido stays hidden across rooms.
+  const cookieState = await readOfflineStoryCookie()
+  if (cookieState.dismissed) {
+    return { ...OFFLINE_STATE, dismissed: true }
+  }
   if (session.offline || !session.sessionId) {
-    return readOfflineStoryCookie()
+    return cookieState
   }
   const db = tryCreateCiceronAdminClient()
-  if (!db) return OFFLINE_STATE
+  if (!db) return cookieState
   try {
     const { data } = await db
       .from('guided_story_progress')
@@ -109,7 +114,8 @@ export async function loadGuidedStory(
       .eq('session_id', session.sessionId)
       .limit(1)
     const row = Array.isArray(data) ? data[0] : null
-    if (!row) return OFFLINE_STATE
+    if (!row) return cookieState
+    if (row.dismissed) return { ...OFFLINE_STATE, dismissed: true }
     const currentStep = Number(row.current_step) as GuidedStoryStep
     const completedSteps = Array.isArray(row.completed_steps)
       ? (row.completed_steps as number[])
@@ -117,11 +123,11 @@ export async function loadGuidedStory(
     return {
       currentStep: currentStep >= 1 && currentStep <= 7 ? currentStep : 1,
       completedSteps,
-      dismissed: Boolean(row.dismissed),
+      dismissed: false,
       completed: Boolean(row.completed_at) || currentStep >= 7,
     }
   } catch {
-    return OFFLINE_STATE
+    return cookieState
   }
 }
 
@@ -131,18 +137,18 @@ export async function advanceGuidedStory(
   opts?: { dismiss?: boolean; resume?: boolean }
 ): Promise<GuidedStoryState> {
   if (opts?.dismiss) {
-    if (session.offline || !isSessionTokenShape(session.token)) {
-      const dismissed = { ...OFFLINE_STATE, dismissed: true }
-      await writeOfflineStoryCookie(dismissed)
-      return dismissed
-    }
-    const db = tryCreateCiceronAdminClient()
-    if (db) {
-      await db.rpc('update_guided_story', {
-        p_token_hash: hashSessionToken(session.token),
-        p_step: 1,
-        p_dismiss: true,
-      })
+    const dismissed = { ...OFFLINE_STATE, dismissed: true }
+    // Always persist dismiss for the session (cookie + DB when available).
+    await writeOfflineStoryCookie(dismissed)
+    if (!session.offline && isSessionTokenShape(session.token)) {
+      const db = tryCreateCiceronAdminClient()
+      if (db) {
+        await db.rpc('update_guided_story', {
+          p_token_hash: hashSessionToken(session.token),
+          p_step: 1,
+          p_dismiss: true,
+        })
+      }
     }
     await recordCiceronEvent({
       name: 'guided_story_step',
@@ -154,7 +160,7 @@ export async function advanceGuidedStory(
         is_demo: true,
       },
     })
-    return { ...OFFLINE_STATE, dismissed: true }
+    return dismissed
   }
 
   if (opts?.resume) {

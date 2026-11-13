@@ -14,12 +14,15 @@ function stepMeta(step: number): { title: string; body: string; cta: string; hre
   return { ...s, href: guidedStepHref(key) }
 }
 
-/** Slim dismissible bar; resume lives in the shell when dismissed. */
+/**
+ * Compact docked panel — lives outside the room content column so it neither
+ * pushes the board nor covers the main surface (fixed corner).
+ */
 export function GuidedStoryPanel({
   state,
-  compact = false,
 }: {
   state: GuidedStoryState
+  /** @deprecated Kept for call-site compat; dock is always compact. */
   compact?: boolean
 }) {
   if (state.dismissed) return null
@@ -30,18 +33,21 @@ export function GuidedStoryPanel({
 
   return (
     <aside
-      className={compact ? 'cic-guided cic-guided-slim' : 'cic-guided cic-guided-slim'}
+      className="cic-guided cic-guided-dock"
       aria-labelledby="cic-guided-title"
     >
       <div className="cic-guided-head">
-        <h2 id="cic-guided-title" className="cic-guided-title">
-          {copy.guidedStory.title}
-          {!isFinale ? (
-            <span className="cic-muted" style={{ fontWeight: 400, marginLeft: 8, fontSize: '0.85rem' }}>
-              {copy.guidedStory.progress} {Math.min(state.currentStep, 6)} {copy.guidedStory.of} 6
-            </span>
-          ) : null}
-        </h2>
+        <div>
+          <p className="cic-guided-demo-tag">{copy.guidedStory.demoTag}</p>
+          <h2 id="cic-guided-title" className="cic-guided-title">
+            {copy.guidedStory.title}
+            {!isFinale ? (
+              <span className="cic-muted" style={{ fontWeight: 400, marginLeft: 8, fontSize: '0.8rem' }}>
+                {copy.guidedStory.progress} {Math.min(state.currentStep, 6)} {copy.guidedStory.of} 6
+              </span>
+            ) : null}
+          </h2>
+        </div>
         <form action={guidedStoryAction}>
           <input type="hidden" name="dismiss" value="1" />
           <input type="hidden" name="step" value="1" />
@@ -72,7 +78,7 @@ export function GuidedStoryPanel({
         </div>
       ) : current ? (
         <div className="cic-guided-slim-body">
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.35 }}>
             <strong>{current.title}.</strong> {current.body}
           </p>
           <div className="cic-guided-actions">

@@ -69,7 +69,7 @@ describe('boletines matcher', () => {
       id: 'cat-2',
       courtName: 'Juzgado Segundo Familiar',
       expedienteNumber: '88/2025',
-      partyNameVariants: ['María Elena Ríos Vargas'],
+      partyNameVariants: ['Elena Ficticia Pedregal Demo'],
       matterId: 'm-2',
     },
   ]
@@ -110,7 +110,7 @@ describe('boletines matcher', () => {
       {
         courtName: 'Otro',
         expedienteNumber: '1/2000',
-        partyNames: 'Ríos Vargas María Elena',
+        partyNames: 'Pedregal Demo Elena Ficticia',
       },
       catalogue
     )

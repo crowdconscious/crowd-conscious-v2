@@ -7,6 +7,7 @@ export const copy = {
   roleAsociado: 'Asociado',
   rolePasante: 'Pasante',
   roleAdmin: 'Administrador',
+  roleCoordinador: 'Coordinador',
 
   invite: {
     title: 'Cicerón.ai',
@@ -39,45 +40,55 @@ export const copy = {
     back: 'Anterior',
     dismiss: 'Omitir recorrido',
     resume: 'Reanudar recorrido',
+    demoTag: 'Datos de demostración',
     steps: {
       1: {
-        title: 'Hoy — lo publicado que afecta a sus clientes',
-        body: 'Empiece en Hoy. Las coincidencias del Diario Oficial son datos reales del corpus; el despacho y los clientes son de demostración.',
+        title: 'Hoy: lo publicado en los boletines estatales que afecta a sus asuntos',
+        body:
+          'Empiece en Hoy y en Boletines. Revise las corridas de demostración de Ciudad de México y Estado de México, el tablero de las 09:30 y las coincidencias etiquetadas. El Monitor del Diario Oficial es un módulo opcional y permanece deshabilitado en esta validación.',
         cta: 'Ver Hoy',
       },
       2: {
-        title: 'Abra una coincidencia',
-        body: 'Revise por qué importa al cliente y el texto oficial marcado. La fuente abre el pasaje del DOF.',
-        cta: 'Ir al Monitor DOF',
+        title: 'Coordinación a las 09:30 y revisiones manuales',
+        body:
+          'Abra la vista del coordinador: asigne revisiones manuales (por ejemplo Guanajuato o Nuevo León) y prepare el resumen para socios. Nada se envía fuera de la demostración.',
+        cta: 'Vista del coordinador',
       },
       3: {
-        title: 'Prepare la alerta al cliente',
-        body: 'Genere un borrador con citas. Nada se envía: queda en Revisión (nivel 2).',
-        cta: 'Preparar borrador',
-      },
-      4: {
-        title: 'Revisión como Socia',
-        body: 'Cambie a Socia. El Asociado ya editó el borrador; usted aprueba, ve el mensaje exacto y la entrada de auditoría.',
+        title: 'Revisión humana antes de cualquier salida',
+        body:
+          'Pase a la cola de Revisión. Un abogado autorizado decide; la demostración registra la auditoría. No hay envíos automáticos al cliente.',
         cta: 'Abrir Revisión',
       },
+      4: {
+        title: 'Expedientes y plazos',
+        body:
+          'Abra un expediente de muestra, revise el plazo propuesto y confírmelo con el rol autorizado. Los expedientes son datos de demostración.',
+        cta: 'Ir a Expedientes',
+      },
       5: {
-        title: 'Investigación con fuentes',
-        body: 'Formule una pregunta sobre la nota, abra la fuente verificada. Una pregunta fuera del corpus debe recibir negativa explícita.',
+        title: 'Investigación con fuentes verificadas',
+        body:
+          'Formule una pregunta sobre el corpus disponible y abra la fuente citada. Una pregunta fuera del corpus debe recibir una negativa explícita.',
         cta: 'Ir a Investigación',
       },
       6: {
-        title: 'Expedientes y plazos',
-        body: 'Abra un expediente de muestra, revise el plazo propuesto y confírmelo con el rol autorizado.',
-        cta: 'Ir a Expedientes',
+        title: 'Fuentes, cobertura y módulos opcionales',
+        body:
+          'Consulte Fuentes y cobertura: los boletines de demostración usan datos ficticios etiquetados y las fuentes estánales siguen deshabilitadas. El Monitor DOF queda como módulo opcional, fuera del alcance de esta validación.',
+        cta: 'Ver Fuentes y cobertura',
       },
     },
     finale: {
-      title: 'Qué fue real y qué fue muestra',
-      body: 'Real: notas del Diario Oficial del corpus incorporado. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
-      realLabel: 'Datos reales',
+      title: 'Qué fue demostración y qué queda opcional',
+      body:
+        'Datos de demostración: despacho, clientes, boletines estatales (incluidas corridas de CDMX y Edomex), tablero 09:30, expedientes y plazos. El Monitor del Diario Oficial es un módulo opcional deshabilitado en esta validación. Solicite un piloto para su despacho.',
+      realLabel: 'Corpus de referencia (opcional)',
       sampleLabel: 'Datos de demostración',
-      realItems: 'Notas DOF del corpus; citas verificadas a esos textos.',
-      sampleItems: 'Despacho Demo, S.C.; clientes; expedientes; plazos; entregas simuladas.',
+      realItems:
+        'Monitor DOF: módulo opcional; no forma parte de la validación de boletines estatales.',
+      sampleItems:
+        'Despacho Demo, S.C.; clientes; boletines estatales; tablero 09:30; expedientes; plazos.',
       cta: 'Solicitar un piloto',
       ctaHref: 'mailto:hola@ciceron.ai?subject=Piloto%20Cicer%C3%B3n.ai',
     },
@@ -130,13 +141,13 @@ export const copy = {
     lead: 'Orígenes del corpus, desde cuándo y última actualización con datos reales disponibles.',
     sourcesTitle: 'Fuentes',
     sourcesBody:
-      'Diario Oficial de la Federación vía SIDOF (JSON). No se consultan portales del Poder Judicial de forma automatizada.',
+      'Diario Oficial de la Federación vía SIDOF (JSON). Los boletines judiciales estatales públicos (listas de acuerdos) pueden consultarse automáticamente solo cuando el registro de la fuente está verificado por una persona nominada, con nivel A o B y revisión de términos (regla 9b). No se consultan expedientes electrónicos ni se inicia sesión en portales del Poder Judicial en esta demostración.',
     sinceTitle: 'Desde cuándo',
-    sinceBody: 'Corpus de demostración con ediciones del Diario Oficial incorporadas en el periodo documentado abajo.',
+    sinceBody: 'Corpus de demostración con ediciones del Diario Oficial incorporadas en el periodo documentado abajo. Los boletines de demostración usan datos ficticios etiquetados.',
     lastUpdateTitle: 'Última actualización',
     lastUpdateFallback: 'Consulte el administrador de Fuentes para el estado del conector.',
     honesty:
-      'Sin actualización diaria automática. La cobertura es la del corpus ya incorporado; no implica vigilancia diaria.',
+      'Sin recolección automática en vivo de boletines en esta demostración (fuentes deshabilitadas). La cobertura del DOF es la del corpus ya incorporado.',
   },
 
   adminVentas: {
@@ -151,7 +162,7 @@ export const copy = {
     lastSeen: 'Última actividad',
     resetTitle: 'Restablecer demostración',
     resetBody:
-      'Vuelve el despacho de demostración al estado semilla. No toca las notas del Diario Oficial.',
+      'Vuelve el despacho de demostración al estado semilla, incluidos boletines de demostración. No toca las notas del Diario Oficial.',
     resetCta: 'Restablecer ahora',
     resetDone: 'Demostración restablecida.',
     resetDenied: 'No tiene permiso para restablecer.',
@@ -160,6 +171,7 @@ export const copy = {
 
   rooms: {
     hoy: 'Hoy',
+    boletines: 'Boletines',
     'monitor-dof': 'Monitor DOF',
     expedientes: 'Expedientes',
     investigacion: 'Investigación',
@@ -203,8 +215,8 @@ export const copy = {
 
   hoy: {
     title: 'Hoy',
-    lead: 'Lo publicado que afecta a sus clientes, revisiones pendientes y plazos próximos.',
-    matches: 'Clientes afectados',
+    lead: 'Boletines estatales del día, luego el Diario Oficial, revisiones y plazos.',
+    matches: 'Clientes afectados (DOF)',
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',
     unopened: 'Pendientes de ediciones anteriores sin abrir',
@@ -214,6 +226,47 @@ export const copy = {
     outlookCard: 'Conecte su Outlook',
     lastEdition: 'Última edición procesada',
     secondaryColumn: 'Herramientas y seguimiento',
+    bulletinsTitle: 'Boletines judiciales de hoy',
+    bulletinsLead:
+      'Coincidencias en listas de acuerdos / boletines estatales (datos de demostración) y estados en revisión manual.',
+    bulletinsHits: 'Coincidencias',
+    bulletinsManual: 'Revisión manual pendiente',
+    bulletinsOpen: 'Abrir sala Boletines',
+    bulletinsEmpty: 'Sin coincidencias de boletín en la demostración de hoy.',
+  },
+
+  boletines: {
+    title: 'Boletines',
+    lead:
+      'Tablero del día por entidad: estado de cada fuente, coincidencias y revisiones manuales. Datos de demostración.',
+    boardTitle: 'Estado por entidad',
+    hitsTitle: 'Coincidencias y posibles coincidencias',
+    manualTitle: 'Revisiones manuales',
+    timeSavedTitle: 'Tiempo de revisión manual sustituido',
+    timeSavedBody:
+      'Horas estimadas de consulta manual reemplazadas según los recibos de corrida de demostración.',
+    timeSavedDemo: 'Cifra de demostración — no es un KPI de producción.',
+    hours: 'horas',
+    runs: 'corridas con recibo',
+    informative:
+      'Informativo: no constituye notificación judicial. Consulte siempre la fuente oficial.',
+    openSource: 'Ver fuente',
+    openExpediente: 'Expediente',
+    openRevision: 'Cola de revisión',
+    coordinatorLink: 'Vista del coordinador',
+    matchExact: 'Exacta',
+    matchPossible: 'Posible',
+    partnerSummaryTitle: 'Resumen para socios (vista previa)',
+    partnerSummaryCta: 'Generar vista previa',
+    partnerSummaryNote: 'No se envía correo. Solo vista previa en pantalla.',
+    assign: 'Asignar a pasante',
+    markDone: 'Marcar hecha',
+    denied: 'Acción denegada',
+    emptyHits: 'Sin coincidencias para hoy.',
+    emptyManual: 'No hay revisiones manuales pendientes.',
+    dataSourceDb: 'Fuente de datos: base de datos',
+    dataSourceFixture: 'Fuente de datos: fixture de demostración',
+    dataSourceError: 'No se pudo cargar el tablero',
   },
 
   monitor: {

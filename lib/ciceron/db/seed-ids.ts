@@ -8,6 +8,8 @@ export const CICERON_SEED = {
     pasante: 'b1000000-0000-4000-8000-000000000003',
     admin: 'b1000000-0000-4000-8000-000000000004',
     asociado2: 'b1000000-0000-4000-8000-000000000005',
+    /** Coordinador desk — membership role remains asociado (RBAC). */
+    coordinador: 'b1000000-0000-4000-8000-000000000006',
     firmB: 'b1000000-0000-4000-8000-000000000011',
   },
   /** @deprecated use personas — kept for isolation.test aliases */
@@ -17,6 +19,7 @@ export const CICERON_SEED = {
     pasante: 'b1000000-0000-4000-8000-000000000003',
     admin: 'b1000000-0000-4000-8000-000000000004',
     asociado2: 'b1000000-0000-4000-8000-000000000005',
+    coordinador: 'b1000000-0000-4000-8000-000000000006',
     firmB: 'b1000000-0000-4000-8000-000000000011',
   },
   inviteCodes: {
@@ -36,6 +39,8 @@ export const CICERON_SEED = {
     nexoraPld: 'd1000000-0000-4000-8000-000000000002',
     farmaCofepris: 'd1000000-0000-4000-8000-000000000003',
     vientoCre: 'd1000000-0000-4000-8000-000000000004',
+    fondoPedregal: 'd1000000-0000-4000-8000-000000000006',
+    alimentosNom: 'd1000000-0000-4000-8000-000000000007',
     firmBUnico: 'd1000000-0000-4000-8000-000000000008',
   },
   clientsExtra: {

@@ -50,7 +50,8 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 function isAllowedMention(file: string, line: string): boolean {
-  if (ALLOWED_MENTION_FILES.has(file.replace(/\\/g, '/'))) return true
+  const rel = file.replace(/\\/g, '/')
+  if (ALLOWED_MENTION_FILES.has(rel)) return true
   // Comments / docs that forbid the domains are OK if they don't construct a URL fetch
   const trimmed = line.trim()
   if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('#')) {
@@ -58,6 +59,30 @@ function isAllowedMention(file: string, line: string): boolean {
   }
   // DECISIONS / PLAN prose
   if (file.includes('docs/ciceron/')) return true
+  // Public bulletin landings (rule 9b) — adapters, demo board, registry seeds.
+  // Still forbids Graph/login hosts AND federal judiciary hosts (rule 9).
+  if (
+    rel.includes('/boletines/') ||
+    rel.includes('boletines-run.ts') ||
+    rel.includes('boletines-probe.ts') ||
+    /supabase\/migrations\/\d+_ciceron_boletines/.test(rel)
+  ) {
+    if (
+      /graph\.microsoft\.com|login\.microsoft|outlook\.office|microsoftonline\.com/i.test(
+        line
+      )
+    ) {
+      return false
+    }
+    if (
+      /cjf\.gob\.mx|scjn\.gob\.mx|sise\.pjf\.gob\.mx|servicios\.pjf\.gob\.mx|tfja\.gob\.mx/i.test(
+        line
+      )
+    ) {
+      return false
+    }
+    return true
+  }
   return false
 }
 

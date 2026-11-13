@@ -10,6 +10,7 @@ import { copy } from '@/lib/ciceron/copy/es-MX'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
+import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { loadOnboarding } from '@/lib/ciceron/engagement/onboarding'
 import { loadFeedbackSuggestion } from '@/lib/ciceron/engagement/feedback-loop'
 import { loadHoyEngagement } from '@/lib/ciceron/engagement/resume'
@@ -20,7 +21,7 @@ export default async function HoyPage() {
   const persona = await getCiceronDemoSession()
   if (!persona) redirect(CICERON_BASE)
 
-  const [briefing, { deadlines }, onboarding, suggestion, engagement, budget] =
+  const [briefing, { deadlines }, onboarding, suggestion, engagement, budget, bulletins] =
     await Promise.all([
       loadHoyBriefing(persona),
       loadDeadlines(persona),
@@ -28,6 +29,7 @@ export default async function HoyPage() {
       loadFeedbackSuggestion(persona),
       loadHoyEngagement(persona),
       loadFirmBudgetStatus(persona.firmId),
+      loadBulletinBoard(persona),
     ])
 
   await recordCiceronEvent({
@@ -78,6 +80,50 @@ export default async function HoyPage() {
             {budget.alertMessage}
           </p>
         ) : null}
+
+        <section className="cic-section" aria-labelledby="hoy-bulletins">
+          <h2 id="hoy-bulletins" className="cic-h2">
+            {copy.hoy.bulletinsTitle}
+          </h2>
+          <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+            {copy.hoy.bulletinsLead}
+          </p>
+          <p className="cic-muted" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+            {bulletins.source === 'schema'
+              ? copy.boletines.dataSourceDb
+              : bulletins.source === 'fixture'
+                ? copy.boletines.dataSourceFixture
+                : copy.boletines.dataSourceError}
+            {bulletins.source === 'error' && bulletins.error
+              ? ` — ${bulletins.error}`
+              : null}
+          </p>
+          {bulletins.hits.length === 0 ? (
+            <p className="cic-muted">{copy.hoy.bulletinsEmpty}</p>
+          ) : (
+            <ul style={{ margin: '0 0 12px', paddingLeft: 18 }}>
+              {bulletins.hits.slice(0, 5).map((h) => (
+                <li key={h.id}>
+                  <Link href="/ciceron/boletines">
+                    {h.stateName}: {h.expedienteNumber ?? '—'} (
+                    {h.matchKind === 'exact' ? copy.boletines.matchExact : copy.boletines.matchPossible})
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {bulletins.manuals.length > 0 ? (
+            <p style={{ marginBottom: 8 }}>
+              <strong>{copy.hoy.bulletinsManual}:</strong>{' '}
+              {bulletins.manuals.map((m) => m.stateName).join(', ')}
+            </p>
+          ) : null}
+          <p style={{ marginTop: 8 }}>
+            <Link href="/ciceron/boletines" className="cic-muted" style={{ fontSize: '0.9rem' }}>
+              {copy.hoy.bulletinsOpen} →
+            </Link>
+          </p>
+        </section>
 
         <section className="cic-section" aria-labelledby="hoy-matches">
           <h2 id="hoy-matches" className="cic-h2">
