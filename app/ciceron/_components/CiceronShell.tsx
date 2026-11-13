@@ -150,18 +150,20 @@ function ShellInner({
             </div>
           </header>
           <main className="cic-content">
-            {meta.guidedStory && !meta.guidedStory.dismissed ? (
-              <GuidedStoryPanel state={meta.guidedStory} compact />
-            ) : (
+            {meta.guidedStory &&
+            (meta.guidedStory.dismissed || meta.guidedStory.completed) ? (
               <GuidedStoryResumeBar
-                dismissed={Boolean(meta.guidedStory?.dismissed)}
-                completed={Boolean(meta.guidedStory?.completed)}
+                dismissed={Boolean(meta.guidedStory.dismissed)}
+                completed={Boolean(meta.guidedStory.completed)}
               />
-            )}
+            ) : null}
             {children}
           </main>
         </div>
       </div>
+      {meta.guidedStory && !meta.guidedStory.dismissed ? (
+        <GuidedStoryPanel state={meta.guidedStory} />
+      ) : null}
       <nav className="cic-mobile-nav" aria-label="Salas">
         {CICERON_ROOMS.map((room) => {
           const active = pathname === room.href

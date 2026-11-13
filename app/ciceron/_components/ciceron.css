@@ -335,48 +335,64 @@
   border: 1px solid var(--cic-rule-strong);
   background: var(--cic-surface);
   border-radius: var(--cic-radius);
-  padding: calc(var(--cic-space) * 2);
-  margin-bottom: calc(var(--cic-space) * 3);
+  padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
 }
 
-.cic-guided-slim {
-  padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
-  margin-bottom: calc(var(--cic-space) * 2);
+/* Fixed corner dock: does not push room content or cover the board. */
+.cic-guided-dock {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 35;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(42vh, 20rem);
+  overflow: auto;
+  margin: 0;
+  box-shadow: none;
+}
+
+.cic-guided-demo-tag {
+  margin: 0 0 2px;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--cic-muted, #8a8a8a);
 }
 
 .cic-guided-slim-body {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .cic-guided-resume {
-  margin-bottom: calc(var(--cic-space) * 2);
+  margin-bottom: calc(var(--cic-space) * 1.5);
   font-size: 0.85rem;
 }
 
 .cic-guided-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .cic-guided-title {
   font-family: var(--cic-serif);
-  font-size: 1.1rem;
+  font-size: 0.98rem;
   margin: 0;
+  line-height: 1.25;
 }
 
 .cic-guided-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 8px;
   align-items: center;
 }
 
 .cic-guided-finale p {
-  margin: 8px 0;
-  font-size: 0.95rem;
+  margin: 6px 0;
+  font-size: 0.85rem;
 }
 
 .cic-hoy-layout {
@@ -1728,11 +1744,12 @@ textarea.cic-input {
   .cic-persona-bar-hint {
     display: none;
   }
-  .cic-guided,
-  .cic-guided-slim {
+  .cic-guided-dock {
+    right: 0.5rem;
+    bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    width: min(22rem, calc(100vw - 1rem));
+    max-height: 36vh;
     padding: 10px 12px;
-    margin-left: 0;
-    margin-right: 0;
   }
   .cic-guided-head {
     flex-wrap: wrap;

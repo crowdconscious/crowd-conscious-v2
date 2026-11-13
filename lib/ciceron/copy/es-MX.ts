@@ -40,45 +40,55 @@ export const copy = {
     back: 'Anterior',
     dismiss: 'Omitir recorrido',
     resume: 'Reanudar recorrido',
+    demoTag: 'Datos de demostración',
     steps: {
       1: {
-        title: 'Hoy — lo publicado que afecta a sus clientes',
-        body: 'Empiece en Hoy. Las coincidencias del Diario Oficial son datos reales del corpus; el despacho y los clientes son de demostración.',
+        title: 'Hoy: lo publicado en los boletines estatales que afecta a sus asuntos',
+        body:
+          'Empiece en Hoy y en Boletines. Revise las corridas de demostración de Ciudad de México y Estado de México, el tablero de las 09:30 y las coincidencias etiquetadas. El Monitor del Diario Oficial es un módulo opcional y permanece deshabilitado en esta validación.',
         cta: 'Ver Hoy',
       },
       2: {
-        title: 'Abra una coincidencia',
-        body: 'Revise por qué importa al cliente y el texto oficial marcado. La fuente abre el pasaje del DOF.',
-        cta: 'Ir al Monitor DOF',
+        title: 'Coordinación a las 09:30 y revisiones manuales',
+        body:
+          'Abra la vista del coordinador: asigne revisiones manuales (por ejemplo Guanajuato o Nuevo León) y prepare el resumen para socios. Nada se envía fuera de la demostración.',
+        cta: 'Vista del coordinador',
       },
       3: {
-        title: 'Prepare la alerta al cliente',
-        body: 'Genere un borrador con citas. Nada se envía: queda en Revisión (nivel 2).',
-        cta: 'Preparar borrador',
-      },
-      4: {
-        title: 'Revisión como Socia',
-        body: 'Cambie a Socia. El Asociado ya editó el borrador; usted aprueba, ve el mensaje exacto y la entrada de auditoría.',
+        title: 'Revisión humana antes de cualquier salida',
+        body:
+          'Pase a la cola de Revisión. Un abogado autorizado decide; la demostración registra la auditoría. No hay envíos automáticos al cliente.',
         cta: 'Abrir Revisión',
       },
+      4: {
+        title: 'Expedientes y plazos',
+        body:
+          'Abra un expediente de muestra, revise el plazo propuesto y confírmelo con el rol autorizado. Los expedientes son datos de demostración.',
+        cta: 'Ir a Expedientes',
+      },
       5: {
-        title: 'Investigación con fuentes',
-        body: 'Formule una pregunta sobre la nota, abra la fuente verificada. Una pregunta fuera del corpus debe recibir negativa explícita.',
+        title: 'Investigación con fuentes verificadas',
+        body:
+          'Formule una pregunta sobre el corpus disponible y abra la fuente citada. Una pregunta fuera del corpus debe recibir una negativa explícita.',
         cta: 'Ir a Investigación',
       },
       6: {
-        title: 'Expedientes y plazos',
-        body: 'Abra un expediente de muestra, revise el plazo propuesto y confírmelo con el rol autorizado.',
-        cta: 'Ir a Expedientes',
+        title: 'Fuentes, cobertura y módulos opcionales',
+        body:
+          'Consulte Fuentes y cobertura: los boletines de demostración usan datos ficticios etiquetados y las fuentes estánales siguen deshabilitadas. El Monitor DOF queda como módulo opcional, fuera del alcance de esta validación.',
+        cta: 'Ver Fuentes y cobertura',
       },
     },
     finale: {
-      title: 'Qué fue real y qué fue muestra',
-      body: 'Real: notas del Diario Oficial del corpus incorporado. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
-      realLabel: 'Datos reales',
+      title: 'Qué fue demostración y qué queda opcional',
+      body:
+        'Datos de demostración: despacho, clientes, boletines estatales (incluidas corridas de CDMX y Edomex), tablero 09:30, expedientes y plazos. El Monitor del Diario Oficial es un módulo opcional deshabilitado en esta validación. Solicite un piloto para su despacho.',
+      realLabel: 'Corpus de referencia (opcional)',
       sampleLabel: 'Datos de demostración',
-      realItems: 'Notas DOF del corpus; citas verificadas a esos textos.',
-      sampleItems: 'Despacho Demo, S.C.; clientes; expedientes; plazos; entregas simuladas.',
+      realItems:
+        'Monitor DOF: módulo opcional; no forma parte de la validación de boletines estatales.',
+      sampleItems:
+        'Despacho Demo, S.C.; clientes; boletines estatales; tablero 09:30; expedientes; plazos.',
       cta: 'Solicitar un piloto',
       ctaHref: 'mailto:hola@ciceron.ai?subject=Piloto%20Cicer%C3%B3n.ai',
     },
