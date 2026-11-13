@@ -60,7 +60,7 @@ function isAllowedMention(file: string, line: string): boolean {
   // DECISIONS / PLAN prose
   if (file.includes('docs/ciceron/')) return true
   // Public bulletin landings (rule 9b) — adapters, demo board, registry seeds.
-  // Still forbids Graph/login hosts and electronic case-file connectors.
+  // Still forbids Graph/login hosts AND federal judiciary hosts (rule 9).
   if (
     rel.includes('/boletines/') ||
     rel.includes('boletines-run.ts') ||
@@ -69,6 +69,13 @@ function isAllowedMention(file: string, line: string): boolean {
   ) {
     if (
       /graph\.microsoft\.com|login\.microsoft|outlook\.office|microsoftonline\.com/i.test(
+        line
+      )
+    ) {
+      return false
+    }
+    if (
+      /cjf\.gob\.mx|scjn\.gob\.mx|sise\.pjf\.gob\.mx|servicios\.pjf\.gob\.mx|tfja\.gob\.mx/i.test(
         line
       )
     ) {

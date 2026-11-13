@@ -1,7 +1,7 @@
 -- 328_ciceron_boletines_demo.sql
 -- Prompt B3/B3b: demo seed for bulletins + Coordinador persona.
--- CREATE OR REPLACE: ciceron.refresh_demo_dates, ciceron.reset_demo_firm
---   (extends prior bodies from 319/322 — call out in PR).
+-- CREATE OR REPLACE: ciceron.refresh_demo_dates (324 body + bulletin block),
+--   ciceron.reset_demo_firm (322 body + bulletin reset).
 -- Additive otherwise. Agent does not apply to production.
 
 -- ---------------------------------------------------------------------------
@@ -59,7 +59,7 @@ INSERT INTO ciceron.case_files (
   (
     'f1000000-0000-4000-8000-000000000023'::uuid,
     'a1000000-0000-4000-8000-000000000001'::uuid,
-    'd1000000-0000-4000-8000-000000000002'::uuid,
+    'd1000000-0000-4000-8000-000000000007'::uuid,
     true,
     'Juzgado Primero de lo Civil — Ciudad Judicial',
     '210/2026',
@@ -87,7 +87,8 @@ INSERT INTO ciceron.case_files (
     '{"label":"Datos de demostración","state":"MEX"}'::jsonb
   )
 ON CONFLICT (id) DO UPDATE
-  SET court_name = EXCLUDED.court_name,
+  SET matter_id = EXCLUDED.matter_id,
+      court_name = EXCLUDED.court_name,
       file_number = EXCLUDED.file_number,
       is_sample = true,
       metadata = EXCLUDED.metadata;
@@ -116,18 +117,25 @@ INSERT INTO ciceron.bulletin_matter_catalogue (
     'f1000000-0000-4000-8000-000000000022'::uuid,
     'QRO', 'Querétaro',
     'Juzgado Segundo Familiar de Querétaro', '88/2025',
-    ARRAY['María Elena Ríos Vargas'],
-    true, true, 'Datos de demostración'
+    ARRAY[
+      'Fondo Pedregal Inmuebles, S.A. de C.V.',
+      'Fondo Pedregal',
+      'Elena Ficticia Pedregal Demo'
+    ],
+    true, true, 'Datos de demostración — cliente Fondo Pedregal Inmuebles'
   ),
   (
     'b7100000-0000-4000-8000-000000000003'::uuid,
     'a1000000-0000-4000-8000-000000000001'::uuid,
-    'd1000000-0000-4000-8000-000000000002'::uuid,
+    'd1000000-0000-4000-8000-000000000007'::uuid,
     'f1000000-0000-4000-8000-000000000023'::uuid,
     'JAL', 'Jalisco',
     'Juzgado Primero de lo Civil — Ciudad Judicial', '210/2026',
-    ARRAY['Alimentos Demo Occidente, S.A. de C.V.', 'Alimentos Demo Occidente'],
-    true, true, 'Datos de demostración'
+    ARRAY[
+      'Alimentos del Bajío Integrados, S.A. de C.V.',
+      'Alimentos del Bajío'
+    ],
+    true, true, 'Datos de demostración — cliente Alimentos del Bajío'
   ),
   (
     'b7100000-0000-4000-8000-000000000004'::uuid,
@@ -160,7 +168,10 @@ INSERT INTO ciceron.bulletin_matter_catalogue (
     true, true, 'Datos de demostración — manual-check state'
   )
 ON CONFLICT (id) DO UPDATE
-  SET party_name_variants = EXCLUDED.party_name_variants,
+  SET matter_id = EXCLUDED.matter_id,
+      case_file_id = EXCLUDED.case_file_id,
+      party_name_variants = EXCLUDED.party_name_variants,
+      notes = EXCLUDED.notes,
       is_active = true,
       is_demo = true;
 
@@ -273,7 +284,7 @@ BEGIN
     'b7300000-0000-4000-8000-000000000002'::uuid,
     firm, run_qro, src_qro, today,
     'Juzgado Segundo Familiar de Querétaro', '88/2025',
-    'María Elena Ríos Vargas / Pedro Alfonso Demo López',
+    'Fondo Pedregal Inmuebles, S.A. de C.V. / Contraparte Demo Arrendamiento',
     'Se señala fecha de audiencia. Datos de demostración.',
     'https://www.poderjudicialqro.gob.mx/acuerdos/lista-de-acuerdos-primera-instancia.php',
     'Datos de demostración — excerpt',
@@ -301,7 +312,7 @@ BEGIN
     'b7300000-0000-4000-8000-000000000003'::uuid,
     firm, run_jal, src_jal, today,
     'Juzgado Primero de lo Civil — Ciudad Judicial', '210/2026',
-    'Alimentos Demo Occidente, S.A. de C.V. / Distribuidora Ficticia Sol',
+    'Alimentos del Bajío Integrados, S.A. de C.V. / Distribuidora Ficticia Sol',
     'Se admite demanda mercantil. Datos de demostración.',
     'https://cjj.gob.mx/bulletin',
     'Datos de demostración — excerpt',
@@ -314,7 +325,7 @@ BEGIN
     'b7400000-0000-4000-8000-000000000003'::uuid,
     firm, run_jal, 'b7300000-0000-4000-8000-000000000003'::uuid,
     'b7100000-0000-4000-8000-000000000003'::uuid,
-    'd1000000-0000-4000-8000-000000000002'::uuid,
+    'd1000000-0000-4000-8000-000000000007'::uuid,
     'f1000000-0000-4000-8000-000000000023'::uuid,
     'exact', 1.0,
     'Coincidencia exacta de expediente (210/2026) y juzgado.',
@@ -328,7 +339,7 @@ BEGIN
     'b7300000-0000-4000-8000-000000000004'::uuid,
     firm, run_jal, src_jal, today,
     'Juzgado Familiar de Zapopan', '15/2026',
-    'Ríos Vargas María Elena / Demo Contraparte Familiar',
+    'Pedregal Fondo Inmuebles Demo / Demo Contraparte Familiar',
     'Se provee escrito de desahogo. Datos de demostración.',
     'https://cjj.gob.mx/bulletin',
     'Datos de demostración — excerpt',
@@ -344,7 +355,7 @@ BEGIN
     'd1000000-0000-4000-8000-000000000006'::uuid,
     'f1000000-0000-4000-8000-000000000022'::uuid,
     'possible', 0.86,
-    'Posible coincidencia por tokens de nombre de parte (variante «María Elena Ríos Vargas»).',
+    'Posible coincidencia por tokens de nombre de parte (variante demo «Fondo Pedregal Inmuebles»).',
     'pendiente', true
   );
 
@@ -428,7 +439,7 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- CREATE OR REPLACE refresh_demo_dates — extend with bulletin demo date refresh
+-- CREATE OR REPLACE refresh_demo_dates — 324 body + bulletin demo date block only
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ciceron.refresh_demo_dates(
   p_firm_id uuid,
@@ -447,6 +458,9 @@ DECLARE
   bol_count int := 0;
   anchor date;
   delta int;
+  due_dates date[];
+  i int;
+  dl_ids uuid[];
   r record;
 BEGIN
   IF p_firm_id IS NULL THEN
@@ -477,41 +491,108 @@ BEGIN
     AND cf.is_sample = true
     AND e.is_sample = true;
 
-  IF anchor IS NOT NULL THEN
-    delta := (today - interval '2 days')::date - anchor;
-    IF delta <> 0 THEN
-      UPDATE ciceron.case_events e
-      SET occurred_at = e.occurred_at + make_interval(days => delta)
-      FROM ciceron.case_files cf
-      WHERE e.case_file_id = cf.id
-        AND cf.firm_id = p_firm_id
-        AND cf.is_sample = true
-        AND e.is_sample = true;
-      GET DIAGNOSTICS ev_count = ROW_COUNT;
+  IF anchor IS NULL THEN
+    -- Still refresh demo bulletin dates when the firm has no sample events.
+    IF EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'ciceron' AND table_name = 'bulletin_runs'
+    ) THEN
+      FOR r IN
+        SELECT id, COALESCE((metadata->>'demo_day_offset')::int, 0) AS off
+        FROM ciceron.bulletin_runs
+        WHERE firm_id = p_firm_id AND is_demo = true
+      LOOP
+        UPDATE ciceron.bulletin_runs
+        SET publication_date = today + r.off
+        WHERE id = r.id;
+        bol_count := bol_count + 1;
+      END LOOP;
 
-      UPDATE ciceron.deadlines d
-      SET due_at = d.due_at + make_interval(days => delta)
-      FROM ciceron.case_files cf
-      WHERE d.case_file_id = cf.id
-        AND cf.firm_id = p_firm_id
-        AND cf.is_sample = true
-        AND d.is_sample = true;
-      GET DIAGNOSTICS dl_count = ROW_COUNT;
+      UPDATE ciceron.bulletin_entries e
+      SET publication_date = br.publication_date,
+          retain_until = br.publication_date + 14
+      FROM ciceron.bulletin_runs br
+      WHERE e.run_id = br.id
+        AND e.firm_id = p_firm_id
+        AND e.is_demo = true;
 
-      IF EXISTS (
-        SELECT 1 FROM information_schema.tables
-        WHERE table_schema = 'ciceron' AND table_name = 'simulated_calendar_events'
-      ) THEN
-        UPDATE ciceron.simulated_calendar_events sce
-        SET starts_at = sce.starts_at + make_interval(days => delta),
-            ends_at = CASE
-              WHEN sce.ends_at IS NULL THEN NULL
-              ELSE sce.ends_at + make_interval(days => delta)
-            END
-        WHERE sce.firm_id = p_firm_id
-          AND sce.is_sample = true;
-      END IF;
+      UPDATE ciceron.bulletin_manual_checks mc
+      SET check_date = today + COALESCE((br.metadata->>'demo_day_offset')::int, 0)
+      FROM ciceron.bulletin_runs br
+      WHERE mc.run_id = br.id
+        AND mc.firm_id = p_firm_id
+        AND mc.is_demo = true;
+
+      UPDATE ciceron.bulletin_manual_checks
+      SET check_date = today
+      WHERE firm_id = p_firm_id
+        AND is_demo = true
+        AND run_id IS NULL;
     END IF;
+
+    INSERT INTO ciceron.demo_freshness_runs (firm_id, run_date, events_shifted, deadlines_shifted)
+    VALUES (p_firm_id, today, 0, 0)
+    ON CONFLICT (firm_id, run_date) DO UPDATE
+      SET ran_at = now();
+    RETURN jsonb_build_object(
+      'ok', true, 'skipped', false, 'run_date', today,
+      'events_shifted', 0, 'deadlines_shifted', 0,
+      'bulletin_rows_refreshed', bol_count,
+      'note', 'no_sample_events'
+    );
+  END IF;
+
+  -- Shift events so the latest lands near today-2
+  delta := (today - interval '2 days')::date - anchor;
+
+  IF delta <> 0 THEN
+    UPDATE ciceron.case_events e
+    SET occurred_at = e.occurred_at + make_interval(days => delta)
+    FROM ciceron.case_files cf
+    WHERE e.case_file_id = cf.id
+      AND cf.firm_id = p_firm_id
+      AND cf.is_sample = true
+      AND e.is_sample = true;
+    GET DIAGNOSTICS ev_count = ROW_COUNT;
+
+    IF EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'ciceron' AND table_name = 'simulated_calendar_events'
+    ) THEN
+      UPDATE ciceron.simulated_calendar_events sce
+      SET starts_at = sce.starts_at + make_interval(days => delta),
+          ends_at = CASE
+            WHEN sce.ends_at IS NULL THEN NULL
+            ELSE sce.ends_at + make_interval(days => delta)
+          END
+      WHERE sce.firm_id = p_firm_id
+        AND sce.is_sample = true;
+    END IF;
+  END IF;
+
+  -- Deadlines: assign explicitly to ~2 / 6 / 14 business days from today (never overdue)
+  due_dates := ARRAY[
+    ciceron.add_business_days(today, 2),
+    ciceron.add_business_days(today, 6),
+    ciceron.add_business_days(today, 14)
+  ];
+
+  SELECT array_agg(d.id ORDER BY d.due_at, d.id)
+    INTO dl_ids
+  FROM ciceron.deadlines d
+  JOIN ciceron.case_files cf ON cf.id = d.case_file_id
+  WHERE cf.firm_id = p_firm_id
+    AND cf.is_sample = true
+    AND d.is_sample = true;
+
+  IF dl_ids IS NOT NULL THEN
+    FOR i IN 1..array_length(dl_ids, 1) LOOP
+      UPDATE ciceron.deadlines
+      SET due_at = (due_dates[((i - 1) % 3) + 1] + time '23:59:00')
+                    AT TIME ZONE 'America/Mexico_City'
+      WHERE id = dl_ids[i];
+      dl_count := dl_count + 1;
+    END LOOP;
   END IF;
 
   -- Bulletin demo dates: publication_date = today + demo_day_offset
@@ -563,16 +644,17 @@ BEGIN
     'ok', true,
     'skipped', false,
     'run_date', today,
-    'delta_days', COALESCE(delta, 0),
+    'delta_days', delta,
     'events_shifted', ev_count,
     'deadlines_shifted', dl_count,
+    'deadline_offsets_business_days', ARRAY[2, 6, 14],
     'bulletin_rows_refreshed', bol_count
   );
 END;
 $$;
 
 COMMENT ON FUNCTION ciceron.refresh_demo_dates(uuid, boolean) IS
-  'Re-date sample case events/deadlines and demo bulletin publication dates relative to today. Never touches DOF. No cron.';
+  'Re-date sample events; set sample deadlines to ~2/6/14 business days from today; refresh demo bulletin dates. Never touches DOF. No cron.';
 
 REVOKE ALL ON FUNCTION ciceron.refresh_demo_dates(uuid, boolean)
   FROM PUBLIC, anon, authenticated;

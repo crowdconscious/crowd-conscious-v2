@@ -7,6 +7,7 @@ import type { DemoPersona } from '@/lib/ciceron/demo/personas'
 
 export type BulletinBoardStatus =
   | 'revisado'
+  | 'parcial'
   | 'fallo'
   | 'manual'
   | 'sin_publicacion'
@@ -62,8 +63,22 @@ export type TimeSavedView = {
   demoLabel: true
 }
 
+export type PartnerSummaryCounts = {
+  revisado: number
+  parcial: number
+  fallo: number
+  manual: number
+  exactHits: number
+  possibleHits: number
+  revisadoStates: string[]
+  manualStates: string[]
+  falloStates: string[]
+  parcialStates: string[]
+}
+
 const STATUS_LABEL: Record<BulletinBoardStatus, string> = {
   revisado: 'Revisado automáticamente',
+  parcial: 'Parcial — revisar',
   fallo: 'Falló',
   manual: 'Revisión manual pendiente',
   sin_publicacion: 'Sin publicación confirmada',
@@ -72,6 +87,16 @@ const STATUS_LABEL: Record<BulletinBoardStatus, string> = {
 const INFORMATIVE =
   'Informativo: no constituye notificación judicial. Consulte la fuente oficial.'
 
+type RunRow = {
+  id: string
+  source_id: string
+  status: string
+  failure_message: string | null
+  hits_exact: number
+  hits_possible: number
+  metadata: Record<string, unknown> | null
+}
+
 function todayMexico(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Mexico_City',
@@ -79,6 +104,95 @@ function todayMexico(): string {
     month: '2-digit',
     day: '2-digit',
   }).format(new Date())
+}
+
+function mapStatus(runStatus: string | null | undefined): BulletinBoardStatus {
+  if (runStatus === 'ok') return 'revisado'
+  if (runStatus === 'partial') return 'parcial'
+  if (runStatus === 'failed') return 'fallo'
+  if (runStatus === 'manual') return 'manual'
+  // No run yet → pending manual check, never "sin publicación" (rule 9c).
+  return 'manual'
+}
+
+/** Failed must never be hidden by an ok/partial run for the same source/day. */
+function preferRun(prev: RunRow | undefined, next: RunRow): RunRow {
+  if (!prev) return next
+  if (next.status === 'failed') return next
+  if (prev.status === 'failed') return prev
+  if (next.status === 'partial' && prev.status === 'ok') return next
+  if (prev.status === 'partial' && next.status === 'ok') return prev
+  return next
+}
+
+export function computePartnerSummaryCounts(
+  board: BulletinStateBoardRow[],
+  hits: BulletinHitView[]
+): PartnerSummaryCounts {
+  const by = (s: BulletinBoardStatus) => board.filter((b) => b.status === s)
+  return {
+    revisado: by('revisado').length,
+    parcial: by('parcial').length,
+    fallo: by('fallo').length,
+    manual: by('manual').length,
+    exactHits: hits.filter((h) => h.matchKind === 'exact').length,
+    possibleHits: hits.filter((h) => h.matchKind === 'possible').length,
+    revisadoStates: by('revisado').map((b) => b.stateName),
+    manualStates: by('manual').map((b) => b.stateName),
+    falloStates: by('fallo').map((b) => b.stateName),
+    parcialStates: by('parcial').map((b) => b.stateName),
+  }
+}
+
+export function formatPartnerSummaryPreview(input: {
+  firmName: string
+  preparerName: string
+  board: BulletinStateBoardRow[]
+  hits: BulletinHitView[]
+  manuals: ManualCheckView[]
+}): string {
+  const c = computePartnerSummaryCounts(input.board, input.hits)
+  const lines = [
+    'Resumen de boletines — vista previa (no enviado)',
+    `Despacho: ${input.firmName}`,
+    `Preparó: ${input.preparerName}`,
+    '',
+  ]
+  if (c.revisadoStates.length) {
+    lines.push(`Estados revisados automáticamente: ${c.revisadoStates.join(', ')}.`)
+  }
+  if (c.parcialStates.length) {
+    lines.push(`Revisión parcial: ${c.parcialStates.join(', ')}.`)
+  }
+  if (c.falloStates.length) {
+    lines.push(
+      `Corridas fallidas visibles (no «sin novedades»): ${c.falloStates.join(', ')}.`
+    )
+  }
+  if (c.manualStates.length) {
+    const manualDetail = input.manuals
+      .map((m) => {
+        const st =
+          m.status === 'asignado'
+            ? 'asignada'
+            : m.status === 'hecha'
+              ? 'hecha'
+              : 'sin asignar'
+        return `${m.stateName} (${st})`
+      })
+      .join(', ')
+    lines.push(
+      `Revisión manual pendiente: ${manualDetail || c.manualStates.join(', ')}.`
+    )
+  }
+  lines.push(
+    `Coincidencias exactas de demostración: ${c.exactHits}; posibles: ${c.possibleHits}.`
+  )
+  lines.push('')
+  lines.push(
+    'Datos de demostración. Informativo: no constituye notificación judicial.'
+  )
+  return lines.join('\n')
 }
 
 /** Offline fixture board — Datos de demostración. */
@@ -124,10 +238,12 @@ export function fixtureBulletinBoard(): {
       sourceId: CICERON_BOLETIN_SOURCES.cdmx,
       sourceName: 'Boletín Judicial PJCDMX',
       sourceUrl: 'https://poderjudicialcdmx.gob.mx/consulta-boletin/',
-      status: 'revisado',
-      statusLabel: STATUS_LABEL.revisado,
-      runId: 'fixture-cdmx',
-      failureMessage: null,
+      // Seeded failed probe must surface; ok must not hide it (rule 9c).
+      status: 'fallo',
+      statusLabel: STATUS_LABEL.fallo,
+      runId: 'fixture-cdmx-fail',
+      failureMessage:
+        'Datos de demostración. Sondeo fallido (Cloudflare/bloqueo simulado) — nunca presentar como «sin novedades».',
       hitsExact: 1,
       hitsPossible: 0,
       tier: 'A',
@@ -177,7 +293,6 @@ export function fixtureBulletinBoard(): {
     },
   ]
 
-  // Inject one failed row as secondary CDMX honesty signal on coordinator
   const hits: BulletinHitView[] = [
     {
       id: 'hit-qro-1',
@@ -199,6 +314,26 @@ export function fixtureBulletinBoard(): {
       informativeNotice: INFORMATIVE,
     },
     {
+      id: 'hit-qro-2',
+      stateCode: 'QRO',
+      stateName: 'Querétaro',
+      matchKind: 'exact',
+      score: 1,
+      reason:
+        'Coincidencia exacta de expediente (88/2025) y juzgado («Juzgado Segundo Familiar de Querétaro»).',
+      courtName: 'Juzgado Segundo Familiar de Querétaro',
+      expedienteNumber: '88/2025',
+      partyNames:
+        'Fondo Pedregal Inmuebles, S.A. de C.V. / Contraparte Demo Arrendamiento',
+      summary: 'Se señala fecha de audiencia. Datos de demostración.',
+      sourceUrl:
+        'https://www.poderjudicialqro.gob.mx/acuerdos/lista-de-acuerdos-primera-instancia.php',
+      matterId: CICERON_SEED.matters.fondoPedregal,
+      caseFileId: 'f1000000-0000-4000-8000-000000000022',
+      reviewState: 'pendiente',
+      informativeNotice: INFORMATIVE,
+    },
+    {
       id: 'hit-jal-1',
       stateCode: 'JAL',
       stateName: 'Jalisco',
@@ -207,10 +342,11 @@ export function fixtureBulletinBoard(): {
       reason: 'Coincidencia exacta de expediente (210/2026) y juzgado.',
       courtName: 'Juzgado Primero de lo Civil — Ciudad Judicial',
       expedienteNumber: '210/2026',
-      partyNames: 'Alimentos Demo Occidente, S.A. de C.V. / Distribuidora Ficticia Sol',
+      partyNames:
+        'Alimentos del Bajío Integrados, S.A. de C.V. / Distribuidora Ficticia Sol',
       summary: 'Se admite demanda mercantil. Datos de demostración.',
       sourceUrl: 'https://cjj.gob.mx/bulletin',
-      matterId: CICERON_SEED.matters.nexoraPld,
+      matterId: CICERON_SEED.matters.alimentosNom,
       caseFileId: 'f1000000-0000-4000-8000-000000000023',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
@@ -222,14 +358,14 @@ export function fixtureBulletinBoard(): {
       matchKind: 'possible',
       score: 0.86,
       reason:
-        'Posible coincidencia por tokens de nombre de parte (variante «María Elena Ríos Vargas»).',
+        'Posible coincidencia por tokens de nombre de parte (variante demo «Fondo Pedregal Inmuebles»).',
       courtName: 'Juzgado Familiar de Zapopan',
       expedienteNumber: '15/2026',
-      partyNames: 'Ríos Vargas María Elena / Demo Contraparte Familiar',
+      partyNames: 'Pedregal Fondo Inmuebles Demo / Demo Contraparte Familiar',
       summary: 'Se provee escrito de desahogo. Datos de demostración.',
       sourceUrl: 'https://cjj.gob.mx/bulletin',
-      matterId: CICERON_SEED.matters.vientoCre,
-      caseFileId: null,
+      matterId: CICERON_SEED.matters.fondoPedregal,
+      caseFileId: 'f1000000-0000-4000-8000-000000000022',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
     },
@@ -299,15 +435,12 @@ export function fixtureBulletinBoard(): {
     board,
     hits,
     manuals,
-    timeSaved: { hoursReplaced: 6.5, runsCounted: 4, demoLabel: true },
+    timeSaved: {
+      hoursReplaced: 1.5 + 1.2 + 2.0 + 1.8,
+      runsCounted: 4,
+      demoLabel: true,
+    },
   }
-}
-
-function mapStatus(runStatus: string | null | undefined): BulletinBoardStatus {
-  if (runStatus === 'ok' || runStatus === 'partial') return 'revisado'
-  if (runStatus === 'failed') return 'fallo'
-  if (runStatus === 'manual') return 'manual'
-  return 'sin_publicacion'
 }
 
 export async function loadBulletinBoard(persona: DemoPersona): Promise<{
@@ -337,7 +470,7 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
       return { source: 'fixture', asOf, ...fixture }
     }
 
-    const { data: runs } = await db
+    const { data: runs, error: runsErr } = await db
       .from('bulletin_runs')
       .select(
         'id, source_id, status, failure_message, hits_exact, hits_possible, publication_date, metadata, is_demo'
@@ -346,32 +479,15 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
       .eq('publication_date', asOf)
       .eq('is_demo', true)
 
-    const runBySource = new Map<
-      string,
-      {
-        id: string
-        status: string
-        failure_message: string | null
-        hits_exact: number
-        hits_possible: number
-        metadata: Record<string, unknown> | null
-      }
-    >()
+    if (runsErr) {
+      // Do not fall through to «Sin publicación confirmada» for every source.
+      return { source: 'fixture', asOf, ...fixture }
+    }
+
+    const runBySource = new Map<string, RunRow>()
     for (const r of Array.isArray(runs) ? runs : []) {
-      const row = r as {
-        id: string
-        source_id: string
-        status: string
-        failure_message: string | null
-        hits_exact: number
-        hits_possible: number
-        metadata: Record<string, unknown> | null
-      }
-      // Prefer ok over failed for same source when both exist
-      const prev = runBySource.get(row.source_id)
-      if (!prev || (prev.status === 'failed' && row.status === 'ok')) {
-        runBySource.set(row.source_id, row)
-      }
+      const row = r as RunRow
+      runBySource.set(row.source_id, preferRun(runBySource.get(row.source_id), row))
     }
 
     const board: BulletinStateBoardRow[] = (
@@ -464,9 +580,6 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
         const ent = entryMap.get(hit.entry_id)
         const src = ent ? sourceMeta.get(ent.source_id) : null
         if (!ent || !src) return null
-        if (ent && (hitRows as unknown[])) {
-          /* keep */
-        }
         return {
           id: hit.id,
           stateCode: src.state_code,
@@ -512,9 +625,10 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
         id: row.id,
         stateCode: src?.state_code ?? '—',
         stateName: src?.state_name ?? '—',
-        sourceName: (sources as Array<{ id: string; display_name: string }>).find(
-          (s) => s.id === row.source_id
-        )?.display_name ?? 'Fuente',
+        sourceName:
+          (sources as Array<{ id: string; display_name: string }>).find(
+            (s) => s.id === row.source_id
+          )?.display_name ?? 'Fuente',
         sourceUrl: row.source_url,
         status: row.status,
         assignedTo: row.assigned_to,

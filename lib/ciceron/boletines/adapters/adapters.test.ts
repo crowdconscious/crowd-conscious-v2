@@ -152,7 +152,9 @@ describe('jalisco adapter', () => {
     })
     assert.equal(parsed.ok, true)
     assert.ok(parsed.entries.length >= 3)
-    assert.ok(parsed.entries.some((e) => (e.partyNames ?? '').includes('Alimentos Demo')))
+    assert.ok(
+      parsed.entries.some((e) => (e.partyNames ?? '').includes('Alimentos del Bajío'))
+    )
   })
 })
 

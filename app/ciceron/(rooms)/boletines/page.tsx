@@ -75,7 +75,7 @@ export default async function BoletinesPage() {
                       className={
                         row.status === 'fallo'
                           ? 'cic-deadline is-urgent'
-                          : row.status === 'manual'
+                          : row.status === 'parcial' || row.status === 'manual'
                             ? 'cic-deadline is-soon'
                             : 'cic-deadline is-normal'
                       }

@@ -59,38 +59,44 @@ export async function assignManualCheckAction(
     }
   }
 
-  if (db) {
-    const { data, error } = await db.rpc('assign_bulletin_manual_check', {
-      p_firm_id: persona.firmId,
-      p_check_id: checkId,
-      p_actor: persona.id,
-      p_assignee: CICERON_SEED.personas.pasante,
+  if (!db) {
+    return { ok: false, message: 'Sin conexión a datos de demostración.' }
+  }
+
+  const { data, error } = await db.rpc('assign_bulletin_manual_check', {
+    p_firm_id: persona.firmId,
+    p_check_id: checkId,
+    p_actor: persona.id,
+    p_assignee: CICERON_SEED.personas.pasante,
+  })
+  if (error) {
+    await recordAuditEvent(asAuditClient(db), {
+      firmId: persona.firmId,
+      userId: persona.id,
+      action: 'bulletin_manual_assign',
+      entityType: 'bulletin_manual_checks',
+      entityId: checkId,
+      outcome: 'denied',
+      policyId: 'rpc_error',
+      policyReason: error.message,
+      payload: {
+        assignee: CICERON_SEED.personas.pasante,
+        rpc_error: error.message,
+      },
     })
-    if (error) {
-      // Offline-shaped demo ids may not exist until migration 328 is applied.
-      await recordAuditEvent(asAuditClient(db), {
-        firmId: persona.firmId,
-        userId: persona.id,
-        action: 'bulletin_manual_assign',
-        entityType: 'bulletin_manual_checks',
-        entityId: checkId,
-        outcome: 'allowed',
-        policyId: 'rbac_role',
-        payload: {
-          assignee: CICERON_SEED.personas.pasante,
-          demo_fallback: true,
-          rpc_error: error.message,
-        },
-      })
-    } else {
-      const row = data as Record<string, unknown> | null
-      if (row && row.ok === false) {
-        return {
-          ok: false,
-          policyId: String(row.policy_id ?? 'rbac_role'),
-          policyReason: String(row.policy_reason ?? 'Denegado.'),
-        }
-      }
+    return {
+      ok: false,
+      policyId: 'rpc_error',
+      policyReason: error.message,
+      message: 'No se pudo asignar la revisión.',
+    }
+  }
+  const row = data as Record<string, unknown> | null
+  if (row && row.ok === false) {
+    return {
+      ok: false,
+      policyId: String(row.policy_id ?? 'rbac_role'),
+      policyReason: String(row.policy_reason ?? 'Denegado.'),
     }
   }
 
@@ -130,33 +136,41 @@ export async function completeManualCheckAction(
     }
   }
 
-  if (db) {
-    const { data, error } = await db.rpc('complete_bulletin_manual_check', {
-      p_firm_id: persona.firmId,
-      p_check_id: checkId,
-      p_actor: persona.id,
-      p_notes: 'Marcada en demostración.',
+  if (!db) {
+    return { ok: false, message: 'Sin conexión a datos de demostración.' }
+  }
+
+  const { data, error } = await db.rpc('complete_bulletin_manual_check', {
+    p_firm_id: persona.firmId,
+    p_check_id: checkId,
+    p_actor: persona.id,
+    p_notes: 'Marcada en demostración.',
+  })
+  if (error) {
+    await recordAuditEvent(asAuditClient(db), {
+      firmId: persona.firmId,
+      userId: persona.id,
+      action: 'bulletin_manual_complete',
+      entityType: 'bulletin_manual_checks',
+      entityId: checkId,
+      outcome: 'denied',
+      policyId: 'rpc_error',
+      policyReason: error.message,
+      payload: { rpc_error: error.message },
     })
-    if (error) {
-      await recordAuditEvent(asAuditClient(db), {
-        firmId: persona.firmId,
-        userId: persona.id,
-        action: 'bulletin_manual_complete',
-        entityType: 'bulletin_manual_checks',
-        entityId: checkId,
-        outcome: 'allowed',
-        policyId: 'rbac_role',
-        payload: { demo_fallback: true, rpc_error: error.message },
-      })
-    } else {
-      const row = data as Record<string, unknown> | null
-      if (row && row.ok === false) {
-        return {
-          ok: false,
-          policyId: String(row.policy_id ?? 'rbac_role'),
-          policyReason: String(row.policy_reason ?? 'Denegado.'),
-        }
-      }
+    return {
+      ok: false,
+      policyId: 'rpc_error',
+      policyReason: error.message,
+      message: 'No se pudo marcar la revisión como hecha.',
+    }
+  }
+  const row = data as Record<string, unknown> | null
+  if (row && row.ok === false) {
+    return {
+      ok: false,
+      policyId: String(row.policy_id ?? 'rbac_role'),
+      policyReason: String(row.policy_reason ?? 'Denegado.'),
     }
   }
 
@@ -195,18 +209,17 @@ export async function partnerSummaryPreviewAction(
     }
   }
 
-  const preview = [
-    'Resumen de boletines — vista previa (no enviado)',
-    `Despacho: ${persona.firmName}`,
-    `Preparó: ${persona.displayName}`,
-    '',
-    'Estados revisados automáticamente: Querétaro, Jalisco, Ciudad de México, Estado de México.',
-    'Revisión manual pendiente: Guanajuato (asignada), Nuevo León (sin asignar).',
-    'Coincidencias exactas de demostración: 5; posibles: 1.',
-    'Una corrida fallida de demostración permanece visible (no se presenta como «sin novedades»).',
-    '',
-    'Datos de demostración. Informativo: no constituye notificación judicial.',
-  ].join('\n')
+  const { loadBulletinBoard, formatPartnerSummaryPreview, computePartnerSummaryCounts } =
+    await import('@/lib/ciceron/boletines/demo-data')
+  const boardData = await loadBulletinBoard(persona)
+  const counts = computePartnerSummaryCounts(boardData.board, boardData.hits)
+  const preview = formatPartnerSummaryPreview({
+    firmName: persona.firmName,
+    preparerName: persona.displayName,
+    board: boardData.board,
+    hits: boardData.hits,
+    manuals: boardData.manuals,
+  })
 
   if (db) {
     await recordAuditEvent(asAuditClient(db), {
@@ -217,7 +230,11 @@ export async function partnerSummaryPreviewAction(
       entityId: persona.firmId,
       outcome: 'allowed',
       policyId: 'rbac_role',
-      payload: { preview_only: true, is_demo: true },
+      payload: {
+        preview_only: true,
+        is_demo: true,
+        counts,
+      },
     })
   }
 
