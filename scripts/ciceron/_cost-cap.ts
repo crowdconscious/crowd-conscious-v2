@@ -9,6 +9,10 @@
 
 import { MODELS } from '../../lib/agents/config'
 import { estimateAnthropicCostUsd } from '../../lib/ciceron/gateway/costs'
+import {
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  parseRequestTimeoutMs,
+} from '../../lib/ciceron/gateway/request-timeout'
 
 export const COST_CAP_USD = 60
 
@@ -286,6 +290,25 @@ export function parseFlags(argv: string[]) {
 
   const tag = argv.find((a) => a.startsWith('--tag='))?.split('=')[1]?.trim() || undefined
 
+  const timeoutRaw = argv
+    .find((a) => a.startsWith('--request-timeout-ms='))
+    ?.split('=')[1]
+  let requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS
+  if (timeoutRaw !== undefined) {
+    try {
+      requestTimeoutMs = parseRequestTimeoutMs(timeoutRaw)
+    } catch {
+      console.error(
+        JSON.stringify({
+          ok: false,
+          error: 'invalid_request_timeout_ms',
+          hint: '--request-timeout-ms must be a positive integer (milliseconds).',
+        })
+      )
+      process.exit(1)
+    }
+  }
+
   return {
     dryRun: argv.includes('--dry-run'),
     limit,
@@ -293,6 +316,7 @@ export function parseFlags(argv: string[]) {
     sinceDay: sinceRaw,
     tag,
     retryFailed: argv.includes('--retry-failed'),
+    requestTimeoutMs,
   }
 }
 
