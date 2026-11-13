@@ -26,24 +26,49 @@ export interface BulletinAdapter {
   countCheck(entries: ParsedBulletinEntry[], ctx: AdapterContext): BulletinCountCheck
 }
 
-/** True when the page body explicitly declares no entries for the day. */
-export function pageDeclaresEmptyDay(body: string | null | undefined): boolean {
-  if (!body) return false
-  if (/data-empty-day\s*=\s*["']?(?:true|1|yes)/i.test(body)) return true
-  const text = body
+/**
+ * Prefer the bulletin content region so nav chrome ("Consulta sin acuerdos…")
+ * cannot declare an empty day (rule 9c count-check).
+ */
+export function extractBulletinBodyHtml(html: string): string {
+  const main =
+    html.match(/<main\b[\s\S]*?<\/main>/i)?.[0] ||
+    html.match(/<article\b[\s\S]*?<\/article>/i)?.[0] ||
+    html.match(
+      /<(?:div|section)\b[^>]*(?:id|class)=["'][^"']*(?:boletin|boletín|bulletin|lista[_-]?acuerdos|acuerdos|extractos|contenido|content|resultados?)[^"']*["'][^>]*>[\s\S]*?<\/(?:div|section)>/i
+    )?.[0]
+  const region = main ?? html
+  return region
+    .replace(/<nav\b[\s\S]*?<\/nav>/gi, ' ')
+    .replace(/<header\b[\s\S]*?<\/header>/gi, ' ')
+    .replace(/<footer\b[\s\S]*?<\/footer>/gi, ' ')
+}
+
+function htmlToPlainText(html: string): string {
+  return html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
     .replace(/\s+/g, ' ')
+    .trim()
     .toLowerCase()
+}
+
+/** True when the bulletin body explicitly declares no entries for the day. */
+export function pageDeclaresEmptyDay(body: string | null | undefined): boolean {
+  if (!body) return false
+  if (/data-empty-day\s*=\s*["']?(?:true|1|yes)/i.test(body)) return true
+  const text = htmlToPlainText(extractBulletinBodyHtml(body))
+  // Word boundaries so «10 acuerdos» does not match «0 acuerdos».
   return (
-    /sin\s+acuerdos/.test(text) ||
-    /no\s+hay\s+acuerdos/.test(text) ||
-    /no\s+se\s+publicaron?\s+acuerdos/.test(text) ||
-    /sin\s+entradas/.test(text) ||
-    /lista\s+vac[ií]a/.test(text) ||
-    /0\s+acuerdos/.test(text) ||
-    /no\s+hay\s+publicaci[oó]n/.test(text)
+    /\bsin\s+acuerdos\b/.test(text) ||
+    /\bno\s+hay\s+acuerdos\b/.test(text) ||
+    /\bno\s+se\s+publicaron?\s+acuerdos\b/.test(text) ||
+    /\bsin\s+entradas\b/.test(text) ||
+    /\blista\s+vac[ií]a\b/.test(text) ||
+    /\b0\s+acuerdos\b/.test(text) ||
+    /\bno\s+hay\s+publicaci[oó]n\b/.test(text)
   )
 }
 

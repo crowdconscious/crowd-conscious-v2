@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it } from 'node:test'
+import { pageDeclaresEmptyDay } from '@/lib/ciceron/boletines/adapter'
 import { jaliscoAdapter } from '@/lib/ciceron/boletines/adapters/jalisco'
 import {
   courtLabelFromHead2,
@@ -59,6 +60,55 @@ const memoryPersistence = (): RunPersistence & { runs: unknown[]; hits: unknown[
     },
   }
 }
+
+describe('pageDeclaresEmptyDay', () => {
+  it('matches exact empty-day phrases with word boundaries', () => {
+    assert.equal(
+      pageDeclaresEmptyDay('<main><p>Sin acuerdos para la fecha.</p></main>'),
+      true
+    )
+    assert.equal(
+      pageDeclaresEmptyDay('<div class="lista-acuerdos"><p>Hay 0 acuerdos hoy.</p></div>'),
+      true
+    )
+    assert.equal(
+      pageDeclaresEmptyDay('<article>No hay acuerdos publicados.</article>'),
+      true
+    )
+  })
+
+  it('does not treat «10 acuerdos» as empty day', () => {
+    assert.equal(
+      pageDeclaresEmptyDay('<main><p>Se publicaron 10 acuerdos hoy.</p></main>'),
+      false
+    )
+    assert.equal(
+      pageDeclaresEmptyDay('<main><p>Total: 100 acuerdos en el archivo.</p></main>'),
+      false
+    )
+  })
+
+  it('ignores «sin acuerdos» in navigation chrome outside the bulletin body', () => {
+    const html = `
+      <html><body>
+        <nav><a href="/ayuda">Consulta sin acuerdos previos</a></nav>
+        <header>Menú sin acuerdos de ejemplo</header>
+        <main><p>Lista del día con publicaciones.</p><table><tr><th>Expediente</th></tr></table></main>
+      </body></html>
+    `
+    assert.equal(pageDeclaresEmptyDay(html), false)
+  })
+
+  it('still detects empty day when the phrase is inside main/bulletin region', () => {
+    const html = `
+      <html><body>
+        <nav><a href="/">Inicio</a></nav>
+        <main class="boletin"><p>Sin acuerdos para esta fecha.</p></main>
+      </body></html>
+    `
+    assert.equal(pageDeclaresEmptyDay(html), true)
+  })
+})
 
 describe('queretaro adapter', () => {
   it('parses court index links from landing-shaped HTML', () => {
