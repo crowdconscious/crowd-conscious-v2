@@ -72,6 +72,37 @@ user's credentials or
 electronic signature, and never write code that solves or bypasses a
 captcha. Court-file
 data enters through the CaseFileConnector interface only.
+9b. PUBLIC COURT BULLETINS. Daily lists that a court publishes openly for
+the public (boletín judicial, listas de acuerdos) may be collected
+automatically ONLY for a source whose registry entry is marked verified by
+a named person, with tier A or B, and with a recorded review of its terms
+of use. Never create accounts, never solve or bypass a captcha, never
+ignore a robots or terms prohibition, and never log in except under 9e.
+One request at a time, a pause between requests, an identifying User-Agent
+with a contact address, and only the courts and dates needed. Rule 9 still
+applies in full to electronic case files and to the federal judiciary's
+systems.
+9c. COMPLETENESS OVER CONVENIENCE. A bulletin run that cannot be fetched,
+parsed or count-checked is a FAILED run and must be shown and notified as
+failed. Never present a failed or partial run as "no updates". Every run
+writes a receipt: source, publication date, bulletin number if any,
+entries parsed, matters searched, hits, possible matches, duration, parser
+version. A source not processed by the firm's fallback time becomes a
+manual check for that day.
+9d. BULLETIN DATA. A bulletin hit is informative, not a legal
+notification, and says so with a link to the source. Persist matched and
+possible-match entries; raw bulletin files are deleted after the retention
+period in configuration. Real firm catalogues are client data and never
+enter the Crowd Conscious demo database.
+9e. DELEGATED ACCESS. A state source that requires an account may be
+consulted with a firm's credentials ONLY when its registry entry is tier C
+with a recorded counsel sign-off naming that state and that firm, and a
+written authorisation from the firm. Credentials are issued by the firm,
+stored in the encrypted vault, never logged, never shown after entry, used
+only for that firm's matters, and revocable by the firm in one step.
+Electronic signatures and their files are never requested, stored or used.
+Every delegated session is written to the audit log. No delegated-access
+code runs in the demo.
 10. DEMO HONESTY. DOF data is real. The firm, its clients and its court files
 are fictional and
 must be labelled "Datos de demostración" wherever they appear. No real
