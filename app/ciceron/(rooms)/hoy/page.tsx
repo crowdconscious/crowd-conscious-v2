@@ -88,6 +88,16 @@ export default async function HoyPage() {
           <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
             {copy.hoy.bulletinsLead}
           </p>
+          <p className="cic-muted" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+            {bulletins.source === 'schema'
+              ? copy.boletines.dataSourceDb
+              : bulletins.source === 'fixture'
+                ? copy.boletines.dataSourceFixture
+                : copy.boletines.dataSourceError}
+            {bulletins.source === 'error' && bulletins.error
+              ? ` — ${bulletins.error}`
+              : null}
+          </p>
           {bulletins.hits.length === 0 ? (
             <p className="cic-muted">{copy.hoy.bulletinsEmpty}</p>
           ) : (

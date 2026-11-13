@@ -46,6 +46,33 @@ export default async function CoordinadorBoletinesPage() {
         <h2 id="coord-board" className="cic-h2">
           Tablero 09:30
         </h2>
+        <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
+          {data.asOf}
+          {' · '}
+          <span
+            role="status"
+            style={{
+              fontWeight: 600,
+              color:
+                data.source === 'error'
+                  ? 'var(--cic-danger, #b42318)'
+                  : data.source === 'fixture'
+                    ? 'var(--cic-warn, #8a5a00)'
+                    : 'inherit',
+            }}
+          >
+            {data.source === 'schema'
+              ? copy.boletines.dataSourceDb
+              : data.source === 'fixture'
+                ? copy.boletines.dataSourceFixture
+                : copy.boletines.dataSourceError}
+          </span>
+        </p>
+        {data.source === 'error' && data.error ? (
+          <p className="cic-policy-box is-denied" role="alert">
+            {data.error}
+          </p>
+        ) : null}
         <div className="cic-table-wrap">
           <table className="cic-table">
             <thead>

@@ -443,22 +443,68 @@ export function fixtureBulletinBoard(): {
   }
 }
 
-export async function loadBulletinBoard(persona: DemoPersona): Promise<{
-  source: 'schema' | 'fixture'
+export type BulletinBoardLoadResult = {
+  source: 'schema' | 'fixture' | 'error'
+  error?: string
   board: BulletinStateBoardRow[]
   hits: BulletinHitView[]
   manuals: ManualCheckView[]
   timeSaved: TimeSavedView
   asOf: string
-}> {
+}
+
+function isSeedDemoFirm(firmId: string): boolean {
+  return (
+    firmId === CICERON_SEED.firmDemo || firmId === CICERON_SEED.firmContraste
+  )
+}
+
+function emptyTimeSaved(): TimeSavedView {
+  return { hoursReplaced: 0, runsCounted: 0, demoLabel: true }
+}
+
+function fixtureOrError(
+  asOf: string,
+  isDemo: boolean,
+  reason: string
+): BulletinBoardLoadResult {
+  if (isDemo) {
+    return { source: 'fixture', asOf, ...fixtureBulletinBoard() }
+  }
+  return {
+    source: 'error',
+    error: reason,
+    asOf,
+    board: [],
+    hits: [],
+    manuals: [],
+    timeSaved: emptyTimeSaved(),
+  }
+}
+
+export async function loadBulletinBoard(
+  persona: DemoPersona
+): Promise<BulletinBoardLoadResult> {
   const asOf = todayMexico()
-  const fixture = fixtureBulletinBoard()
   const db = tryCreateCiceronAdminClient()
   if (!db) {
-    return { source: 'fixture', asOf, ...fixture }
+    return fixtureOrError(
+      asOf,
+      isSeedDemoFirm(persona.firmId),
+      'Sin conexión a la base de datos del despacho.'
+    )
   }
 
   try {
+    const { data: firmRow } = await db
+      .from('firms')
+      .select('is_demo')
+      .eq('id', persona.firmId)
+      .maybeSingle()
+    const isDemo =
+      Boolean((firmRow as { is_demo?: boolean } | null)?.is_demo) ||
+      isSeedDemoFirm(persona.firmId)
+
     const { data: sources, error: srcErr } = await db
       .from('bulletin_sources')
       .select(
@@ -467,25 +513,73 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
       .in('id', Object.values(CICERON_BOLETIN_SOURCES))
 
     if (srcErr || !Array.isArray(sources) || sources.length === 0) {
-      return { source: 'fixture', asOf, ...fixture }
+      return fixtureOrError(
+        asOf,
+        isDemo,
+        srcErr?.message ?? 'No hay fuentes de boletín registradas.'
+      )
     }
 
-    const { data: runs, error: runsErr } = await db
+    let runsQuery = db
       .from('bulletin_runs')
       .select(
         'id, source_id, status, failure_message, hits_exact, hits_possible, publication_date, metadata, is_demo'
       )
       .eq('firm_id', persona.firmId)
       .eq('publication_date', asOf)
-      .eq('is_demo', true)
+    if (isDemo) runsQuery = runsQuery.eq('is_demo', true)
+
+    const { data: runs, error: runsErr } = await runsQuery
 
     if (runsErr) {
-      // Do not fall through to «Sin publicación confirmada» for every source.
-      return { source: 'fixture', asOf, ...fixture }
+      return fixtureOrError(asOf, isDemo, runsErr.message)
+    }
+
+    const runList = Array.isArray(runs) ? runs : []
+    // No runs for today: demo firms get the whole fixture (never mix).
+    if (runList.length === 0) {
+      if (isDemo) {
+        return { source: 'fixture', asOf, ...fixtureBulletinBoard() }
+      }
+      // Real firm: empty schema board from sources — no fixture fill.
+      const board: BulletinStateBoardRow[] = (
+        sources as Array<{
+          id: string
+          state_code: string
+          state_name: string
+          display_name: string
+          landing_url: string
+          proposed_tier: string
+        }>
+      ).map((s) => {
+        const status = mapStatus(undefined)
+        return {
+          stateCode: s.state_code,
+          stateName: s.state_name,
+          sourceId: s.id,
+          sourceName: s.display_name,
+          sourceUrl: s.landing_url,
+          status,
+          statusLabel: STATUS_LABEL[status],
+          runId: null,
+          failureMessage: null,
+          hitsExact: 0,
+          hitsPossible: 0,
+          tier: s.proposed_tier,
+        }
+      })
+      return {
+        source: 'schema',
+        asOf,
+        board,
+        hits: [],
+        manuals: [],
+        timeSaved: emptyTimeSaved(),
+      }
     }
 
     const runBySource = new Map<string, RunRow>()
-    for (const r of Array.isArray(runs) ? runs : []) {
+    for (const r of runList) {
       const row = r as RunRow
       runBySource.set(row.source_id, preferRun(runBySource.get(row.source_id), row))
     }
@@ -518,15 +612,16 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
       }
     })
 
-    const { data: hitRows } = await db
+    let hitsQuery = db
       .from('bulletin_hits')
       .select(
         'id, match_kind, score, reason, matter_id, case_file_id, review_state, entry_id, run_id'
       )
       .eq('firm_id', persona.firmId)
-      .eq('is_demo', true)
       .order('created_at', { ascending: false })
       .limit(40)
+    if (isDemo) hitsQuery = hitsQuery.eq('is_demo', true)
+    const { data: hitRows } = await hitsQuery
 
     const entryIds = (Array.isArray(hitRows) ? hitRows : []).map(
       (h) => (h as { entry_id: string }).entry_id
@@ -600,14 +695,15 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
       })
       .filter(Boolean) as BulletinHitView[]
 
-    const { data: manualsRaw } = await db
+    let manualsQuery = db
       .from('bulletin_manual_checks')
       .select(
         'id, source_id, status, source_url, assigned_to, notes, check_date'
       )
       .eq('firm_id', persona.firmId)
       .eq('check_date', asOf)
-      .eq('is_demo', true)
+    if (isDemo) manualsQuery = manualsQuery.eq('is_demo', true)
+    const { data: manualsRaw } = await manualsQuery
 
     const manuals: ManualCheckView[] = (
       Array.isArray(manualsRaw) ? manualsRaw : []
@@ -642,7 +738,7 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
 
     let hours = 0
     let runsCounted = 0
-    for (const r of Array.isArray(runs) ? runs : []) {
+    for (const r of runList) {
       const meta = (r as { metadata?: Record<string, unknown>; status: string })
         .metadata
       const h = meta?.hours_manual_replaced
@@ -656,15 +752,19 @@ export async function loadBulletinBoard(persona: DemoPersona): Promise<{
       source: 'schema',
       asOf,
       board,
-      hits: hits.length ? hits : fixture.hits,
-      manuals: manuals.length ? manuals : fixture.manuals,
+      hits,
+      manuals,
       timeSaved: {
-        hoursReplaced: hours || fixture.timeSaved.hoursReplaced,
-        runsCounted: runsCounted || fixture.timeSaved.runsCounted,
+        hoursReplaced: hours,
+        runsCounted,
         demoLabel: true,
       },
     }
-  } catch {
-    return { source: 'fixture', asOf, ...fixture }
+  } catch (err) {
+    return fixtureOrError(
+      asOf,
+      isSeedDemoFirm(persona.firmId),
+      err instanceof Error ? err.message : 'Error al cargar el tablero de boletines.'
+    )
   }
 }

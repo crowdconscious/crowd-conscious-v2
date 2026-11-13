@@ -254,6 +254,9 @@ export const copy = {
     denied: 'Acción denegada',
     emptyHits: 'Sin coincidencias para hoy.',
     emptyManual: 'No hay revisiones manuales pendientes.',
+    dataSourceDb: 'Fuente de datos: base de datos',
+    dataSourceFixture: 'Fuente de datos: fixture de demostración',
+    dataSourceError: 'No se pudo cargar el tablero',
   },
 
   monitor: {
