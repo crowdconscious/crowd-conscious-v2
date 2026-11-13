@@ -7,12 +7,20 @@
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --limit=8
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --tag=pre-demo
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --retry-failed
+ *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --request-timeout-ms=60000
  *
  * Hard US$60 cumulative spend since --since. Pre-flight estimate over the cap
  * warns but still starts; each batch is projected against remaining budget.
+ * Each model call times out (default 60s) with up to 2 retries; a batch with
+ * no progress for 5 minutes logs batch_stalled and exits non-zero (resumable).
  */
 import { createClient } from '@supabase/supabase-js'
 import { runClassifyMatchBatch } from '../../lib/ciceron/dof/classify-match'
+import { setCompleteRequestPolicy } from '../../lib/ciceron/gateway/complete'
+import {
+  BATCH_STALL_MS,
+  isBatchStalled,
+} from '../../lib/ciceron/gateway/request-timeout'
 import {
   abortIfSpendAtCap,
   assertUnderCap,
@@ -144,12 +152,16 @@ async function main() {
   const priorSpendUsd = await sumBackfillSpendSince(sb, flags.sinceIso)
   const remainingBudgetUsd = Number((COST_CAP_USD - priorSpendUsd).toFixed(4))
 
+  setCompleteRequestPolicy({ timeoutMs: flags.requestTimeoutMs })
+
   console.log(
     JSON.stringify({
       dryRun: flags.dryRun,
       since: flags.sinceDay,
       tag: flags.tag ?? null,
       retryFailed: flags.retryFailed,
+      requestTimeoutMs: flags.requestTimeoutMs,
+      batchStallMs: BATCH_STALL_MS,
       ingestedNotes: ingestedCount ?? 0,
       pendingNotes,
       needClassify,
@@ -222,12 +234,58 @@ async function main() {
     }
 
     rounds += 1
-    const stats = await runClassifyMatchBatch({
+    let lastProgressAt = Date.now()
+    let lastProgressNoteId: string | null = null
+    const stallCheckMs = Math.min(15_000, Math.max(1_000, Math.floor(BATCH_STALL_MS / 20)))
+    const batchPromise = runClassifyMatchBatch({
       limit: projection.batchLimit,
       onlyPending: true,
       retryFailed: flags.retryFailed,
       excludeIds: attemptedIds,
+      onProgress: ({ noteId }) => {
+        lastProgressAt = Date.now()
+        lastProgressNoteId = noteId
+      },
     })
+
+    const stats = await new Promise<Awaited<typeof batchPromise>>((resolve, reject) => {
+      const timer = setInterval(() => {
+        const now = Date.now()
+        if (!isBatchStalled(lastProgressAt, now)) return
+        clearInterval(timer)
+        const stalledForMs = now - lastProgressAt
+        console.error(
+          JSON.stringify({
+            event: 'batch_stalled',
+            ok: false,
+            round: rounds,
+            stalledForMs,
+            stallMs: BATCH_STALL_MS,
+            lastProgressNoteId,
+            attemptedNotes: attemptedIds.size,
+            requestTimeoutMs: flags.requestTimeoutMs,
+            hint: 'No batch progress; exiting so a wrapper can restart. Already-attempted notes stay skipped via status / --retry-failed.',
+          })
+        )
+        reject(Object.assign(new Error('batch_stalled'), { code: 'batch_stalled' }))
+      }, stallCheckMs)
+
+      batchPromise
+        .then((value) => {
+          clearInterval(timer)
+          resolve(value)
+        })
+        .catch((err) => {
+          clearInterval(timer)
+          reject(err)
+        })
+    }).catch((err) => {
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'batch_stalled') {
+        process.exit(1)
+      }
+      throw err
+    })
+
     sessionCost += stats.costUsd
     totalMatchRows += stats.matchRows
     totalMatchedNotes += stats.matchedNotes

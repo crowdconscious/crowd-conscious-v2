@@ -2,6 +2,12 @@ import { CREATIVE_THINKING_OFF, getAnthropicClient, MODELS } from '@/lib/agents/
 import { estimateAnthropicCostUsd } from '@/lib/ciceron/gateway/costs'
 import { recordAiRun } from '@/lib/ciceron/gateway/ai-runs'
 import { assertGatewayBudget } from '@/lib/ciceron/gateway/budget'
+import {
+  anthropicAttemptRequestOptions,
+  DEFAULT_MAX_RETRIES,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  withTimeoutRetry,
+} from '@/lib/ciceron/gateway/request-timeout'
 
 export type CompleteTier = 'fast' | 'creative'
 
@@ -16,6 +22,44 @@ export type CompleteArgs = {
   matterId?: string | null
   userId?: string | null
   retrievedChunkIds?: string[]
+  /** Per-attempt HTTPS timeout (default 60s). */
+  timeoutMs?: number
+  /** Retries after the first attempt on timeout/5xx/network (default 2). */
+  maxRetries?: number
+}
+
+type CompleteRequestPolicy = {
+  timeoutMs: number
+  maxRetries: number
+}
+
+let requestPolicy: CompleteRequestPolicy = {
+  timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+  maxRetries: DEFAULT_MAX_RETRIES,
+}
+
+/** Process-wide defaults for `complete` (backfill sets via --request-timeout-ms). */
+export function setCompleteRequestPolicy(
+  opts: Partial<CompleteRequestPolicy>
+): CompleteRequestPolicy {
+  requestPolicy = {
+    timeoutMs:
+      opts.timeoutMs !== undefined ? opts.timeoutMs : requestPolicy.timeoutMs,
+    maxRetries:
+      opts.maxRetries !== undefined ? opts.maxRetries : requestPolicy.maxRetries,
+  }
+  return { ...requestPolicy }
+}
+
+export function getCompleteRequestPolicy(): CompleteRequestPolicy {
+  return { ...requestPolicy }
+}
+
+export function resetCompleteRequestPolicy(): void {
+  requestPolicy = {
+    timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+    maxRetries: DEFAULT_MAX_RETRIES,
+  }
 }
 
 export type CompleteResult =
@@ -91,15 +135,24 @@ export async function complete(args: CompleteArgs): Promise<CompleteResult> {
   }
 
   const started = Date.now()
+  const timeoutMs = args.timeoutMs ?? requestPolicy.timeoutMs
+  const maxRetries = args.maxRetries ?? requestPolicy.maxRetries
   try {
     const client = getAnthropicClient()
-    const res = await client.messages.create({
-      model,
-      max_tokens: args.maxTokens ?? (args.tier === 'creative' ? 2048 : 1024),
-      system: args.system,
-      messages: [{ role: 'user', content: args.user }],
-      ...(args.tier === 'creative' ? { thinking: CREATIVE_THINKING_OFF } : {}),
-    })
+    const res = await withTimeoutRetry(
+      (signal) =>
+        client.messages.create(
+          {
+            model,
+            max_tokens: args.maxTokens ?? (args.tier === 'creative' ? 2048 : 1024),
+            system: args.system,
+            messages: [{ role: 'user', content: args.user }],
+            ...(args.tier === 'creative' ? { thinking: CREATIVE_THINKING_OFF } : {}),
+          },
+          anthropicAttemptRequestOptions({ timeoutMs, signal })
+        ),
+      { timeoutMs, maxRetries }
+    )
     const text = res.content
       .map((b) => (b.type === 'text' ? b.text : ''))
       .filter(Boolean)
@@ -136,6 +189,7 @@ export async function complete(args: CompleteArgs): Promise<CompleteResult> {
       aiRunId,
     }
   } catch (err) {
+    // Message only — never log request headers or API keys.
     const message = err instanceof Error ? err.message : String(err)
     const aiRunId = await recordAiRun({
       purpose: `${args.purpose}:provider_error`,

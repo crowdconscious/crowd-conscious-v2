@@ -59,6 +59,8 @@ export async function runClassifyMatchBatch(opts?: {
   retryFailed?: boolean
   /** Note ids already attempted in this process; skipped and appended to. */
   excludeIds?: Set<string>
+  /** Heartbeat for backfill stall watchdog (called as each note starts/finishes). */
+  onProgress?: (info: { noteId: string; phase: 'start' | 'done' }) => void
 }): Promise<ClassifyMatchStats> {
   const db = tryCreateCiceronAdminClient()
   const empty: ClassifyMatchStats = {
@@ -137,6 +139,7 @@ export async function runClassifyMatchBatch(opts?: {
   for (const row of batch) {
     excludeIds?.add(row.id)
     stats.processed += 1
+    opts?.onProgress?.({ noteId: row.id, phase: 'start' })
     let classifiedOk = row.classify_status === 'classified'
 
     if (row.classify_status !== 'classified') {
@@ -147,6 +150,7 @@ export async function runClassifyMatchBatch(opts?: {
         classifiedOk = true
       } else {
         stats.classifyFailed += 1
+        opts?.onProgress?.({ noteId: row.id, phase: 'done' })
         continue
       }
     }
@@ -164,6 +168,7 @@ export async function runClassifyMatchBatch(opts?: {
         if (m.newMatches > 0) stats.matchedNotes += 1
       }
     }
+    opts?.onProgress?.({ noteId: row.id, phase: 'done' })
   }
 
   stats.remaining = await countPendingNotes({
