@@ -656,6 +656,278 @@ export type CiceronDatabase = {
         }
         Update: Partial<CiceronDatabase['ciceron']['Tables']['review_tasks']['Insert']>
       }
+      bulletin_sources: {
+        Row: {
+          id: string
+          source_key: string
+          state_code: string
+          state_name: string
+          display_name: string
+          landing_url: string
+          branch_or_subject: string | null
+          publication_form: string | null
+          file_format: string | null
+          proposed_tier: 'A' | 'B' | 'C' | 'D' | 'E' | 'not_verified'
+          needs_login: boolean
+          has_captcha: boolean
+          robots_ok: boolean
+          terms_ok: boolean
+          terms_of_use_url: string | null
+          proposed_match_key: string | null
+          difficulty_note: string | null
+          verified_by: string | null
+          verified_on: string | null
+          terms_reviewed_on: string | null
+          counsel_reviewed_on: string | null
+          enabled: boolean
+          adapter_key: string | null
+          retention_days: number
+          is_demo: boolean
+          metadata: Record<string, unknown>
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          source_key: string
+          state_code: string
+          state_name: string
+          display_name: string
+          landing_url: string
+          branch_or_subject?: string | null
+          publication_form?: string | null
+          file_format?: string | null
+          proposed_tier: 'A' | 'B' | 'C' | 'D' | 'E' | 'not_verified'
+          needs_login?: boolean
+          has_captcha?: boolean
+          robots_ok?: boolean
+          terms_ok?: boolean
+          terms_of_use_url?: string | null
+          proposed_match_key?: string | null
+          difficulty_note?: string | null
+          verified_by?: string | null
+          verified_on?: string | null
+          terms_reviewed_on?: string | null
+          counsel_reviewed_on?: string | null
+          enabled?: boolean
+          adapter_key?: string | null
+          retention_days?: number
+          is_demo?: boolean
+          metadata?: Record<string, unknown>
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['bulletin_sources']['Insert']>
+      }
+      bulletin_matter_catalogue: {
+        Row: {
+          id: string
+          firm_id: string
+          matter_id: string | null
+          case_file_id: string | null
+          state_code: string
+          state_name: string
+          court_name: string
+          expediente_number: string
+          party_name_variants: string[]
+          is_active: boolean
+          is_demo: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          matter_id?: string | null
+          case_file_id?: string | null
+          state_code: string
+          state_name: string
+          court_name: string
+          expediente_number: string
+          party_name_variants?: string[]
+          is_active?: boolean
+          is_demo?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['bulletin_matter_catalogue']['Insert']
+        >
+      }
+      bulletin_runs: {
+        Row: {
+          id: string
+          firm_id: string
+          source_id: string
+          publication_date: string
+          bulletin_number: string | null
+          status: 'ok' | 'failed' | 'partial' | 'manual'
+          failure_stage:
+            | 'fetch'
+            | 'parse'
+            | 'count_check'
+            | 'terms'
+            | 'disabled'
+            | 'manual_required'
+            | null
+          failure_message: string | null
+          entries_parsed: number
+          matters_searched: number
+          hits_exact: number
+          hits_possible: number
+          duration_ms: number | null
+          parser_version: string
+          source_url: string | null
+          is_demo: boolean
+          metadata: Record<string, unknown>
+          started_at: string
+          finished_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          source_id: string
+          publication_date: string
+          bulletin_number?: string | null
+          status: 'ok' | 'failed' | 'partial' | 'manual'
+          failure_stage?:
+            | 'fetch'
+            | 'parse'
+            | 'count_check'
+            | 'terms'
+            | 'disabled'
+            | 'manual_required'
+            | null
+          failure_message?: string | null
+          entries_parsed?: number
+          matters_searched?: number
+          hits_exact?: number
+          hits_possible?: number
+          duration_ms?: number | null
+          parser_version?: string
+          source_url?: string | null
+          is_demo?: boolean
+          metadata?: Record<string, unknown>
+          started_at?: string
+          finished_at?: string | null
+          created_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['bulletin_runs']['Insert']>
+      }
+      bulletin_entries: {
+        Row: {
+          id: string
+          firm_id: string
+          run_id: string
+          source_id: string
+          publication_date: string
+          court_name: string | null
+          expediente_number: string | null
+          party_names: string | null
+          summary: string | null
+          source_url: string | null
+          raw_excerpt: string | null
+          retain_until: string
+          is_demo: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          run_id: string
+          source_id: string
+          publication_date: string
+          court_name?: string | null
+          expediente_number?: string | null
+          party_names?: string | null
+          summary?: string | null
+          source_url?: string | null
+          raw_excerpt?: string | null
+          retain_until: string
+          is_demo?: boolean
+          created_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['bulletin_entries']['Insert']>
+      }
+      bulletin_hits: {
+        Row: {
+          id: string
+          firm_id: string
+          run_id: string
+          entry_id: string
+          catalogue_id: string | null
+          matter_id: string | null
+          case_file_id: string | null
+          match_kind: 'exact' | 'possible'
+          score: number
+          reason: string
+          review_state: 'pendiente' | 'en_revision' | 'confirmado' | 'descartado'
+          review_task_id: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          run_id: string
+          entry_id: string
+          catalogue_id?: string | null
+          matter_id?: string | null
+          case_file_id?: string | null
+          match_kind: 'exact' | 'possible'
+          score?: number
+          reason: string
+          review_state?: 'pendiente' | 'en_revision' | 'confirmado' | 'descartado'
+          review_task_id?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['bulletin_hits']['Insert']>
+      }
+      bulletin_manual_checks: {
+        Row: {
+          id: string
+          firm_id: string
+          source_id: string
+          run_id: string | null
+          check_date: string
+          status: 'pendiente' | 'asignado' | 'hecho' | 'omitido'
+          source_url: string
+          assigned_to: string | null
+          assigned_by: string | null
+          completed_by: string | null
+          notes: string | null
+          completed_at: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          source_id: string
+          run_id?: string | null
+          check_date: string
+          status?: 'pendiente' | 'asignado' | 'hecho' | 'omitido'
+          source_url: string
+          assigned_to?: string | null
+          assigned_by?: string | null
+          completed_by?: string | null
+          notes?: string | null
+          completed_at?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['bulletin_manual_checks']['Insert']
+        >
+      }
     }
     Functions: {
       decide_review: {
@@ -731,6 +1003,81 @@ export type CiceronDatabase = {
           fts_rank: number
           vector_distance: number | null
         }[]
+      }
+      record_bulletin_run: {
+        Args: {
+          p_firm_id: string
+          p_source_id: string
+          p_publication_date: string
+          p_status: string
+          p_bulletin_number?: string | null
+          p_failure_stage?: string | null
+          p_failure_message?: string | null
+          p_entries_parsed?: number
+          p_matters_searched?: number
+          p_hits_exact?: number
+          p_hits_possible?: number
+          p_duration_ms?: number | null
+          p_parser_version?: string
+          p_source_url?: string | null
+          p_is_demo?: boolean
+          p_metadata?: Record<string, unknown>
+          p_started_at?: string
+          p_run_id?: string | null
+        }
+        Returns: string
+      }
+      record_bulletin_hit: {
+        Args: {
+          p_firm_id: string
+          p_run_id: string
+          p_source_id: string
+          p_publication_date: string
+          p_match_kind: string
+          p_score: number
+          p_reason: string
+          p_court_name?: string | null
+          p_expediente_number?: string | null
+          p_party_names?: string | null
+          p_summary?: string | null
+          p_source_url?: string | null
+          p_raw_excerpt?: string | null
+          p_catalogue_id?: string | null
+          p_matter_id?: string | null
+          p_case_file_id?: string | null
+          p_retention_days?: number
+          p_is_demo?: boolean
+        }
+        Returns: string
+      }
+      ensure_bulletin_manual_check: {
+        Args: {
+          p_firm_id: string
+          p_source_id: string
+          p_check_date: string
+          p_source_url: string
+          p_run_id?: string | null
+          p_is_demo?: boolean
+        }
+        Returns: string
+      }
+      assign_bulletin_manual_check: {
+        Args: {
+          p_firm_id: string
+          p_check_id: string
+          p_actor: string
+          p_assignee: string
+        }
+        Returns: Record<string, unknown>
+      }
+      complete_bulletin_manual_check: {
+        Args: {
+          p_firm_id: string
+          p_check_id: string
+          p_actor: string
+          p_notes?: string | null
+        }
+        Returns: Record<string, unknown>
       }
     }
   }
