@@ -2,6 +2,9 @@
  * Backfill classification + matching for every ingested edition, oldest → newest.
  * Resumable batches. Idempotent on already-classified/matched notes when --only-pending.
  *
+ * Shared batch logic lives in lib/ciceron/dof/backfill-batch.ts (also used by
+ * /api/ciceron/cron/backfill). This script keeps the stall watchdog for box runs.
+ *
  * Usage:
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run --since=2026-11-12
  *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --limit=8
@@ -15,8 +18,7 @@
  * no progress for 5 minutes logs batch_stalled and exits non-zero (resumable).
  */
 import { createClient } from '@supabase/supabase-js'
-import { runClassifyMatchBatch } from '../../lib/ciceron/dof/classify-match'
-import { setCompleteRequestPolicy } from '../../lib/ciceron/gateway/complete'
+import { runBackfillBatches } from '../../lib/ciceron/dof/backfill-batch'
 import {
   BATCH_STALL_MS,
   isBatchStalled,
@@ -28,11 +30,10 @@ import {
   ESTIMATE_MARGIN,
   estimateNotesUsd,
   fetchAllRows,
+  loadRecentBackfillRates,
   parseFlags,
   perNoteCostFromRates,
-  projectBatchAffordable,
   sumBackfillSpendSince,
-  type AiRunRate,
 } from './_cost-cap'
 
 type NoteRow = {
@@ -46,34 +47,6 @@ function pendingOr(retryFailed: boolean): string {
   return retryFailed
     ? 'classify_status.in.(pending,failed),match_status.in.(pending,failed)'
     : 'classify_status.eq.pending,match_status.eq.pending'
-}
-
-/** Prefer last ~2 days of runs so the estimate tracks the current corpus. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loadRecentRates(sb: any): Promise<AiRunRate[]> {
-  const since = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-  const rows = await fetchAllRows<{
-    purpose: string
-    cost_estimate_usd: number | null
-  }>(
-    sb
-      .from('ai_runs')
-      .select('purpose, cost_estimate_usd')
-      .in('purpose', ['dof_classify', 'dof_match_relevance'])
-      .gte('created_at', since)
-  )
-  const by = new Map<string, number[]>()
-  for (const r of rows) {
-    if (r.cost_estimate_usd == null) continue
-    const list = by.get(r.purpose) ?? []
-    list.push(Number(r.cost_estimate_usd))
-    by.set(r.purpose, list)
-  }
-  return [...by.entries()].map(([purpose, costs]) => ({
-    purpose,
-    avgCostUsd: costs.reduce((a, b) => a + b, 0) / costs.length,
-    sampleSize: costs.length,
-  }))
 }
 
 async function main() {
@@ -98,18 +71,20 @@ async function main() {
   const sb = createClient(url, key, { db: { schema: 'ciceron' } })
   const orFilter = pendingOr(flags.retryFailed)
 
-  const [{ count: ingestedCount, error: ingestedErr }, { count: pendingCount, error: pendingErr }] =
-    await Promise.all([
-      sb
-        .from('dof_notes')
-        .select('id', { count: 'exact', head: true })
-        .in('ingest_status', ['ready', 'embedding_pending']),
-      sb
-        .from('dof_notes')
-        .select('id', { count: 'exact', head: true })
-        .in('ingest_status', ['ready', 'embedding_pending'])
-        .or(orFilter),
-    ])
+  const [
+    { count: ingestedCount, error: ingestedErr },
+    { count: pendingCount, error: pendingErr },
+  ] = await Promise.all([
+    sb
+      .from('dof_notes')
+      .select('id', { count: 'exact', head: true })
+      .in('ingest_status', ['ready', 'embedding_pending']),
+    sb
+      .from('dof_notes')
+      .select('id', { count: 'exact', head: true })
+      .in('ingest_status', ['ready', 'embedding_pending'])
+      .or(orFilter),
+  ])
   if (ingestedErr || pendingErr) {
     console.error(ingestedErr?.message ?? pendingErr?.message)
     process.exit(1)
@@ -137,12 +112,16 @@ async function main() {
       .order('note_date', { ascending: true })
   )
 
-  const rates = await loadRecentRates(sb)
+  const rates = await loadRecentBackfillRates(sb)
   const sample = perNoteCostFromRates(rates)
   const pendingNotes = pendingCount ?? pending.length
   const needClassify =
     needClassifyCount ??
-    pending.filter((p) => p.classify_status === 'pending' || (flags.retryFailed && p.classify_status === 'failed')).length
+    pending.filter(
+      (p) =>
+        p.classify_status === 'pending' ||
+        (flags.retryFailed && p.classify_status === 'failed')
+    ).length
   const estimateUsd = estimateNotesUsd({
     pendingNotes,
     perNoteUsd: sample.perNoteUsd,
@@ -151,8 +130,6 @@ async function main() {
 
   const priorSpendUsd = await sumBackfillSpendSince(sb, flags.sinceIso)
   const remainingBudgetUsd = Number((COST_CAP_USD - priorSpendUsd).toFixed(4))
-
-  setCompleteRequestPolicy({ timeoutMs: flags.requestTimeoutMs })
 
   console.log(
     JSON.stringify({
@@ -201,137 +178,84 @@ async function main() {
     })
   }
 
-  const requestedLimit = flags.limit && flags.limit > 0 ? flags.limit : 6
   const attemptedIds = new Set<string>()
-  let sessionCost = 0
-  let rounds = 0
-  let totalMatchRows = 0
-  let totalMatchedNotes = 0
+  let lastProgressAt = Date.now()
+  let lastProgressNoteId: string | null = null
+  const stallCheckMs = Math.min(
+    15_000,
+    Math.max(1_000, Math.floor(BATCH_STALL_MS / 20))
+  )
 
-  for (;;) {
-    const spentBefore = await sumBackfillSpendSince(sb, flags.sinceIso)
-    const projection = projectBatchAffordable({
-      spentUsd: spentBefore,
-      batchLimit: requestedLimit,
-      perNoteUsd: sample.perNoteUsd,
-      label: 'backfill-classify-match',
-    })
-    if (!projection.ok) {
-      console.log(
-        JSON.stringify({
-          ok: true,
-          stopped: projection.reason,
-          cumulativeSpendUsd: Number(spentBefore.toFixed(6)),
-          remainingBudgetUsd: projection.remainingBudgetUsd,
-          capUsd: COST_CAP_USD,
-          rounds,
-          sessionCostUsd: Number(sessionCost.toFixed(6)),
-          totalMatchRows,
-          totalMatchedNotes,
-        })
-      )
-      break
-    }
+  const stallTimer = setInterval(() => {
+    const now = Date.now()
+    if (!isBatchStalled(lastProgressAt, now)) return
+    clearInterval(stallTimer)
+    console.error(
+      JSON.stringify({
+        event: 'batch_stalled',
+        ok: false,
+        stalledForMs: now - lastProgressAt,
+        stallMs: BATCH_STALL_MS,
+        lastProgressNoteId,
+        attemptedNotes: attemptedIds.size,
+        requestTimeoutMs: flags.requestTimeoutMs,
+        hint: 'No batch progress; exiting so a wrapper can restart. Already-attempted notes stay skipped via status / --retry-failed.',
+      })
+    )
+    process.exit(1)
+  }, stallCheckMs)
 
-    rounds += 1
-    let lastProgressAt = Date.now()
-    let lastProgressNoteId: string | null = null
-    const stallCheckMs = Math.min(15_000, Math.max(1_000, Math.floor(BATCH_STALL_MS / 20)))
-    const batchPromise = runClassifyMatchBatch({
-      limit: projection.batchLimit,
-      onlyPending: true,
+  try {
+    const totals = await runBackfillBatches({
+      sinceIso: flags.sinceIso,
+      tag: flags.tag ?? 'pre-demo',
       retryFailed: flags.retryFailed,
+      batchLimit: flags.limit && flags.limit > 0 ? flags.limit : 6,
+      wallClockMs: null,
+      requestTimeoutMs: flags.requestTimeoutMs,
+      useClaims: false,
       excludeIds: attemptedIds,
       onProgress: ({ noteId }) => {
         lastProgressAt = Date.now()
         lastProgressNoteId = noteId
+        attemptedIds.add(noteId)
       },
     })
 
-    const stats = await new Promise<Awaited<typeof batchPromise>>((resolve, reject) => {
-      const timer = setInterval(() => {
-        const now = Date.now()
-        if (!isBatchStalled(lastProgressAt, now)) return
-        clearInterval(timer)
-        const stalledForMs = now - lastProgressAt
-        console.error(
-          JSON.stringify({
-            event: 'batch_stalled',
-            ok: false,
-            round: rounds,
-            stalledForMs,
-            stallMs: BATCH_STALL_MS,
-            lastProgressNoteId,
-            attemptedNotes: attemptedIds.size,
-            requestTimeoutMs: flags.requestTimeoutMs,
-            hint: 'No batch progress; exiting so a wrapper can restart. Already-attempted notes stay skipped via status / --retry-failed.',
-          })
-        )
-        reject(Object.assign(new Error('batch_stalled'), { code: 'batch_stalled' }))
-      }, stallCheckMs)
+    clearInterval(stallTimer)
 
-      batchPromise
-        .then((value) => {
-          clearInterval(timer)
-          resolve(value)
-        })
-        .catch((err) => {
-          clearInterval(timer)
-          reject(err)
-        })
-    }).catch((err) => {
-      if (err && typeof err === 'object' && 'code' in err && err.code === 'batch_stalled') {
-        process.exit(1)
-      }
-      throw err
-    })
+    if (totals.stopReason === 'spend_cap_reached') {
+      abortIfSpendAtCap({
+        spentUsd: totals.cumulativeSpendUsd,
+        label: 'backfill-classify-match',
+      })
+    }
 
-    sessionCost += stats.costUsd
-    totalMatchRows += stats.matchRows
-    totalMatchedNotes += stats.matchedNotes
-    const spentUsd = await sumBackfillSpendSince(sb, flags.sinceIso)
     console.log(
       JSON.stringify({
-        round: rounds,
+        ok: true,
         tag: flags.tag ?? null,
-        batchEstUsd: projection.batchEstUsd,
-        ...stats,
-        sessionCostUsd: Number(sessionCost.toFixed(6)),
-        cumulativeSpendUsd: Number(spentUsd.toFixed(6)),
-        totalMatchRows,
-        totalMatchedNotes,
+        since: flags.sinceDay,
+        retryFailed: flags.retryFailed,
+        rounds: totals.rounds,
+        sessionCostUsd: totals.sessionCostUsd,
+        cumulativeSpendUsd: totals.cumulativeSpendUsd,
+        totalMatchRows: totals.matches,
+        totalMatchedNotes: totals.matchedNotes,
+        processed: totals.processed,
+        classified: totals.classified,
+        failed: totals.failed,
+        remaining: totals.remaining,
+        done: totals.done,
+        stopReason: totals.stopReason,
         attemptedNotes: attemptedIds.size,
         capUsd: COST_CAP_USD,
       })
     )
-    if (spentUsd >= COST_CAP_USD) {
-      abortIfSpendAtCap({ spentUsd, label: 'backfill-classify-match' })
-    }
-    // No new work, or every remaining pending note was already tried this run.
-    if (stats.processed === 0) break
-    if (stats.remaining === 0) break
-    if (rounds > 800) {
-      console.error('Stopping after 800 rounds — resume later')
-      break
-    }
+  } catch (err) {
+    clearInterval(stallTimer)
+    throw err
   }
-
-  console.log(
-    JSON.stringify({
-      ok: true,
-      tag: flags.tag ?? null,
-      since: flags.sinceDay,
-      retryFailed: flags.retryFailed,
-      rounds,
-      sessionCostUsd: Number(sessionCost.toFixed(6)),
-      cumulativeSpendUsd: Number(
-        (await sumBackfillSpendSince(sb, flags.sinceIso)).toFixed(6)
-      ),
-      totalMatchRows,
-      totalMatchedNotes,
-      attemptedNotes: attemptedIds.size,
-    })
-  )
 }
 
 main().catch((err) => {

@@ -6,6 +6,7 @@ import {
 } from '@/lib/ciceron/dof/pipeline'
 import { runClassifyMatchBatch } from '@/lib/ciceron/dof/classify-match'
 import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
+import { authorizeCronBearer } from '@/lib/ciceron/dof/backfill-gate'
 import { backfillArchiveEmbeddings } from '@/lib/ciceron/m365/archive-embeddings'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 
@@ -33,9 +34,7 @@ function dailyCapUsd(): number {
 }
 
 function authorize(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET
-  if (!secret) return false
-  return req.headers.get('authorization') === `Bearer ${secret}`
+  return authorizeCronBearer(req.headers.get('authorization'))
 }
 
 type SpendLookup =

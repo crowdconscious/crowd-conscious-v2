@@ -383,6 +383,8 @@ export type CiceronDatabase = {
           raw_storage_path: string | null
           last_error: string | null
           ready_at: string | null
+          /** Lease for serverless backfill overlap safety (migration 329). */
+          backfill_claim_until: string | null
           created_at: string
           updated_at: string
         }
@@ -1078,6 +1080,24 @@ export type CiceronDatabase = {
           p_notes?: string | null
         }
         Returns: Record<string, unknown>
+      }
+      dof_backfill_spend_since: {
+        Args: { p_since: string }
+        Returns: number
+      }
+      claim_dof_backfill_notes: {
+        Args: {
+          p_limit: number
+          p_retry_failed?: boolean
+          p_lease_seconds?: number
+        }
+        Returns: {
+          id: string
+          note_date: string
+          classify_status: string
+          match_status: string
+          backfill_claim_until: string | null
+        }[]
       }
     }
   }
