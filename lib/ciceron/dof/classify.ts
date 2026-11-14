@@ -238,7 +238,7 @@ export async function classifyDofNote(noteId: string): Promise<{
   if (!loaded) {
     await db
       .from('dof_notes')
-      .update({ classify_status: 'skipped' })
+      .update({ classify_status: 'skipped', match_status: 'skipped' })
       .eq('id', noteId)
     return { ok: false, error: 'no text' }
   }

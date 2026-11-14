@@ -83,9 +83,6 @@
     "app/api/ciceron/cron/dof/route.ts": {
       "maxDuration": 300
     },
-    "app/api/ciceron/cron/backfill/route.ts": {
-      "maxDuration": 300
-    },
     "app/api/**/*.ts": {
       "maxDuration": 30
     }
@@ -158,10 +155,6 @@
     {
       "path": "/api/ciceron/cron/dof",
       "schedule": "0 16 * * 0,6"
-    },
-    {
-      "path": "/api/ciceron/cron/backfill",
-      "schedule": "*/5 * * * *"
     }
   ],
   "headers": [
