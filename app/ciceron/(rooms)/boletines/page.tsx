@@ -1,11 +1,22 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { BulletinClockStrip } from './BulletinClockStrip'
 import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
+import {
+  formatDateLongEs,
+  formatDateTimeEs,
+} from '@/lib/ciceron/copy/format-date'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
+
+function statusClass(status: string): string {
+  if (status === 'fallo') return 'cic-bol-status is-critical'
+  if (status === 'manual' || status === 'parcial') return 'cic-bol-status is-warning'
+  if (status === 'sin_publicacion') return 'cic-bol-status is-neutral'
+  return 'cic-bol-status is-good'
+}
 
 export default async function BoletinesPage() {
   const persona = await getCiceronDemoSession()
@@ -32,6 +43,8 @@ export default async function BoletinesPage() {
         {' · '}
         <Link href="/ciceron/revision">{copy.boletines.openRevision}</Link>
       </p>
+
+      <BulletinClockStrip board={data.board} />
 
       <section className="cic-section" aria-labelledby="bol-board">
         <h2 id="bol-board" className="cic-h2">
@@ -68,11 +81,15 @@ export default async function BoletinesPage() {
           <table className="cic-table">
             <thead>
               <tr>
-                <th scope="col">Entidad</th>
-                <th scope="col">Estado</th>
-                <th scope="col">Exactas</th>
-                <th scope="col">Posibles</th>
-                <th scope="col">Fuente</th>
+                <th scope="col">{copy.boletines.colEntidad}</th>
+                <th scope="col">{copy.boletines.colPublicacion}</th>
+                <th scope="col">{copy.boletines.colNivel}</th>
+                <th scope="col">{copy.boletines.colBuscados}</th>
+                <th scope="col">{copy.boletines.colExactas}</th>
+                <th scope="col">{copy.boletines.colPosibles}</th>
+                <th scope="col">{copy.boletines.colHoraCorrida}</th>
+                <th scope="col">{copy.boletines.colEstado}</th>
+                <th scope="col">{copy.boletines.colAccion}</th>
               </tr>
             </thead>
             <tbody>
@@ -80,27 +97,42 @@ export default async function BoletinesPage() {
                 <tr key={row.sourceId}>
                   <td>{row.stateName}</td>
                   <td>
-                    <span
-                      className={
-                        row.status === 'fallo'
-                          ? 'cic-deadline is-urgent'
-                          : row.status === 'parcial' || row.status === 'manual'
-                            ? 'cic-deadline is-soon'
-                            : 'cic-deadline is-normal'
-                      }
-                    >
-                      {row.statusLabel}
-                    </span>
-                    {row.failureMessage ? (
+                    {row.publicationDate
+                      ? formatDateLongEs(row.publicationDate)
+                      : '—'}
+                    {row.bulletinNumber ? (
+                      <span className="cic-muted" style={{ display: 'block', fontSize: '0.8rem' }}>
+                        Núm. {row.bulletinNumber}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td>{row.tierLabel}</td>
+                  <td>{row.mattersSearched}</td>
+                  <td>{row.hitsExact}</td>
+                  <td>{row.hitsPossible}</td>
+                  <td>
+                    {row.runFinishedAt ? formatDateTimeEs(row.runFinishedAt) : '—'}
+                  </td>
+                  <td>
+                    <span className={statusClass(row.status)}>{row.statusLabel}</span>
+                    {row.status === 'fallo' ? (
+                      <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
+                        {copy.boletines.revisarManualmente}
+                        {row.failureMessage ? ` — ${row.failureMessage}` : ''}
+                      </p>
+                    ) : row.failureMessage ? (
                       <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
                         {row.failureMessage}
                       </p>
                     ) : null}
                   </td>
-                  <td>{row.hitsExact}</td>
-                  <td>{row.hitsPossible}</td>
                   <td>
-                    <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className="cic-btn cic-btn-secondary cic-btn-compact"
+                      href={row.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {copy.boletines.openSource}
                     </a>
                   </td>
@@ -115,7 +147,7 @@ export default async function BoletinesPage() {
         <h2 id="bol-hits" className="cic-h2">
           {copy.boletines.hitsTitle}
         </h2>
-        <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+        <p className="cic-bol-notice" role="note">
           {copy.boletines.informative}
         </p>
         {data.hits.length === 0 ? (
@@ -125,9 +157,26 @@ export default async function BoletinesPage() {
             {data.hits.map((h) => (
               <li key={h.id} className="cic-card" style={{ margin: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <strong>
-                    {h.stateName} · {h.expedienteNumber ?? '—'}
-                  </strong>
+                  <div>
+                    {h.clientName ? (
+                      <p style={{ margin: '0 0 4px' }}>
+                        <strong>{h.clientName}</strong>
+                        {h.clientSide ? (
+                          <span className="cic-muted">
+                            {' '}
+                            (
+                            {h.clientSide === 'actor'
+                              ? copy.boletines.clientSideActor
+                              : copy.boletines.clientSideDemandado}
+                            )
+                          </span>
+                        ) : null}
+                      </p>
+                    ) : null}
+                    <strong>
+                      {h.stateName} · {h.expedienteNumber ?? '—'}
+                    </strong>
+                  </div>
                   <span className="cic-muted" style={{ fontSize: '0.85rem' }}>
                     {h.matchKind === 'exact'
                       ? copy.boletines.matchExact
@@ -136,29 +185,48 @@ export default async function BoletinesPage() {
                 </div>
                 <p style={{ margin: '6px 0' }}>{h.reason}</p>
                 <p className="cic-muted" style={{ margin: '0 0 6px', fontSize: '0.85rem' }}>
-                  {h.courtName} · {h.partyNames}
+                  {copy.boletines.publicationDate}:{' '}
+                  {h.publicationDate ? formatDateLongEs(h.publicationDate) : '—'}
+                  {' · '}
+                  {h.courtName ?? '—'}
+                  {' · '}
+                  {copy.boletines.secretaria}: {h.secretaria?.trim() ? h.secretaria : '—'}
                 </p>
-                <p style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>{h.summary}</p>
-                <p className="cic-muted" style={{ fontSize: '0.8rem', margin: '0 0 8px' }}>
-                  {h.informativeNotice}
+                <p className="cic-legal" style={{ margin: '0 0 10px', fontSize: '0.95rem' }}>
+                  {h.summary}
                 </p>
-                <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {h.caseFileId ? (
+                    <Link
+                      className="cic-btn cic-btn-compact"
+                      href={`/ciceron/expedientes/${h.caseFileId}`}
+                    >
+                      {copy.boletines.openExpedienteBtn}
+                    </Link>
+                  ) : null}
+                  <Link
+                    className="cic-btn cic-btn-secondary cic-btn-compact"
+                    href="/ciceron/expedientes/captura"
+                  >
+                    {copy.boletines.captureAcuerdoBtn}
+                  </Link>
+                  <Link
+                    className="cic-btn cic-btn-secondary cic-btn-compact"
+                    href="/ciceron/revision"
+                  >
+                    {copy.boletines.sendReviewBtn}
+                  </Link>
                   {h.sourceUrl ? (
-                    <a href={h.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className="cic-btn cic-btn-secondary cic-btn-compact"
+                      href={h.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {copy.boletines.openSource}
                     </a>
                   ) : null}
-                  {h.caseFileId ? (
-                    <>
-                      {' · '}
-                      <Link href={`/ciceron/expedientes/${h.caseFileId}`}>
-                        {copy.boletines.openExpediente}
-                      </Link>
-                    </>
-                  ) : null}
-                  {' · '}
-                  <Link href="/ciceron/revision">{copy.boletines.openRevision}</Link>
-                </p>
+                </div>
               </li>
             ))}
           </ul>
@@ -181,7 +249,12 @@ export default async function BoletinesPage() {
                 ] ?? m.status}
                 {m.assignedToName ? ` · ${m.assignedToName}` : ''}
                 {' · '}
-                <a href={m.sourceUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  className="cic-btn cic-btn-secondary cic-btn-compact"
+                  href={m.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {copy.boletines.openSource}
                 </a>
               </li>

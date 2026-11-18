@@ -18,6 +18,16 @@ export const CICERON_FIRM_NAME = 'Despacho Demo, S.C.'
 
 export const CICERON_DEMO_LABEL = 'Datos de demostración'
 
+/**
+ * Firm bulletin coordination wall-clock (America/Mexico_City, 24 h).
+ * No DB table — configuration only (B6 C3).
+ */
+export const CICERON_BULLETIN_CLOCK = {
+  objetivo: '09:30',
+  respaldo: '10:00',
+  limite: '12:00',
+} as const
+
 export const CICERON_ROOMS = [
   { href: `${CICERON_BASE}/hoy`, id: 'hoy', badge: 3 },
   { href: `${CICERON_BASE}/boletines`, id: 'boletines', badge: 4 },

@@ -39,6 +39,11 @@ export type BulletinStateBoardRow = {
   /** Internal tier key (A/B/…); UI must render tierLabel. */
   tier: string
   tierLabel: string
+  publicationDate: string | null
+  bulletinNumber: string | null
+  mattersSearched: number
+  /** ISO datetime of finished_at / started_at for the corrida. */
+  runFinishedAt: string | null
 }
 
 export type BulletinHitView = {
@@ -57,6 +62,10 @@ export type BulletinHitView = {
   caseFileId: string | null
   reviewState: string
   informativeNotice: string
+  clientName: string | null
+  clientSide: 'actor' | 'demandado' | null
+  publicationDate: string | null
+  secretaria: string | null
 }
 
 export type ManualCheckView = {
@@ -90,12 +99,31 @@ export type PartnerSummaryCounts = {
   parcialStates: string[]
 }
 
+/** C1 — colour + word; failed/pending sort first. */
 const STATUS_LABEL: Record<BulletinBoardStatus, string> = {
-  revisado: 'Revisado automáticamente',
-  parcial: 'Parcial — revisar',
+  revisado: 'Revisado',
+  parcial: 'Revisión pendiente',
   fallo: 'Falló',
-  manual: 'Revisión manual pendiente',
-  sin_publicacion: 'Sin publicación confirmada',
+  manual: 'Revisión pendiente',
+  sin_publicacion: 'Sin publicación prevista',
+}
+
+const STATUS_SORT: Record<BulletinBoardStatus, number> = {
+  fallo: 0,
+  manual: 1,
+  parcial: 2,
+  sin_publicacion: 3,
+  revisado: 4,
+}
+
+export function sortBoardRows(
+  rows: BulletinStateBoardRow[]
+): BulletinStateBoardRow[] {
+  return [...rows].sort(
+    (a, b) =>
+      STATUS_SORT[a.status] - STATUS_SORT[b.status] ||
+      a.stateName.localeCompare(b.stateName, 'es-MX')
+  )
 }
 
 const INFORMATIVE =
@@ -109,7 +137,31 @@ type RunRow = {
   failure_stage: string | null
   hits_exact: number
   hits_possible: number
+  matters_searched: number | null
+  bulletin_number: string | null
+  publication_date: string | null
+  finished_at: string | null
+  started_at: string | null
   metadata: Record<string, unknown> | null
+}
+
+const CLIENT_BY_MATTER: Record<string, { name: string; side: 'actor' | 'demandado' }> = {
+  [CICERON_SEED.matters.nexoraCnbv]: {
+    name: 'Nexora Pagos, S.A.P.I. de C.V.',
+    side: 'actor',
+  },
+  [CICERON_SEED.matters.fondoPedregal]: {
+    name: 'Fondo Pedregal Inmuebles, S.A. de C.V.',
+    side: 'actor',
+  },
+  [CICERON_SEED.matters.alimentosNom]: {
+    name: 'Alimentos del Bajío Integrados, S.A. de C.V.',
+    side: 'actor',
+  },
+  [CICERON_SEED.matters.farmaCofepris]: {
+    name: 'Distribuidora Farma Sierra, S.A. de C.V.',
+    side: 'actor',
+  },
 }
 
 /** Display/as-of day for the board — current CDMX business day. */
@@ -230,6 +282,10 @@ export function fixtureBulletinBoard(): {
       hitsPossible: 0,
       tier: 'B',
       tierLabel: sourceTierLabel('B'),
+      publicationDate: currentCdmxBusinessDay(),
+      bulletinNumber: 'QRO-DEMO',
+      mattersSearched: 6,
+      runFinishedAt: '2026-11-18T15:25:00.000Z',
     },
     {
       stateCode: 'JAL',
@@ -246,6 +302,10 @@ export function fixtureBulletinBoard(): {
       hitsPossible: 1,
       tier: 'A',
       tierLabel: sourceTierLabel('A'),
+      publicationDate: currentCdmxBusinessDay(),
+      bulletinNumber: 'JAL-DEMO',
+      mattersSearched: 6,
+      runFinishedAt: '2026-11-18T15:35:00.000Z',
     },
     {
       stateCode: 'CDMX',
@@ -263,6 +323,10 @@ export function fixtureBulletinBoard(): {
       hitsPossible: 0,
       tier: 'A',
       tierLabel: sourceTierLabel('A'),
+      publicationDate: currentCdmxBusinessDay(),
+      bulletinNumber: 'CDMX-DEMO-512',
+      mattersSearched: 6,
+      runFinishedAt: '2026-11-18T15:40:00.000Z',
     },
     {
       stateCode: 'MEX',
@@ -279,6 +343,10 @@ export function fixtureBulletinBoard(): {
       hitsPossible: 0,
       tier: 'not_verified',
       tierLabel: sourceTierLabel('not_verified'),
+      publicationDate: currentCdmxBusinessDay(),
+      bulletinNumber: 'MEX-LISTA-DEMO',
+      mattersSearched: 6,
+      runFinishedAt: '2026-11-18T15:15:00.000Z',
     },
     {
       stateCode: 'GTO',
@@ -296,6 +364,10 @@ export function fixtureBulletinBoard(): {
       hitsPossible: 0,
       tier: 'D',
       tierLabel: sourceTierLabel('D'),
+      publicationDate: currentCdmxBusinessDay(),
+      bulletinNumber: null,
+      mattersSearched: 6,
+      runFinishedAt: '2026-11-18T15:50:00.000Z',
     },
     {
       stateCode: 'NL',
@@ -312,6 +384,10 @@ export function fixtureBulletinBoard(): {
       hitsPossible: 0,
       tier: 'D',
       tierLabel: sourceTierLabel('D'),
+      publicationDate: currentCdmxBusinessDay(),
+      bulletinNumber: null,
+      mattersSearched: 6,
+      runFinishedAt: '2026-11-18T15:52:00.000Z',
     },
   ]
 
@@ -337,6 +413,11 @@ export function fixtureBulletinBoard(): {
       caseFileId: 'f1000000-0000-4000-8000-000000000021',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
+      clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
+      clientSide: 'actor',
+      publicationDate: currentCdmxBusinessDay(),
+      secretaria: null,
+
     },
     {
       id: 'hit-qro-2',
@@ -360,6 +441,11 @@ export function fixtureBulletinBoard(): {
       caseFileId: 'f1000000-0000-4000-8000-000000000022',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
+      clientName: 'Fondo Pedregal Inmuebles, S.A. de C.V.',
+      clientSide: 'actor',
+      publicationDate: currentCdmxBusinessDay(),
+      secretaria: null,
+
     },
     {
       id: 'hit-jal-1',
@@ -382,6 +468,11 @@ export function fixtureBulletinBoard(): {
       caseFileId: 'f1000000-0000-4000-8000-000000000023',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
+      clientName: 'Alimentos del Bajío Integrados, S.A. de C.V.',
+      clientSide: 'actor',
+      publicationDate: currentCdmxBusinessDay(),
+      secretaria: null,
+
     },
     {
       id: 'hit-jal-2',
@@ -402,6 +493,11 @@ export function fixtureBulletinBoard(): {
       caseFileId: 'f1000000-0000-4000-8000-000000000022',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
+      clientName: 'Fondo Pedregal Inmuebles, S.A. de C.V.',
+      clientSide: 'actor',
+      publicationDate: currentCdmxBusinessDay(),
+      secretaria: null,
+
     },
     {
       id: 'hit-cdmx-1',
@@ -423,6 +519,11 @@ export function fixtureBulletinBoard(): {
       caseFileId: 'f1000000-0000-4000-8000-000000000024',
       reviewState: 'en_revision',
       informativeNotice: INFORMATIVE,
+      clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
+      clientSide: 'actor',
+      publicationDate: currentCdmxBusinessDay(),
+      secretaria: null,
+
     },
     {
       id: 'hit-mex-1',
@@ -444,6 +545,11 @@ export function fixtureBulletinBoard(): {
       caseFileId: 'f1000000-0000-4000-8000-000000000025',
       reviewState: 'pendiente',
       informativeNotice: INFORMATIVE,
+      clientName: 'Distribuidora Farma Sierra, S.A. de C.V.',
+      clientSide: 'actor',
+      publicationDate: currentCdmxBusinessDay(),
+      secretaria: null,
+
     },
   ]
 
@@ -583,7 +689,7 @@ export async function loadBulletinBoard(
     let runsQuery = db
       .from('bulletin_runs')
       .select(
-        'id, source_id, status, failure_message, failure_stage, hits_exact, hits_possible, publication_date, metadata, is_demo'
+        'id, source_id, status, failure_message, failure_stage, hits_exact, hits_possible, matters_searched, bulletin_number, publication_date, finished_at, started_at, metadata, is_demo'
       )
       .eq('firm_id', persona.firmId)
       .eq('publication_date', runPublicationDate)
@@ -628,12 +734,16 @@ export async function loadBulletinBoard(
           hitsPossible: 0,
           tier: s.proposed_tier,
           tierLabel: sourceTierLabel(s.proposed_tier),
+          publicationDate: null,
+          bulletinNumber: null,
+          mattersSearched: 0,
+          runFinishedAt: null,
         }
       })
       return {
         source: 'schema',
         asOf,
-        board,
+        board: sortBoardRows(board),
         hits: [],
         manuals: [],
         timeSaved: emptyTimeSaved(),
@@ -675,6 +785,10 @@ export async function loadBulletinBoard(
         hitsPossible: run?.hits_possible ?? 0,
         tier: s.proposed_tier,
         tierLabel: sourceTierLabel(s.proposed_tier),
+        publicationDate: run?.publication_date ?? null,
+        bulletinNumber: run?.bulletin_number ?? null,
+        mattersSearched: run?.matters_searched ?? 0,
+        runFinishedAt: run?.finished_at ?? run?.started_at ?? null,
       }
     })
 
@@ -712,6 +826,7 @@ export async function loadBulletinBoard(
           summary: string | null
           source_url: string | null
           source_id: string
+          publication_date: string | null
         },
       ])
     )
@@ -742,6 +857,9 @@ export async function loadBulletinBoard(
         const src = ent ? sourceMeta.get(ent.source_id) : null
         if (!ent || !src) return null
         const partyVariant = partyVariantFromStoredReason(hit.reason)
+        const client = hit.matter_id
+          ? CLIENT_BY_MATTER[hit.matter_id]
+          : undefined
         return {
           id: hit.id,
           stateCode: src.state_code,
@@ -767,6 +885,10 @@ export async function loadBulletinBoard(
           caseFileId: hit.case_file_id,
           reviewState: hit.review_state,
           informativeNotice: INFORMATIVE,
+          clientName: client?.name ?? null,
+          clientSide: client?.side ?? null,
+          publicationDate: ent.publication_date,
+          secretaria: null,
         } satisfies BulletinHitView
       })
       .filter(Boolean) as BulletinHitView[]
@@ -827,7 +949,7 @@ export async function loadBulletinBoard(
     return {
       source: 'schema',
       asOf,
-      board,
+      board: sortBoardRows(board),
       hits,
       manuals,
       timeSaved: {

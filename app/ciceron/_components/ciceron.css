@@ -1794,3 +1794,59 @@ textarea.cic-input {
     white-space: normal;
   }
 }
+
+/* B6 C1/C3 — bulletin status colour+word and firm clock strip */
+.cic-bol-status {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 2px 0;
+}
+.cic-bol-status.is-good {
+  color: var(--cic-accent-mint);
+}
+.cic-bol-status.is-critical {
+  color: #f97066;
+}
+.cic-bol-status.is-warning {
+  color: #fdb022;
+}
+.cic-bol-status.is-neutral {
+  color: var(--cic-muted);
+}
+.cic-bol-notice {
+  font-size: 0.9rem;
+  color: var(--cic-muted);
+  border-left: 3px solid var(--cic-rule-strong);
+  padding-left: 12px;
+  margin: 0 0 14px;
+}
+.cic-clock-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.cic-clock-slot {
+  background: var(--cic-surface);
+  border: 1px solid var(--cic-rule);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cic-clock-hm {
+  font-family: var(--cic-serif);
+  font-size: 1.4rem;
+}
+.cic-btn-compact {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+@media (max-width: 720px) {
+  .cic-clock-grid {
+    grid-template-columns: 1fr;
+  }
+}

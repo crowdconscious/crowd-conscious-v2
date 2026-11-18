@@ -7,6 +7,7 @@ import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
@@ -47,12 +48,6 @@ export default async function HoyPage() {
         <h1 className="cic-h1">{copy.hoy.title}</h1>
         <p className="cic-lead">{copy.hoy.lead}</p>
 
-        {!briefing.editionIsToday ? (
-          <p className="cic-edition-heading" role="status">
-            {copy.hoy.lastEdition}: {briefing.editionLabel}
-          </p>
-        ) : null}
-
         <p className="cic-hoy-links">
           <Link href="/ciceron/hoy/briefing">{copy.engagement.openBriefing}</Link>
           {(persona.role === 'socio' || persona.role === 'admin') && (
@@ -88,7 +83,10 @@ export default async function HoyPage() {
           <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
             {copy.hoy.bulletinsLead}
           </p>
-          <p className="cic-muted" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+          <p className="cic-muted" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+            {copy.hoy.bulletinDateLabel}: {formatDateLongEs(bulletins.asOf)}
+          </p>
+          <p className="cic-muted" style={{ fontSize: '0.8rem' }}>
             {bulletins.source === 'schema'
               ? copy.boletines.dataSourceDb
               : bulletins.source === 'fixture'
@@ -103,11 +101,19 @@ export default async function HoyPage() {
           ) : (
             <ul style={{ margin: '0 0 12px', paddingLeft: 18 }}>
               {bulletins.hits.slice(0, 5).map((h) => (
-                <li key={h.id}>
-                  <Link href="/ciceron/boletines">
-                    {h.stateName}: {h.expedienteNumber ?? '—'} (
-                    {h.matchKind === 'exact' ? copy.boletines.matchExact : copy.boletines.matchPossible})
+                <li key={h.id} style={{ marginBottom: 8 }}>
+                  <Link href={h.caseFileId ? `/ciceron/expedientes/${h.caseFileId}` : '/ciceron/boletines'}>
+                    <strong>{h.clientName ?? h.stateName}</strong>
+                    {' · '}
+                    {h.courtName ?? '—'}
+                    {' · '}
+                    {h.expedienteNumber ?? '—'}
                   </Link>
+                  {h.summary ? (
+                    <span className="cic-muted" style={{ display: 'block', fontSize: '0.85rem' }}>
+                      {h.summary}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -124,6 +130,12 @@ export default async function HoyPage() {
             </Link>
           </p>
         </section>
+
+        {!briefing.editionIsToday ? (
+          <p className="cic-edition-heading" role="status">
+            {copy.hoy.dofEditionLabel}: {briefing.editionLabel}
+          </p>
+        ) : null}
 
         <section className="cic-section" aria-labelledby="hoy-matches">
           <h2 id="hoy-matches" className="cic-h2">
