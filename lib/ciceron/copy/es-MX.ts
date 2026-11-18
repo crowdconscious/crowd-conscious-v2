@@ -121,7 +121,7 @@ export const copy = {
     lead: 'Aislamiento por despacho y por asunto, sin entrenamiento con datos del cliente, revisión humana, auditoría y derechos de exportación y eliminación.',
     isolationTitle: 'Aislamiento',
     isolationBody:
-      'Cada despacho tiene su propio espacio (firm_id). Los asuntos restringen el acceso por membresía. La recuperación filtra en la base de datos antes de ordenar resultados.',
+      'Cada despacho tiene su propio espacio aislado. Los asuntos restringen el acceso por membresía. La recuperación filtra por despacho y asunto antes de ordenar resultados.',
     noTrainingTitle: 'Sin entrenamiento con sus datos',
     noTrainingBody:
       'Los documentos y consultas del cliente no se usan para entrenar modelos de Cicerón.ai.',
@@ -586,7 +586,7 @@ export const copy = {
     colStatus: 'Estado',
     colDuration: 'Duración',
     colStats: 'Estadísticas',
-    colError: 'Error',
+    colError: 'Detalle',
   },
 
   adminMetricas: {

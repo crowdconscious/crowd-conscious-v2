@@ -1,0 +1,29 @@
+name: Cicerón wording scan
+
+on:
+  pull_request:
+    paths:
+      - 'app/ciceron/**'
+      - 'lib/ciceron/**'
+      - 'scripts/ciceron/scan-wording.ts'
+      - '.github/workflows/ciceron-wording.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/ciceron/**'
+      - 'lib/ciceron/**'
+      - 'scripts/ciceron/scan-wording.ts'
+
+jobs:
+  scan:
+    name: scan-wording
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Scan lawyer-facing wording
+        run: npm run ciceron:scan-wording
