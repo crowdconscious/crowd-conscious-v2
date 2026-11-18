@@ -4,6 +4,7 @@
  */
 
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { formatDateShortEs } from '@/lib/ciceron/copy/format-date'
 
 const RAW_TIER_VALUES = ['A', 'B', 'C', 'D', 'E', 'not_verified'] as const
 
@@ -117,11 +118,8 @@ export function computationDisplayText(raw: string | null | undefined): string {
     text = text.replaceAll(key, label)
   }
   text = text.replace(/\bRegla ejemplo\b/gi, copy.expedientes.ruleExample)
-  // ISO dates → short Spanish form handled later in B1; strip bare ISO for A1 safety.
-  text = text.replace(
-    /\b(\d{4})-(\d{2})-(\d{2})\b/g,
-    (_m, y: string, mo: string, d: string) => `${Number(d)}/${Number(mo)}/${y}`
-  )
+  // ISO dates → short Spanish (B1); never leave yyyy-mm-dd in the UI.
+  text = text.replace(/\b(\d{4}-\d{2}-\d{2})\b/g, (iso) => formatDateShortEs(iso))
   return text
 }
 

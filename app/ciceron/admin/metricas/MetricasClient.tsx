@@ -12,6 +12,7 @@ import {
   Bar,
 } from 'recharts'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { formatDateShortEs } from '@/lib/ciceron/copy/format-date'
 import type { FirmWeekRow, MetricsDashboard } from '@/lib/ciceron/engagement/metrics-types'
 
 function Sample({ n }: { n: number }) {
@@ -43,7 +44,7 @@ function IndicatorTable({ rows }: { rows: FirmWeekRow[] }) {
           {rows.map((r) => (
             <tr key={`${r.firmId}-${r.weekStart}`}>
               <td>{r.firmName}</td>
-              <td>{r.weekStart}</td>
+              <td>{formatDateShortEs(r.weekStart)}</td>
               <td>
                 {r.activation.display}
                 <Sample n={r.activation.sampleSize} />
@@ -85,7 +86,7 @@ export function MetricasClient({ data }: { data: MetricsDashboard }) {
   const costTrend = [...trendSource]
     .sort((a, b) => a.weekStart.localeCompare(b.weekStart))
     .map((r) => ({
-      week: r.weekStart.slice(5),
+      week: formatDateShortEs(r.weekStart),
       cost: typeof r.cost.value === 'number' ? r.cost.value : 0,
       valueMoments:
         typeof r.valueMoments.value === 'number' ? r.valueMoments.value : 0,
