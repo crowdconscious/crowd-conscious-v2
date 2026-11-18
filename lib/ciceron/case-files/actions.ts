@@ -31,6 +31,7 @@ import {
 } from '@/lib/ciceron/demo/actor-write'
 import { writeM365CookieStatus } from '@/lib/ciceron/m365/demo-store'
 import { CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
+import { formatClientNotifyPreview } from '@/lib/ciceron/case-files/notify-preview'
 
 export type ActionResult = {
   ok: boolean
@@ -309,31 +310,28 @@ export async function draftClientNotifyEmail(formData: FormData): Promise<Action
     matterId: matterId || null,
   })
 
-  let subject = `Actualización de su expediente ${fileNumber}`
-  let body = result.ok
-    ? result.text
-    : [
-        `Estimado(a) representante de ${clientName}:`,
-        '',
-        `Le informamos sobre una actuación reciente en el expediente ${fileNumber}.`,
-        eventText.slice(0, 400),
-        '',
-        'Quedamos a su disposición para cualquier duda.',
-        '',
-        `Atentamente,\n${persona.displayName}\nDespacho Demo, S.C.`,
-        '',
-        CICERON_DEMO_LABEL,
-      ].join('\n')
-
-  if (result.ok) {
-    try {
-      const parsed = JSON.parse(result.text) as { subject?: string; body?: string }
-      if (parsed.subject) subject = parsed.subject
-      if (parsed.body) body = parsed.body
-    } catch {
-      // keep plain text body
-    }
+  const fallbackNotify = {
+    subject: `Actualización de su expediente ${fileNumber}`,
+    body: [
+      `Estimado(a) representante de ${clientName}:`,
+      '',
+      `Le informamos sobre una actuación reciente en el expediente ${fileNumber}.`,
+      eventText.slice(0, 400),
+      '',
+      'Quedamos a su disposición para cualquier duda.',
+      '',
+      `Atentamente,\n${persona.displayName}\nDespacho Demo, S.C.`,
+      '',
+      CICERON_DEMO_LABEL,
+    ].join('\n'),
   }
+
+  // Prefer fenced/wrapped JSON subject+body; never surface raw object text (B6/H).
+  const formatted = result.ok
+    ? formatClientNotifyPreview(result.text, fallbackNotify)
+    : fallbackNotify
+  const subject = formatted.subject
+  const body = formatted.body
 
   const db = tryCreateCiceronAdminClient()
   let draftId = `notify-fixture-${Date.now()}`
