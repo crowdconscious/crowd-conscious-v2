@@ -116,13 +116,15 @@ export const fixtureReviews = [
   },
 ] as const
 
+/** State-court sample cases (prospect list style). Marked via demo badge, not DEMO- prefix. */
 export const fixtureCases = [
   {
     id: 'case-1',
     clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
     matterTitle: 'Licencia CNBV y prevención de lavado',
-    court: 'TFJA Sala Regional Metropolitana',
-    fileNumber: 'DEMO-TFJA-1001/2026',
+    court: 'Trigésimo Primero Civil de Proceso Oral',
+    fileNumber: '1001/2026',
+    juicio: 'Oral Merc.',
     lastEvent: 'Notificación por lista — término para contestar',
     nextDeadline: '14 de noviembre de 2026',
     urgency: 'soon' as const,
@@ -131,10 +133,33 @@ export const fixtureCases = [
     id: 'case-2',
     clientName: 'Viento del Istmo Energía, S.A.P.I. de C.V.',
     matterTitle: 'Permisos CRE y evaluación de impacto ambiental',
-    court: 'Juzgado Primero de Distrito en Materia de Amparo',
-    fileNumber: 'DEMO-AMP-404/2026',
+    court: 'Juzgado Primero Civil de Proceso Oral del Estado de México',
+    fileNumber: '404/2026',
+    juicio: 'Ejec. Merc.',
     lastEvent: 'Se tiene por presentado el escrito de demanda',
     nextDeadline: '20 de noviembre de 2026',
+    urgency: 'normal' as const,
+  },
+  {
+    id: 'case-3',
+    clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
+    matterTitle: 'Licencia CNBV y prevención de lavado',
+    court: 'Juzgado Primero Civil de Querétaro',
+    fileNumber: '123/2026',
+    juicio: 'Ord. Merc.',
+    lastEvent: 'Se tiene por presentado el escrito de demanda',
+    nextDeadline: '—',
+    urgency: 'normal' as const,
+  },
+  {
+    id: 'case-4',
+    clientName: 'Distribuidora Farma Sierra, S.A. de C.V.',
+    matterTitle: 'Autorizaciones COFEPRIS y cadena de frío',
+    court: 'Juzgado Primero Civil Toluca',
+    fileNumber: '901/2026',
+    juicio: 'Ejec. Civ.',
+    lastEvent: 'Acuerdo de admisión',
+    nextDeadline: '—',
     urgency: 'normal' as const,
   },
 ] as const
@@ -142,7 +167,7 @@ export const fixtureCases = [
 export const fixtureDeadlines = [
   {
     id: 'dl-1',
-    label: 'Contestar demanda — DEMO-TFJA-1001/2026',
+    label: 'Contestar demanda — 1001/2026',
     due: '14 de noviembre de 2026',
     clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
     urgency: 'soon' as const,

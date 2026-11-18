@@ -5,6 +5,7 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fictionalMatterCountForState } from '@/lib/ciceron/boletines/fictional-catalogue'
 import { sourceTierLabel } from '@/lib/ciceron/copy/labels'
 
 export type JurisdictionCoverageRow = {
@@ -14,34 +15,6 @@ export type JurisdictionCoverageRow = {
   /** ISO date when coverage began, or null if still por verificar. */
   coverageSince: string | null
   verified: boolean
-}
-
-/** Prospect footprint matter weights from SURVEY-SUMMARY (fictional demo scale). */
-const MATTER_WEIGHTS: Record<string, number> = {
-  'Estado de México': 33,
-  Guanajuato: 18,
-  Querétaro: 14,
-  Chihuahua: 11,
-  Jalisco: 10,
-  'Nuevo León': 9,
-  Coahuila: 6,
-  'Quintana Roo': 6,
-  Tabasco: 6,
-  Chiapas: 5,
-  Sonora: 5,
-  Puebla: 5,
-  Tamaulipas: 5,
-  Hidalgo: 3,
-  Morelos: 2,
-  Michoacán: 2,
-  Yucatán: 2,
-  Durango: 2,
-  'Baja California': 1,
-  'Baja California Sur': 1,
-  Guerrero: 1,
-  Aguascalientes: 1,
-  Oaxaca: 1,
-  'Ciudad de México': 250,
 }
 
 function parseCsvLine(line: string): string[] {
@@ -109,7 +82,7 @@ export function loadJurisdictionCoverageFromRegistry(
     const verified = Boolean(meta.verifiedBy && meta.verifiedOn)
     rows.push({
       stateName,
-      matterCount: MATTER_WEIGHTS[stateName] ?? 0,
+      matterCount: fictionalMatterCountForState(stateName),
       modality: verified ? sourceTierLabel(meta.tier) : sourceTierLabel('not_verified'),
       coverageSince: verified ? meta.verifiedOn : null,
       verified,

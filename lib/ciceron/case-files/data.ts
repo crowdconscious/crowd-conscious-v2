@@ -10,6 +10,7 @@ import {
   type CaseDeadlineView,
   type CaseEventView,
 } from '@/lib/ciceron/case-files/fixtures-detail'
+import { displaySampleCase } from '@/lib/ciceron/case-files/display-sample'
 import { readM365CookieStatus } from '@/lib/ciceron/m365/demo-store'
 import {
   fixtureArchiveDocs,
@@ -85,6 +86,7 @@ export type CaseListRow = {
   nextDeadlineAt: string | null
   urgency: 'urgent' | 'soon' | 'normal'
   lawyerName: string
+  isSample: boolean
 }
 
 export async function loadCaseList(
@@ -177,20 +179,26 @@ export async function loadCaseList(
       const client = clients.find((c) => c.id === matter?.client_id)
       const last = events.find((e) => e.case_file_id === r.id)
       const dl = deadlines.find((d) => d.case_file_id === r.id)
+      const display = displaySampleCase({
+        id: r.id,
+        fileNumber: r.file_number,
+        court: r.court_name,
+      })
       return {
         id: r.id,
         clientName: client?.display_name ?? '—',
         clientId: client?.id ?? '',
         matterTitle: matter?.title ?? '—',
         matterId: r.matter_id,
-        court: r.court_name ?? '—',
-        fileNumber: r.file_number ?? '—',
+        court: display.court,
+        fileNumber: display.fileNumber,
         lastEvent:
           last?.summary?.replace(/^Datos de demostración\.\s*/i, '') ?? 'Sin actuaciones',
         nextDeadline: dl ? formatEsDate(dl.due_at) : '—',
         nextDeadlineAt: dl?.due_at ?? null,
         urgency: dl ? urgencyFromDue(dl.due_at) : 'normal',
         lawyerName: '—',
+        isSample: true,
       }
     })
 
@@ -209,19 +217,38 @@ export async function loadCaseList(
 }
 
 function fixtureListRows(): CaseListRow[] {
+  const clientByCase: Record<string, string> = {
+    'case-1': 'nexora',
+    'case-2': 'viento',
+    'case-3': 'nexora',
+    'case-4': 'farma',
+  }
+  const matterByCase: Record<string, string> = {
+    'case-1': 'nexora-cnbv',
+    'case-2': 'viento-cre',
+    'case-3': 'nexora-cnbv',
+    'case-4': 'farma-cofepris',
+  }
+  const lawyerByCase: Record<string, string> = {
+    'case-1': 'Asociado Demo Herrera',
+    'case-2': 'Socia Demo Rivera',
+    'case-3': 'Asociado Demo Herrera',
+    'case-4': 'Asociado Demo López',
+  }
   return fixtureCases.map((c) => ({
     id: c.id,
     clientName: c.clientName,
-    clientId: c.id === 'case-1' ? 'nexora' : 'viento',
+    clientId: clientByCase[c.id] ?? 'nexora',
     matterTitle: c.matterTitle,
-    matterId: c.id === 'case-1' ? 'nexora-cnbv' : 'viento-cre',
+    matterId: matterByCase[c.id] ?? 'nexora-cnbv',
     court: c.court,
     fileNumber: c.fileNumber,
     lastEvent: c.lastEvent,
     nextDeadline: c.nextDeadline,
     nextDeadlineAt: null,
     urgency: c.urgency === 'soon' ? 'soon' : 'normal',
-    lawyerName: c.id === 'case-1' ? 'Asociado Demo Herrera' : 'Socia Demo Rivera',
+    lawyerName: lawyerByCase[c.id] ?? 'Asociado Demo Herrera',
+    isSample: true,
   }))
 }
 
@@ -390,6 +417,12 @@ export async function loadCaseDetail(
           ? []
           : fixture?.deadlines ?? []
 
+    const display = displaySampleCase({
+      id: cf.id,
+      fileNumber: cf.file_number,
+      court: cf.court_name,
+    })
+
     return {
       source: 'schema',
       schemaReady: true,
@@ -399,8 +432,10 @@ export async function loadCaseDetail(
         clientId: client?.id ?? '',
         matterId: cf.matter_id,
         matterTitle: matter?.title ?? fixture?.matterTitle ?? '—',
-        court: cf.court_name ?? '—',
-        fileNumber: cf.file_number ?? '—',
+        court: display.court,
+        fileNumber: display.fileNumber,
+        juicio: display.juicio || fixture?.juicio || '',
+        secretaria: display.secretaria ?? fixture?.secretaria ?? null,
         status: cf.status,
         lawyerName: fixture?.lawyerName ?? '—',
         events,

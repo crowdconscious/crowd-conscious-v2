@@ -375,7 +375,7 @@ export const copy = {
 
   expedientes: {
     title: 'Expedientes',
-    lead: 'Expedientes federales de demostración. Sin acceso automatizado al Poder Judicial.',
+    lead: 'Expedientes estatales de demostración. Sin acceso automatizado al Poder Judicial.',
     nextDeadline: 'Próximo plazo',
     lastEvent: 'Último acuerdo',
     filters: 'Filtros',

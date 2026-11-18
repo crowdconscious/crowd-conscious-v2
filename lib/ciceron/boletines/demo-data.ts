@@ -4,6 +4,7 @@ import {
   currentCdmxBusinessDay,
   pickDemoBulletinPublicationDate,
 } from '@/lib/ciceron/boletines/demo-freshness'
+import { fictionalMatterCountForState } from '@/lib/ciceron/boletines/fictional-catalogue'
 import { CICERON_BOLETIN_SOURCES } from '@/lib/ciceron/boletines/seed-ids'
 import {
   failureStageLabel,
@@ -284,7 +285,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('B'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: 'QRO-DEMO',
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Querétaro'),
       runFinishedAt: '2026-11-18T15:25:00.000Z',
     },
     {
@@ -304,7 +305,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('A'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: 'JAL-DEMO',
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Jalisco'),
       runFinishedAt: '2026-11-18T15:35:00.000Z',
     },
     {
@@ -325,7 +326,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('A'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: 'CDMX-DEMO-512',
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Ciudad de México'),
       runFinishedAt: '2026-11-18T15:40:00.000Z',
     },
     {
@@ -345,7 +346,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('not_verified'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: 'MEX-LISTA-DEMO',
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Estado de México'),
       runFinishedAt: '2026-11-18T15:15:00.000Z',
     },
     {
@@ -366,7 +367,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('D'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: null,
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Guanajuato'),
       runFinishedAt: '2026-11-18T15:50:00.000Z',
     },
     {
@@ -386,7 +387,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('D'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: null,
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Nuevo León'),
       runFinishedAt: '2026-11-18T15:52:00.000Z',
     },
   ]

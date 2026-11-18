@@ -43,6 +43,8 @@ export default async function CaseDetailPage({
       <MatterBreadcrumb client={detail.clientName} matter={detail.matterTitle} />
       <p className="cic-muted" style={{ marginTop: 8 }}>
         {detail.court}
+        {detail.juicio ? ` · ${detail.juicio}` : ''}
+        {detail.secretaria ? ` · Sría. ${detail.secretaria}` : ''}
       </p>
       {!schemaReady ? (
         <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
