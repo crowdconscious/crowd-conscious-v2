@@ -19,11 +19,6 @@ function Feedback({ state }: { state: BulletinActionState | null }) {
         <p style={{ margin: '6px 0 0', fontSize: '0.9rem' }}>
           {formatPolicyCell(state.policyId, state.policyReason)}
         </p>
-        {state.policyId ? (
-          <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
-            policy_id: {state.policyId}
-          </p>
-        ) : null}
       </div>
     )
   }

@@ -19,8 +19,8 @@ export function auditRowsToCsv(rows: AuditViewerRow[]): string {
       r.createdAt,
       r.actorName,
       auditActionLabel(r.action),
-      r.entityType,
-      r.entityId ?? '',
+      r.entityLabel,
+      '',
       r.outcome === 'denied' ? 'Denegado' : 'Permitido',
       formatPolicyCell(r.policyId, r.policyReason),
     ].map((c) => `"${String(c).replace(/"/g, '""')}"`)

@@ -54,6 +54,8 @@ export type AuditViewerRow = {
   action: string
   entityType: string
   entityId: string | null
+  /** Lawyer-facing object label (G2). */
+  entityLabel: string
   outcome: 'allowed' | 'denied'
   policyId: string | null
   policyReason: string | null

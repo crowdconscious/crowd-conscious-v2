@@ -7,8 +7,6 @@ import {
   confirmDeadlineAction,
   discardDeadlineAction,
   draftClientNotifyEmail,
-  draftInformarCliente,
-  syncDeadlinesToOutlookSim,
 } from '@/lib/ciceron/case-files/actions'
 
 export function DeadlineConfirm({
@@ -78,7 +76,6 @@ export function ClientActions({
   eventText: string
 }) {
   const [pending, start] = useTransition()
-  const [note, setNote] = useState<string | null>(null)
   const [compose, setCompose] = useState<{
     draftId: string
     toEmail: string
@@ -94,26 +91,6 @@ export function ClientActions({
         {copy.expedientes.informarCliente}
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-        <button
-          type="button"
-          className="cic-btn cic-btn-secondary"
-          disabled={pending}
-          onClick={() => {
-            start(async () => {
-              const fd = new FormData()
-              fd.set('caseId', caseId)
-              fd.set('matterId', matterId)
-              fd.set('clientName', clientName)
-              fd.set('fileNumber', fileNumber)
-              fd.set('eventText', eventText)
-              const r = await draftInformarCliente(fd)
-              setNote(String(r.payload?.body ?? ''))
-              setMsg(r.message ?? null)
-            })
-          }}
-        >
-          {copy.expedientes.informarCliente}
-        </button>
         <button
           type="button"
           className="cic-btn"
@@ -143,28 +120,7 @@ export function ClientActions({
         >
           {copy.m365.notifyCompose}
         </button>
-        <button
-          type="button"
-          className="cic-btn cic-btn-secondary"
-          disabled={pending}
-          onClick={() => {
-            start(async () => {
-              const fd = new FormData()
-              fd.set('caseId', caseId)
-              const r = await syncDeadlinesToOutlookSim(fd)
-              setMsg(r.message ?? null)
-            })
-          }}
-        >
-          {copy.expedientes.syncOutlook}
-        </button>
       </div>
-
-      {note ? (
-        <div className="cic-legal" style={{ marginTop: 12, whiteSpace: 'pre-wrap' }}>
-          {note}
-        </div>
-      ) : null}
 
       {compose ? (
         <div className="cic-outlook-compose" style={{ marginTop: 16 }}>
