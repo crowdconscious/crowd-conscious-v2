@@ -158,6 +158,28 @@ export function MetricasClient({ data }: { data: MetricsDashboard }) {
         </h2>
         <IndicatorTable rows={data.byFirm} />
       </section>
+
+      <section className="cic-section" aria-labelledby="metricas-time-saved">
+        <h2 id="metricas-time-saved" className="cic-h2">
+          {copy.adminMetricas.timeSavedTitle}
+        </h2>
+        <p>
+          <strong style={{ fontFamily: 'var(--cic-serif)', fontSize: '1.6rem' }}>
+            {data.bulletinTimeSaved.hoursReplaced.toFixed(1)}
+          </strong>{' '}
+          {copy.adminMetricas.hours}
+          <span className="cic-muted">
+            {' '}
+            · {data.bulletinTimeSaved.runsCounted} {copy.adminMetricas.runs}
+          </span>
+        </p>
+        <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+          {copy.adminMetricas.timeSavedBody}
+        </p>
+        <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+          {copy.adminMetricas.timeSavedBasis} {copy.adminMetricas.timeSavedDemo}
+        </p>
+      </section>
     </div>
   )
 }

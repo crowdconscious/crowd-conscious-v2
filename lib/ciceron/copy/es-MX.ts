@@ -242,12 +242,6 @@ export const copy = {
     boardTitle: 'Estado por entidad',
     hitsTitle: 'Coincidencias y posibles coincidencias',
     manualTitle: 'Revisiones manuales',
-    timeSavedTitle: 'Tiempo de revisión manual sustituido',
-    timeSavedBody:
-      'Horas estimadas de consulta manual reemplazadas según los recibos de corrida de demostración.',
-    timeSavedDemo: 'Cifra de demostración — no es un KPI de producción.',
-    hours: 'horas',
-    runs: 'corridas con recibo',
     informative:
       'Informativo: no constituye notificación judicial. Consulte siempre la fuente oficial.',
     openSource: 'Ver fuente',
@@ -264,9 +258,44 @@ export const copy = {
     denied: 'Acción denegada',
     emptyHits: 'Sin coincidencias para hoy.',
     emptyManual: 'No hay revisiones manuales pendientes.',
-    dataSourceDb: 'Fuente de datos: base de datos',
-    dataSourceFixture: 'Fuente de datos: fixture de demostración',
+    dataSourceDb: 'Datos del despacho',
+    dataSourceFixture: 'Datos de demostración',
     dataSourceError: 'No se pudo cargar el tablero',
+    /** A2 — source modality (never raw A/B/not_verified). */
+    tier: {
+      A: 'Automático',
+      B: 'Revisión asistida',
+      C: 'Revisión gestionada',
+      D: 'Por verificar',
+      E: 'Por verificar',
+      not_verified: 'Por verificar',
+    },
+    /** A1 — failure copy from failure_stage. */
+    failureStage: {
+      fetch:
+        'No se pudo consultar la fuente. Revise manualmente; no constituye «sin novedades».',
+      parse: 'La publicación no se pudo interpretar por completo. Revise manualmente.',
+      count_check:
+        'La cantidad de acuerdos no coincide con lo esperado. Revise manualmente.',
+      terms: 'Fuente pendiente de revisión de términos de uso.',
+      disabled: 'Fuente no habilitada para consulta automática.',
+      manual_required:
+        'Requiere revisión manual (la fuente no admite consulta automática).',
+    },
+    reasonExact: 'Coincide el número de expediente y el juzgado.',
+    reasonExactCourt:
+      'Coincide el expediente {expediente} con el juzgado «{court}».',
+    reasonPossibleNumberNoCourt:
+      'El número coincide; el juzgado no aparece en la publicación.',
+    reasonPossibleParty: 'El nombre de la parte se parece a: {variant}.',
+    reasonPossibleGeneric: 'Posible coincidencia: revise el nombre de la parte y el juzgado.',
+    manualStatus: {
+      pendiente: 'Pendiente',
+      asignado: 'Asignada',
+      hecho: 'Hecha',
+      hecha: 'Hecha',
+    },
+    colNivel: 'Modalidad',
   },
 
   monitor: {
@@ -332,6 +361,16 @@ export const copy = {
       'Algunas tablas de Expedientes aún no están aplicadas en esta vista previa. Se muestran datos de demostración.',
     syncOutlook: 'Sincronizar con Outlook',
     lawyerFilter: 'Abogado',
+    ruleExample: 'Regla de demostración',
+    eventTypes: {
+      acuerdo: 'Acuerdo',
+      notificacion: 'Notificación',
+      notificacion_demanda: 'Notificación de demanda',
+      acuerdo_requerimiento: 'Acuerdo de requerimiento',
+      notificacion_sentencia: 'Notificación de sentencia',
+      emplazamiento: 'Emplazamiento',
+      audiencia: 'Audiencia',
+    },
   },
 
   m365: {
@@ -483,6 +522,22 @@ export const copy = {
     colEntity: 'Objeto',
     colOutcome: 'Resultado',
     colPolicy: 'Regla',
+    actions: {
+      view_client_material: 'Abrió material del cliente',
+      review_decide: 'Registró una decisión',
+      review_decision: 'Registró una decisión',
+      draft_edit: 'Editó un borrador',
+      review_reassign: 'Reasignó una revisión',
+      delivery_create: 'Preparó una entrega',
+      delivery: 'Registró una entrega',
+      bulletin_manual_assign: 'Asignó revisión manual de boletín',
+      bulletin_manual_complete: 'Marcó revisión manual como hecha',
+      bulletin_partner_summary_preview: 'Generó vista previa para socios',
+      access_denied: 'Acceso denegado',
+      research_answer_created: 'Generó respuesta de investigación',
+      research_feedback: 'Envió comentario sobre una respuesta',
+      research_sent_to_review: 'Envió investigación a revisión',
+    },
   },
 
   clientes: {
@@ -553,8 +608,16 @@ export const copy = {
     week: 'Semana',
     firm: 'Despacho',
     demoSource: 'Datos de demostración',
-    schemaSource: 'Vistas SQL del esquema ciceron',
+    schemaSource: 'Datos del despacho',
     linkFuentes: 'Fuentes',
+    timeSavedTitle: 'Tiempo de revisión manual sustituido',
+    timeSavedBody:
+      'Suma de las horas de consulta manual registradas en los recibos de corrida exitosos (datos de demostración).',
+    timeSavedBasis:
+      'Cada corrida exitosa registra las horas que habría tomado revisar esa fuente a mano; la cifra suma esos recibos del día.',
+    timeSavedDemo: 'Cifra de demostración — no es un KPI de producción.',
+    hours: 'horas',
+    runs: 'corridas con recibo',
   },
 
   engagement: {

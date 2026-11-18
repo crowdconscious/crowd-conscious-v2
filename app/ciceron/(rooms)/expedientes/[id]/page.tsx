@@ -5,6 +5,10 @@ import { MatterBreadcrumb } from '../../../_components/MatterBreadcrumb'
 import { MatterTopbarTitle } from '../../../_components/MatterChrome'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import {
+  computationDisplayText,
+  eventTypeLabel,
+} from '@/lib/ciceron/copy/labels'
 import { loadCaseDetail } from '@/lib/ciceron/case-files/data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { canConfirmDeadline } from '@/lib/ciceron/case-files/confirm-deadline'
@@ -64,7 +68,7 @@ export default async function CaseDetailPage({
               <li key={ev.id} className="cic-timeline-item">
                 <div className="cic-timeline-meta">
                   <time dateTime={ev.occurredAt}>{ev.occurredLabel}</time>
-                  <span className="cic-muted">{ev.eventType}</span>
+                  <span className="cic-muted">{eventTypeLabel(ev.eventType)}</span>
                 </div>
                 <p className="cic-legal" style={{ margin: '6px 0' }}>
                   {ev.aiSummary}
@@ -106,7 +110,8 @@ export default async function CaseDetailPage({
                     <strong>{copy.expedientes.basis}:</strong> {d.basisText}
                   </p>
                   <p className="cic-muted" style={{ fontSize: '0.8rem' }}>
-                    <strong>{copy.expedientes.computation}:</strong> {d.computationText}
+                    <strong>{copy.expedientes.computation}:</strong>{' '}
+                    {computationDisplayText(d.computationText)}
                   </p>
                   {d.confirmedBy ? (
                     <p className="cic-muted" style={{ fontSize: '0.75rem' }}>

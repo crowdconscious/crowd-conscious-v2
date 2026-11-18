@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { formatPolicyCell } from '@/lib/ciceron/audit/policy-labels'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { auditActionLabel } from '@/lib/ciceron/copy/labels'
 import type { AuditViewerRow } from '@/lib/ciceron/review/types'
 import { auditRowsToCsv } from '@/lib/ciceron/review/data-client'
 
@@ -59,7 +60,7 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
             <option value="">—</option>
             {actions.map((a) => (
               <option key={a} value={a}>
-                {a}
+                {auditActionLabel(a)}
               </option>
             ))}
           </select>
@@ -108,7 +109,7 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
                 <tr key={r.id}>
                   <td>{new Date(r.createdAt).toLocaleString('es-MX')}</td>
                   <td>{r.actorName}</td>
-                  <td>{r.action}</td>
+                  <td>{auditActionLabel(r.action)}</td>
                   <td>
                     {r.entityType}
                     {r.entityId ? ` · ${r.entityId.slice(0, 8)}` : ''}
