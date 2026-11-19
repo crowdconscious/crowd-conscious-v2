@@ -984,6 +984,9 @@ export const copy = {
     send: 'Enviar por WhatsApp',
     sendNote:
       'Abre WhatsApp con un mensaje listo. Usted confirma el envío; Cicerón no envía automáticamente.',
+    sendDemoTest: 'Enviar resumen de prueba por WhatsApp',
+    sendDemoTestNote:
+      'Envía la plantilla aprobada del resumen de la mañana (datos ficticios, etiquetados) al número en CICERON_DEMO_RECIPIENT_WHATSAPP. Solo socio o administrador. Requiere CICERON_WHATSAPP_ENABLED y plantilla Meta aprobada.',
   },
 
   integrations: {

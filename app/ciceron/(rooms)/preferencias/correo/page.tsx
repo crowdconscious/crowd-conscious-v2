@@ -5,13 +5,16 @@ import { loadMorningEmailPrefs } from '@/lib/ciceron/engagement/morning-email-da
 import {
   saveMorningEmailPrefsAction,
   sendDemoMorningTestAction,
+  sendDemoMorningWhatsAppTestAction,
   sendMorningPreviewAction,
 } from '@/lib/ciceron/engagement/morning-email-actions'
 import { isMorningEmailEnabled } from '@/lib/ciceron/engagement/morning-email-gate'
 import {
   canSendDemoLiveTest,
   readDemoRecipientEmail,
+  readDemoRecipientWhatsApp,
 } from '@/lib/ciceron/engagement/demo-recipient'
+import { readWhatsAppCloudConfig } from '@/lib/ciceron/whatsapp/cloud-api'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
@@ -24,6 +27,12 @@ export default async function MorningEmailPrefsPage() {
   const showDemoTest =
     persona.firmId === CICERON_SEED.firmDemo && canSendDemoLiveTest(persona.role)
   const demoRecipientConfigured = Boolean(readDemoRecipientEmail())
+  const waCfg = readWhatsAppCloudConfig()
+  const demoWhatsAppConfigured = Boolean(readDemoRecipientWhatsApp())
+  const waReady =
+    waCfg.enabled &&
+    Boolean(waCfg.phoneNumberId && waCfg.accessToken && waCfg.templateName) &&
+    demoWhatsAppConfigured
 
   return (
     <div>
@@ -112,6 +121,17 @@ export default async function MorningEmailPrefsPage() {
           </button>
           <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
             {copy.morningEmail.sendDemoTestNote}
+          </p>
+        </form>
+      ) : null}
+
+      {showDemoTest ? (
+        <form action={sendDemoMorningWhatsAppTestAction} style={{ marginTop: 16 }}>
+          <button type="submit" className="cic-btn" disabled={!waReady}>
+            {copy.whatsapp.sendDemoTest}
+          </button>
+          <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
+            {copy.whatsapp.sendDemoTestNote}
           </p>
         </form>
       ) : null}
