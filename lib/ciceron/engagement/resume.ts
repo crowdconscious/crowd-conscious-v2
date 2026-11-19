@@ -55,12 +55,12 @@ const RESUME_LABEL_ES: Record<string, string> = {
   investigacion_desk: 'Investigación',
   clientes_list: 'Clientes y asuntos',
   hoy: copy.rooms.hoy,
-  guided_step_1: 'Recorrido guiado — Hoy / Boletines',
-  guided_step_2: 'Recorrido guiado — Coordinador',
-  guided_step_3: 'Recorrido guiado — Revisión',
-  guided_step_4: 'Recorrido guiado — Expedientes',
-  guided_step_5: 'Recorrido guiado — Investigación',
-  guided_step_6: 'Recorrido guiado — Fuentes y cobertura',
+  guided_step_1: 'Recorrido guiado — Boletín del día',
+  guided_step_2: 'Recorrido guiado — Coincidencia',
+  guided_step_3: 'Recorrido guiado — Plazo',
+  guided_step_4: 'Recorrido guiado — Aviso al cliente',
+  guided_step_5: 'Recorrido guiado — Resumen para socios',
+  guided_step_6: 'Recorrido guiado — Cierre',
 }
 
 export function resumeLabelEs(code: string): string {

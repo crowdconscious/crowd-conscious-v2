@@ -34,6 +34,7 @@ export const copy = {
 
   guidedStory: {
     title: 'Recorrido guiado',
+    start: 'Recorrido guiado',
     progress: 'Paso',
     of: 'de',
     next: 'Continuar',
@@ -41,54 +42,49 @@ export const copy = {
     dismiss: 'Omitir recorrido',
     resume: 'Reanudar recorrido',
     demoTag: 'Datos de demostración',
+    storyClient: 'Nexora Pagos, S.A.P.I. de C.V.',
     steps: {
       1: {
-        title: 'Hoy: lo publicado en los boletines estatales que afecta a sus asuntos',
+        title: 'Boletín del día',
         body:
-          'Empiece en Hoy y en Boletines. Revise las corridas de demostración de Ciudad de México y Estado de México, el tablero de las 09:30 y las coincidencias etiquetadas. El Monitor del Diario Oficial es un módulo opcional y permanece deshabilitado en esta validación.',
-        cta: 'Ver Hoy',
+          'Siga el hilo de Nexora Pagos: en Boletines aparece la publicación de Querétaro que menciona su expediente. Datos de demostración; no constituye notificación judicial.',
+        cta: 'Abrir Boletines',
       },
       2: {
-        title: 'Coordinación a las 09:30 y revisiones manuales',
+        title: 'Coincidencia con el cliente',
         body:
-          'Abra la vista del coordinador: asigne revisiones manuales (por ejemplo Guanajuato o Nuevo León) y prepare el resumen para socios. Nada se envía fuera de la demostración.',
-        cta: 'Vista del coordinador',
+          'La tarjeta de coincidencia resume en una frase: Nexora Pagos (actor), el juzgado y lo que el acuerdo requiere. Abra el expediente vinculado para continuar.',
+        cta: 'Ver coincidencias',
       },
       3: {
-        title: 'Revisión humana antes de cualquier salida',
+        title: 'Plazo en el expediente',
         body:
-          'Pase a la cola de Revisión. Un abogado autorizado decide; la demostración registra la auditoría. No hay envíos automáticos al cliente.',
-        cta: 'Abrir Revisión',
+          'En el expediente de muestra revise el plazo propuesto en días hábiles. Confirmarlo exige un rol autorizado; la demostración no presenta escritos al juzgado.',
+        cta: 'Abrir expediente',
       },
       4: {
-        title: 'Expedientes y plazos',
+        title: 'Aviso al cliente en revisión',
         body:
-          'Abra un expediente de muestra, revise el plazo propuesto y confírmelo con el rol autorizado. Los expedientes son datos de demostración.',
-        cta: 'Ir a Expedientes',
+          'Antes de cualquier salida al cliente, un abogado autoriza el aviso en la cola de Revisión. La auditoría queda registrada; no hay envío automático.',
+        cta: 'Abrir Revisión',
       },
       5: {
-        title: 'Investigación con fuentes verificadas',
+        title: 'Resumen para socios',
         body:
-          'Formule una pregunta sobre el corpus disponible y abra la fuente citada. Una pregunta fuera del corpus debe recibir una negativa explícita.',
-        cta: 'Ir a Investigación',
-      },
-      6: {
-        title: 'Fuentes, cobertura y módulos opcionales',
-        body:
-          'Consulte Fuentes y cobertura: los boletines de demostración usan datos ficticios etiquetados y las fuentes estánales siguen deshabilitadas. El Monitor DOF queda como módulo opcional, fuera del alcance de esta validación.',
-        cta: 'Ver Fuentes y cobertura',
+          'Cierre la mañana en la vista del coordinador: el mapa de entidades y el resumen matutino para socios (solo vista previa; no se envía correo).',
+        cta: 'Vista del coordinador',
       },
     },
     finale: {
-      title: 'Qué fue demostración y qué queda opcional',
+      title: 'Recorrido completo',
       body:
-        'Datos de demostración: despacho, clientes, boletines estatales (incluidas corridas de CDMX y Edomex), tablero 09:30, expedientes y plazos. El Monitor del Diario Oficial es un módulo opcional deshabilitado en esta validación. Solicite un piloto para su despacho.',
+        'Siguió el hilo de Nexora Pagos desde el boletín hasta el resumen para socios. Todo es datos de demostración del Despacho Altamirano y Asociados, S.C. Solicite un piloto para su despacho.',
       realLabel: 'Corpus de referencia (opcional)',
       sampleLabel: 'Datos de demostración',
       realItems:
         'Monitor DOF: módulo opcional; no forma parte de la validación de boletines estatales.',
       sampleItems:
-        'Despacho Altamirano y Asociados, S.C.; clientes; boletines estatales; tablero 09:30; expedientes; plazos.',
+        'Despacho Altamirano y Asociados, S.C.; Nexora Pagos; boletines estatales; plazos; resumen para socios.',
       cta: 'Solicitar un piloto',
       ctaHref: 'mailto:hola@ciceron.ai?subject=Piloto%20Cicer%C3%B3n.ai',
     },

@@ -2284,3 +2284,34 @@ textarea.cic-input {
   background: rgba(110, 231, 183, 0.1);
   color: var(--cic-accent-mint);
 }
+
+.cic-guided-story-client {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--cic-accent-mint);
+}
+
+.cic-guided-start-form {
+  margin: 0;
+}
+
+.cic-guided-start-btn {
+  appearance: none;
+  border: 1px solid var(--cic-accent-mint);
+  background: rgba(110, 231, 183, 0.08);
+  color: var(--cic-accent-mint);
+  border-radius: var(--cic-radius);
+  padding: 6px 12px;
+  font-family: var(--cic-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cic-guided-start-btn:hover {
+  background: rgba(110, 231, 183, 0.16);
+}

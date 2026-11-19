@@ -10,7 +10,11 @@ import { shouldShowAdminRailLinks } from '@/lib/ciceron/demo/rail-visibility'
 import { SU_MANANA_RAIL_GROUPS } from '@/lib/ciceron/demo/su-manana-pure'
 import { CiceronLockup } from './CiceronLogo'
 import { CommandPalette } from './CommandPalette'
-import { GuidedStoryPanel, GuidedStoryResumeBar } from './GuidedStory'
+import {
+  GuidedStoryPanel,
+  GuidedStoryResumeBar,
+  GuidedStoryStartButton,
+} from './GuidedStory'
 import { MatterChromeProvider, useMatterChrome } from './MatterChrome'
 import { PersonaSwitcher, type SwitchablePersona } from './PersonaSwitcher'
 import './ciceron.css'
@@ -221,6 +225,9 @@ function ShellInner({
               {copy.topbar.commandHint}
               <kbd>{copy.topbar.commandShortcut}</kbd>
             </button>
+            {meta.guidedStory?.dismissed || meta.guidedStory?.completed ? (
+              <GuidedStoryStartButton />
+            ) : null}
             <div className="cic-user" title={copy.topbar.userMenu}>
               {meta.userName} · {meta.role}
             </div>
