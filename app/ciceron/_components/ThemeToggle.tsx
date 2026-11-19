@@ -51,8 +51,9 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-pressed={theme === 'light'}
       title={label}
+      suppressHydrationWarning
     >
-      {label}
+      <span suppressHydrationWarning>{label}</span>
     </button>
   )
 }

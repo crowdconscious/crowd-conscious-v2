@@ -10,7 +10,11 @@ import {
   formatDateLongEs,
   formatDateTimeEs,
 } from '@/lib/ciceron/copy/format-date'
-import type { CardPersonaRole } from '@/lib/ciceron/boletines/card-action-pure'
+import {
+  decideCardPrimaryAction,
+  type CardPersonaRole,
+} from '@/lib/ciceron/boletines/card-action-pure'
+import { buildQueCambio } from '@/lib/ciceron/boletines/que-cambio-pure'
 import { personaHomeKind } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
@@ -178,7 +182,33 @@ export default async function BoletinesPage() {
           </EmptyState>
         ) : (
           <ul className="cic-stack cic-match-list">
-            {data.hits.map((h) => (
+            {data.hits.map((h) => {
+              const needsManual = manualStates.has(h.stateCode)
+              const primary = decideCardPrimaryAction({
+                role: personaRole,
+                caseFileId: h.caseFileId,
+                sourceUrl: h.sourceUrl,
+                matchKind: h.matchKind,
+                needsManual,
+              })
+              const cambio = buildQueCambio({
+                clientName: h.clientName,
+                summary: h.summary,
+                matchKind: h.matchKind,
+                courtName: h.courtName,
+                expedienteNumber: h.expedienteNumber,
+              })
+              const primaryLabel =
+                primary.id === 'notify-client'
+                  ? copy.boletines.notifyClientBtn
+                  : primary.id === 'assign-pasante'
+                    ? copy.boletines.assignPasanteBtn
+                    : primary.id === 'mark-reviewed'
+                      ? copy.boletines.markReviewedBtn
+                      : primary.id === 'capture'
+                        ? copy.boletines.captureAcuerdoBtn
+                        : copy.boletines.openExpedienteBtn
+              return (
               <li key={h.id}>
                 <BulletinMatchCard
                   id={h.id}
@@ -195,11 +225,18 @@ export default async function BoletinesPage() {
                   caseFileId={h.caseFileId}
                   sourceUrl={h.sourceUrl}
                   reason={h.reason}
-                  personaRole={personaRole}
-                  needsManual={manualStates.has(h.stateCode)}
+                  queCambioBefore={cambio.before}
+                  queCambioAfter={cambio.after}
+                  queCambioLegalDetail={cambio.legalDetail}
+                  primaryActionId={primary.id}
+                  primaryLabel={primaryLabel}
+                  primaryHref={primary.href}
+                  primaryDenied={primary.denied}
+                  primaryDenyReason={primary.denyReason}
                 />
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       </section>
