@@ -19,7 +19,10 @@ import { ProAssistant, ProAssistantButton } from './ProAssistant'
 import { ThemeToggle } from './ThemeToggle'
 import { MatterChromeProvider, useMatterChrome } from './MatterChrome'
 import { PersonaSwitcher, type SwitchablePersona } from './PersonaSwitcher'
-import type { ProPersonaRole } from '@/lib/ciceron/demo/pro-assistant-pure'
+import type {
+  ProClientRef,
+  ProPersonaRole,
+} from '@/lib/ciceron/demo/pro-assistant-pure'
 import './ciceron.css'
 
 export type ShellMeta = {
@@ -36,6 +39,9 @@ export type ShellMeta = {
   /** True when this session came from a prospect (non-admin) invite. */
   isProspectSession?: boolean
   proRole?: ProPersonaRole
+  proClients?: ProClientRef[]
+  proPlazosSoonCount?: number
+  proClientsMovedCount?: number
 }
 
 const RAIL_COLLAPSE_KEY = 'ciceron-rail-collapsed'
@@ -272,6 +278,9 @@ function ShellInner({
         open={proOpen}
         onClose={() => setProOpen(false)}
         role={meta.proRole ?? 'socio'}
+        clients={meta.proClients}
+        plazosSoonCount={meta.proPlazosSoonCount}
+        clientsMovedCount={meta.proClientsMovedCount}
       />
     </div>
   )

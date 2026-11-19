@@ -8,6 +8,7 @@ import {
   buildProDraft,
   buildProSuggestions,
   parseProIntent,
+  type ProClientRef,
   type ProPersonaRole,
 } from '@/lib/ciceron/demo/pro-assistant-pure'
 
@@ -26,38 +27,48 @@ export function ProAssistant({
   role = 'socio',
   plazosSoonCount = 1,
   clientsMovedCount = 3,
+  clients: clientsProp,
 }: {
   open: boolean
   onClose: () => void
   role?: ProPersonaRole
   plazosSoonCount?: number
   clientsMovedCount?: number
+  clients?: ProClientRef[]
 }) {
   const titleId = useId()
   const [q, setQ] = useState('')
+  const [preferredEntryId, setPreferredEntryId] = useState<string | undefined>()
+
+  const baseClients = clientsProp ?? PRO_DEMO_CLIENTS
   const clients = useMemo(() => {
-    if (role !== 'pasante') return PRO_DEMO_CLIENTS
-    // Demo: pasante only assigned to Fondo Pedregal matters.
-    return PRO_DEMO_CLIENTS.map((c) =>
-      c.id === 'fondo'
-        ? c
-        : { ...c, allowedMatterIds: [] as string[] }
+    if (role !== 'pasante') return baseClients
+    return baseClients.map((c) =>
+      c.id === 'fondo' ? c : { ...c, allowedMatterIds: [] as string[] }
     )
-  }, [role])
+  }, [role, baseClients])
 
   const chips = useMemo(
-    () => buildProSuggestions({ plazosSoonCount, clientsMovedCount }),
-    [plazosSoonCount, clientsMovedCount]
+    () =>
+      buildProSuggestions({
+        plazosSoonCount,
+        clientsMovedCount,
+        primaryClientName: clients[0]?.name,
+      }),
+    [plazosSoonCount, clientsMovedCount, clients]
   )
 
   const intent = useMemo(
-    () => parseProIntent(q, { role, clients }),
-    [q, role, clients]
+    () => parseProIntent(q, { role, clients, preferredEntryId }),
+    [q, role, clients, preferredEntryId]
   )
   const draft = useMemo(() => buildProDraft(intent), [intent])
 
   useEffect(() => {
-    if (!open) setQ('')
+    if (!open) {
+      setQ('')
+      setPreferredEntryId(undefined)
+    }
   }, [open])
 
   useEffect(() => {
@@ -96,7 +107,10 @@ export function ProAssistant({
           id="cic-pro-input"
           className="cic-pro-input"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            setPreferredEntryId(undefined)
+            setQ(e.target.value)
+          }}
           placeholder={copy.pro.placeholder}
           autoFocus
         />
@@ -107,7 +121,10 @@ export function ProAssistant({
               key={c.id}
               type="button"
               className="cic-pro-chip"
-              onClick={() => setQ(c.query)}
+              onClick={() => {
+                setPreferredEntryId(undefined)
+                setQ(c.query)
+              }}
             >
               {c.label}
             </button>
@@ -117,6 +134,40 @@ export function ProAssistant({
         {draft ? (
           <div className={`cic-pro-draft${draft.denied ? ' is-denied' : ''}`}>
             <p className="cic-pro-draft-kicker">{copy.pro.draftLabel}</p>
+            {!draft.denied ? (
+              <div className="cic-pro-resolution" aria-label={copy.pro.resolvedLabel}>
+                <span className="cic-pro-res-chip">
+                  <span className="cic-pro-res-k">{copy.pro.chipClient}</span>
+                  {draft.resolution.clientName}
+                </span>
+                <span className="cic-pro-res-chip">
+                  <span className="cic-pro-res-k">{copy.pro.chipMatter}</span>
+                  {draft.resolution.matterLabel}
+                  {draft.resolution.expedienteNumber
+                    ? ` · ${draft.resolution.expedienteNumber}`
+                    : ''}
+                </span>
+                <span className="cic-pro-res-chip">
+                  <span className="cic-pro-res-k">{copy.pro.chipSource}</span>
+                  {draft.resolution.sourceName}
+                </span>
+              </div>
+            ) : null}
+            {draft.alternateMatters.length > 0 ? (
+              <p className="cic-pro-alt-matters">
+                <span className="cic-muted">{copy.pro.changeMatter}: </span>
+                {draft.alternateMatters.map((m) => (
+                  <button
+                    key={m.entryId}
+                    type="button"
+                    className="cic-pro-alt-btn"
+                    onClick={() => setPreferredEntryId(m.entryId)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </p>
+            ) : null}
             {draft.denied ? (
               <p className="cic-muted cic-inline-denied" role="note">
                 {draft.denyReason}

@@ -2709,6 +2709,57 @@ textarea.cic-input {
   padding-top: 12px;
 }
 
+.cic-pro-resolution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.cic-pro-res-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1px solid var(--cic-border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+.cic-pro-res-k {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cic-muted);
+}
+
+.cic-pro-alt-matters {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.cic-pro-alt-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--cic-border, rgba(255, 255, 255, 0.18));
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 3px 8px;
+}
+
+.cic-pro-alt-btn:hover {
+  border-color: var(--cic-accent, #c4a574);
+}
+
 .cic-pro-draft-kicker {
   margin: 0 0 8px;
   font-size: 0.7rem;

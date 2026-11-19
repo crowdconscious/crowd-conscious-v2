@@ -9,7 +9,7 @@ import {
 } from './pro-assistant-pure'
 
 describe('pro-assistant-pure', () => {
-  it('parses notify intent for Nexora', () => {
+  it('parses notify intent for Nexora with real entry', () => {
     const intent = parseProIntent('escríbele a Nexora sobre el auto de hoy', {
       role: 'socio',
       clients: PRO_DEMO_CLIENTS,
@@ -18,6 +18,9 @@ describe('pro-assistant-pure', () => {
     if (intent.kind === 'notify') {
       assert.match(intent.client.name, /Nexora/)
       assert.equal(intent.denied, false)
+      assert.match(intent.entry.expedienteNumber, /123\/2026|1001\/2026/)
+      assert.match(intent.entry.courtName, /Juzgado/)
+      assert.match(intent.entry.acuerdoPlain, /presentado el escrito de demanda|vista/)
     }
   })
 
@@ -35,15 +38,32 @@ describe('pro-assistant-pure', () => {
     }
   })
 
-  it('builds a draft that never claims to send', () => {
-    const intent = parseProIntent('recuérdame el plazo de Farma Sierra', {
+  it('builds a draft that cites expediente, juzgado, acuerdo and never sends', () => {
+    const intent = parseProIntent('escríbele a Nexora sobre el auto de hoy', {
       role: 'socio',
       clients: PRO_DEMO_CLIENTS,
     })
     const draft = buildProDraft(intent)
     assert.ok(draft)
+    assert.match(draft!.body, /expediente 123\/2026|expediente 1001\/2026/)
+    assert.match(draft!.body, /Juzgado/)
+    assert.match(draft!.body, /Se tiene por presentado|Se ordena vista/)
+    assert.match(draft!.body, /Siguiente paso sugerido/)
     assert.match(draft!.body, /no se envía automáticamente/i)
     assert.match(draft!.body, /demostración/i)
+    assert.match(draft!.resolution.clientName, /Nexora/)
+    assert.ok(draft!.resolution.expedienteNumber)
+    assert.doesNotMatch(draft!.body, /\d{4}-\d{2}-\d{2}/)
+  })
+
+  it('exposes alternate matters when ambiguous', () => {
+    const intent = parseProIntent('escríbele a Nexora', {
+      role: 'socio',
+      clients: PRO_DEMO_CLIENTS,
+    })
+    const draft = buildProDraft(intent)
+    assert.ok(draft)
+    assert.ok(draft!.alternateMatters.length >= 1)
   })
 
   it('keeps LLM flag off by default', () => {

@@ -755,6 +755,11 @@ export const copy = {
     openCompose: 'Abrir en Outlook simulado',
     unknown:
       'No entendí la petición. Pruebe con un cliente de la demostración (Nexora, Farma Sierra) y una acción (escribir, recordar plazo).',
+    resolvedLabel: 'Lo que entendí',
+    chipClient: 'Cliente',
+    chipMatter: 'Asunto',
+    chipSource: 'Fuente',
+    changeMatter: 'Cambiar asunto',
   },
 
   digest: {
