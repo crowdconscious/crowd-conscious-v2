@@ -2315,3 +2315,160 @@ textarea.cic-input {
 .cic-guided-start-btn:hover {
   background: rgba(110, 231, 183, 0.16);
 }
+
+/* —— Deadline countdown + week strip —— */
+.cic-week-strip {
+  margin: calc(var(--cic-space) * 2) 0 calc(var(--cic-space) * 3);
+}
+
+.cic-week-strip-lead {
+  font-size: 0.85rem;
+  margin: 6px 0 12px;
+}
+
+.cic-week-strip-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cic-week-strip-day {
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 4.5rem;
+}
+
+.cic-week-strip-day.is-today {
+  border-color: var(--cic-accent-mint);
+  box-shadow: 0 0 0 1px rgba(110, 231, 183, 0.35);
+}
+
+.cic-week-strip-day.is-weekend {
+  opacity: 0.55;
+}
+
+.cic-week-strip-day.has-deadline {
+  background: var(--cic-surface);
+}
+
+.cic-week-strip-wd {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+}
+
+.cic-week-strip-num {
+  font-family: var(--cic-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.cic-week-strip-dot {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background: var(--cic-accent-mint);
+  color: var(--cic-on-accent);
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cic-week-strip-dot.is-empty {
+  background: transparent;
+  color: transparent;
+}
+
+.cic-deadline-countdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: var(--cic-radius);
+  border: 1px solid var(--cic-rule);
+  background: var(--cic-surface);
+}
+
+.cic-deadline-countdown-word {
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.cic-deadline-countdown-num {
+  font-family: var(--cic-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.cic-deadline-countdown-due,
+.cic-deadline-countdown-label {
+  font-size: 0.85rem;
+  color: var(--cic-muted);
+}
+
+.cic-deadline-countdown.is-overdue,
+.cic-deadline-countdown.is-today,
+.cic-deadline-countdown.is-critical {
+  border-color: var(--cic-urgent);
+}
+.cic-deadline-countdown.is-overdue .cic-deadline-countdown-word,
+.cic-deadline-countdown.is-today .cic-deadline-countdown-word,
+.cic-deadline-countdown.is-critical .cic-deadline-countdown-word,
+.cic-deadline-countdown.is-overdue .cic-deadline-countdown-num,
+.cic-deadline-countdown.is-today .cic-deadline-countdown-num,
+.cic-deadline-countdown.is-critical .cic-deadline-countdown-num {
+  color: var(--cic-urgent);
+}
+
+.cic-deadline-countdown.is-soon {
+  border-color: var(--cic-soon);
+}
+.cic-deadline-countdown.is-soon .cic-deadline-countdown-word,
+.cic-deadline-countdown.is-soon .cic-deadline-countdown-num {
+  color: var(--cic-soon);
+}
+
+.cic-deadline-countdown.is-normal {
+  border-color: var(--cic-normal);
+}
+.cic-deadline-countdown.is-normal .cic-deadline-countdown-word,
+.cic-deadline-countdown.is-normal .cic-deadline-countdown-num {
+  color: var(--cic-normal);
+}
+
+.cic-hoy-deadline-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 520px) {
+  .cic-week-strip-grid {
+    gap: 4px;
+  }
+  .cic-week-strip-day {
+    padding: 8px 2px;
+    min-height: 4rem;
+  }
+}

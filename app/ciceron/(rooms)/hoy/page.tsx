@@ -6,6 +6,8 @@ import { ReviewBadge } from '../../_components/ReviewBadge'
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { SuMananaHero } from '../../_components/SuMananaHero'
+import { WeekDeadlineStrip } from '../../_components/WeekDeadlineStrip'
+import { DeadlineCountdown } from '../../_components/DeadlineCountdown'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
@@ -135,6 +137,10 @@ export default async function HoyPage() {
     <div className="cic-hoy-layout">
       <div className="cic-hoy-primary">
         <SuMananaHero metrics={morning.metrics} actions={morning.actions} />
+
+        <WeekDeadlineStrip
+          dueAts={upcomingDeadlines.map((d) => d.dueAt).filter((v): v is string => Boolean(v))}
+        />
 
         <p className="cic-hoy-links">
           <Link href="/ciceron/hoy/briefing">{copy.engagement.openBriefing}</Link>
@@ -318,8 +324,12 @@ export default async function HoyPage() {
           </h2>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} className="cic-stack">
             {upcomingDeadlines.map((d) => (
-              <li key={d.id}>
-                <DeadlineMarker label={`${d.label} — ${d.due}`} urgency={d.urgency} />
+              <li key={d.id} className="cic-hoy-deadline-row">
+                {d.dueAt ? (
+                  <DeadlineCountdown dueAt={d.dueAt} dueLabel={d.due} label={d.label} />
+                ) : (
+                  <DeadlineMarker label={`${d.label} — ${d.due}`} urgency={d.urgency} />
+                )}
                 <span className="cic-muted" style={{ marginLeft: 8, fontSize: '0.85rem' }}>
                   {d.clientName}
                 </span>

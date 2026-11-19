@@ -10,7 +10,9 @@ import {
   fixtureReviews,
   type ReviewState,
 } from '@/lib/ciceron/demo/fixtures'
-import { isDueWithinNextDaysCdmx } from '@/lib/ciceron/dof/dates'
+import { addTermDays } from '@/lib/ciceron/case-files/business-days'
+import { isDueWithinNextDaysCdmx, todayInMexicoCity } from '@/lib/ciceron/dof/dates'
+import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 
 export type RoomSource = 'schema' | 'fixture'
 
@@ -26,10 +28,12 @@ function formatEsDate(iso: string | null | undefined): string {
   })
 }
 
-function urgencyFromDue(dueAt: string): 'soon' | 'normal' {
+function urgencyFromDue(dueAt: string): 'urgent' | 'soon' | 'normal' {
   const due = new Date(dueAt).getTime()
   const days = (due - Date.now()) / (1000 * 60 * 60 * 24)
-  return days <= 5 ? 'soon' : 'normal'
+  if (days <= 2) return 'urgent'
+  if (days <= 5) return 'soon'
+  return 'normal'
 }
 
 /** Matter ids the pasante may see; null means firm-wide (socio/asociado/admin). */
@@ -135,7 +139,7 @@ export type CaseView = {
   fileNumber: string
   lastEvent: string
   nextDeadline: string
-  urgency: 'soon' | 'normal'
+  urgency: 'urgent' | 'soon' | 'normal'
 }
 
 export async function loadCasesRoom(persona: DemoPersona): Promise<{
@@ -244,8 +248,35 @@ export type DeadlineView = {
   id: string
   label: string
   due: string
+  /** ISO instant or date when known (schema / rolled fixtures). */
+  dueAt?: string
   clientName: string
-  urgency: 'soon' | 'normal'
+  urgency: 'urgent' | 'soon' | 'normal'
+}
+
+/** Roll demo plazos forward so Su mañana always shows live countdowns. */
+function rolledFixtureDeadlines(): DeadlineView[] {
+  const today = todayInMexicoCity()
+  const soon = addTermDays({ startIso: today, termDays: 3, dayCount: 'business' })
+  const later = addTermDays({ startIso: today, termDays: 8, dayCount: 'business' })
+  return [
+    {
+      id: 'dl-1',
+      label: 'Contestar demanda — 1001/2026',
+      due: formatDateLongEs(soon.dueIso),
+      dueAt: `${soon.dueIso}T23:59:00-06:00`,
+      clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
+      urgency: 'soon',
+    },
+    {
+      id: 'dl-2',
+      label: 'Desahogar requerimiento — 1001/2026',
+      due: formatDateLongEs(later.dueIso),
+      dueAt: `${later.dueIso}T23:59:00-06:00`,
+      clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
+      urgency: 'normal',
+    },
+  ]
 }
 
 export async function loadDeadlines(persona: DemoPersona): Promise<{
@@ -254,7 +285,7 @@ export async function loadDeadlines(persona: DemoPersona): Promise<{
 }> {
   const db = tryCreateCiceronAdminClient()
   if (!db) {
-    return { source: 'fixture', deadlines: fixtureDeadlines.map((d) => ({ ...d })) }
+    return { source: 'fixture', deadlines: rolledFixtureDeadlines() }
   }
 
   try {
@@ -266,7 +297,7 @@ export async function loadDeadlines(persona: DemoPersona): Promise<{
       .limit(20)
 
     if (error || !Array.isArray(data) || data.length === 0) {
-      return { source: 'fixture', deadlines: fixtureDeadlines.map((d) => ({ ...d })) }
+      return { source: 'fixture', deadlines: rolledFixtureDeadlines() }
     }
 
     let rows = data as {
@@ -332,6 +363,7 @@ export async function loadDeadlines(persona: DemoPersona): Promise<{
         id: r.id,
         label,
         due: formatEsDate(r.due_at),
+        dueAt: r.due_at,
         clientName: client?.display_name ?? '—',
         urgency: urgencyFromDue(r.due_at),
       }
@@ -340,7 +372,7 @@ export async function loadDeadlines(persona: DemoPersona): Promise<{
     // Empty after filtering past dates is a valid schema result (do not reinject fixtures).
     return { source: 'schema', deadlines }
   } catch {
-    return { source: 'fixture', deadlines: fixtureDeadlines.map((d) => ({ ...d })) }
+    return { source: 'fixture', deadlines: rolledFixtureDeadlines() }
   }
 }
 
