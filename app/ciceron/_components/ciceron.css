@@ -3579,6 +3579,13 @@ textarea.cic-input {
   margin-top: 16px;
 }
 
+.cic-term-tip {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+  color: inherit;
+}
+
 /* Coordinator board: cards default + table toggle */
 .cic-coord-board-head {
   display: flex;
