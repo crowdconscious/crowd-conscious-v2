@@ -393,7 +393,7 @@ export function fixtureBulletinBoard(): {
       }),
       courtName: 'Juzgado Primero Civil de Querétaro',
       expedienteNumber: '123/2026',
-      partyNames: 'Nexora Pagos, S.A.P.I. de C.V. / Comercial Ficticia Delta, S.A. de C.V.',
+      partyNames: 'Nexora Pagos, S.A.P.I. de C.V. / Comercial Delta del Bajío, S.A. de C.V.',
       summary: 'Se tiene por presentado el escrito de demanda. Datos de demostración.',
       sourceUrl:
         'https://www.poderjudicialqro.gob.mx/acuerdos/lista-de-acuerdos-primera-instancia.php',
@@ -421,7 +421,7 @@ export function fixtureBulletinBoard(): {
       courtName: 'Juzgado Segundo Familiar de Querétaro',
       expedienteNumber: '88/2025',
       partyNames:
-        'Fondo Pedregal Inmuebles, S.A. de C.V. / Arrendamientos Ficticios del Centro, S.A. de C.V.',
+        'Fondo Pedregal Inmuebles, S.A. de C.V. / Arrendamientos del Centro, S.A. de C.V.',
       summary: 'Se señala fecha de audiencia. Datos de demostración.',
       sourceUrl:
         'https://www.poderjudicialqro.gob.mx/acuerdos/lista-de-acuerdos-primera-instancia.php',
@@ -449,7 +449,7 @@ export function fixtureBulletinBoard(): {
       courtName: 'Juzgado Primero de lo Civil — Ciudad Judicial',
       expedienteNumber: '210/2026',
       partyNames:
-        'Alimentos del Bajío Integrados, S.A. de C.V. / Distribuidora Ficticia Sol',
+        'Alimentos del Bajío Integrados, S.A. de C.V. / Distribuidora Sol del Pacífico, S.A. de C.V.',
       summary: 'Se admite demanda mercantil. Datos de demostración.',
       sourceUrl: 'https://cjj.gob.mx/bulletin',
       matterId: CICERON_SEED.matters.alimentosNom,
@@ -474,7 +474,7 @@ export function fixtureBulletinBoard(): {
       }),
       courtName: 'Juzgado Familiar de Zapopan',
       expedienteNumber: '15/2026',
-      partyNames: 'Fondo Pedregal Inmuebles, S.A. de C.V. / Familia Ficticia Pedregal',
+      partyNames: 'Fondo Pedregal Inmuebles, S.A. de C.V. / Familia Herrera Pedregal',
       summary: 'Se provee escrito de desahogo. Datos de demostración.',
       sourceUrl: 'https://cjj.gob.mx/bulletin',
       matterId: CICERON_SEED.matters.fondoPedregal,
@@ -500,7 +500,7 @@ export function fixtureBulletinBoard(): {
       }),
       courtName: 'Juzgado 32 Civil CDMX',
       expedienteNumber: '512/2026',
-      partyNames: 'Nexora Pagos, S.A.P.I. de C.V. / Demandado Ficticio Centro',
+      partyNames: 'Nexora Pagos, S.A.P.I. de C.V. / Constructora Centro Urbano, S.A. de C.V.',
       summary: 'Boletín judicial (demostración): se ordena vista. Datos de demostración.',
       sourceUrl: 'https://poderjudicialcdmx.gob.mx/consulta-boletin/',
       matterId: CICERON_SEED.matters.nexoraCnbv,
@@ -526,7 +526,7 @@ export function fixtureBulletinBoard(): {
       }),
       courtName: 'Juzgado Primero Civil Toluca',
       expedienteNumber: '901/2026',
-      partyNames: 'Distribuidora Farma Sierra, S.A. de C.V. / Comercial Toluca Ficticia, S.A. de C.V.',
+      partyNames: 'Distribuidora Farma Sierra, S.A. de C.V. / Comercial Toluca Norte, S.A. de C.V.',
       summary: 'Lista de acuerdos (demostración): se admite prueba. Datos de demostración.',
       sourceUrl: 'https://notificacion.pjedomex.gob.mx/',
       matterId: CICERON_SEED.matters.farmaCofepris,

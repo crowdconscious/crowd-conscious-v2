@@ -49,10 +49,10 @@ export const fixtureArchiveDocs: ArchiveDoc[] = [
   {
     id: 'arch-5',
     documentId: 'e5100000-0000-4000-8000-000000000005',
-    title: 'Convenio de confidencialidad — Nexora / Proveedor Ficticio Sigma',
+    title: 'Convenio de confidencialidad — Nexora / Proveedor Sigma Digital',
     folderPath: 'OneDrive / Contratos / Nexora',
     docDate: '2026-03-01',
-    parties: 'Nexora Pagos · Proveedor Ficticio Sigma',
+    parties: 'Nexora Pagos · Proveedor Sigma Digital',
     excerpt: `${CICERON_DEMO_LABEL}. Información técnica de APIs de pagos y datos de clientes son confidenciales por tres años.`,
     chunkId: 'e5300000-0000-4000-8000-000000000005',
     isSample: true,

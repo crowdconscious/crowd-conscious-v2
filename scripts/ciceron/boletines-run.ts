@@ -108,7 +108,7 @@ const SAMPLE_CATALOGUE: CatalogueMatter[] = [
     expedienteNumber: '88/2025',
     partyNameVariants: [
       'Fondo Pedregal Inmuebles, S.A. de C.V.',
-      'Elena Ficticia Pedregal Demo',
+      'Elena Herrera Pedregal',
     ],
     matterId: 'd1000000-0000-4000-8000-000000000006',
   },

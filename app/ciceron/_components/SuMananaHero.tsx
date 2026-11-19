@@ -12,13 +12,40 @@ const METRIC_LABEL: Record<SuMananaMetricId, string> = {
   pendientesRevision: copy.hoy.metrics.pendientesRevision,
 }
 
+export type DeniedActionNote = {
+  actionIdPrefix?: string
+  kind?: SuMananaAction['kind']
+  title: string
+  reason: string
+}
+
 export function SuMananaHero({
   metrics,
   actions,
+  deniedNotes = [],
 }: {
   metrics: SuMananaMetric[]
   actions: SuMananaAction[]
+  /** RBAC/ABAC notes shown next to the related action, not as a home hero. */
+  deniedNotes?: DeniedActionNote[]
 }) {
+  function noteFor(action: SuMananaAction): DeniedActionNote | undefined {
+    return deniedNotes.find(
+      (n) =>
+        (n.kind && n.kind === action.kind) ||
+        (n.actionIdPrefix && action.id.startsWith(n.actionIdPrefix))
+    )
+  }
+
+  const orphanNotes = deniedNotes.filter(
+    (n) =>
+      !actions.some(
+        (a) =>
+          (n.kind && n.kind === a.kind) ||
+          (n.actionIdPrefix && a.id.startsWith(n.actionIdPrefix))
+      )
+  )
+
   return (
     <section className="cic-su-manana" aria-labelledby="su-manana-heading">
       <h1 id="su-manana-heading" className="cic-h1">
@@ -45,27 +72,67 @@ export function SuMananaHero({
           {copy.hoy.actionsTitle}
         </h2>
         <p className="cic-muted cic-su-manana-actions-lead">{copy.hoy.actionsLead}</p>
-        {actions.length === 0 ? (
+        {actions.length === 0 && orphanNotes.length === 0 ? (
           <p className="cic-muted" role="status">
             {copy.hoy.actionsEmpty}
           </p>
         ) : (
           <ol className="cic-su-manana-action-list">
-            {actions.map((a, index) => (
-              <li key={a.id} className="cic-su-manana-action">
+            {actions.map((a, index) => {
+              const denied = noteFor(a)
+              return (
+                <li
+                  key={a.id}
+                  className={`cic-su-manana-action${denied ? ' is-denied' : ''}`}
+                >
+                  <span className="cic-su-manana-action-index" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <div className="cic-su-manana-action-body">
+                    <span className="cic-su-manana-action-kind">
+                      {copy.hoy.actionKinds[a.kind]}
+                    </span>
+                    {denied ? (
+                      <>
+                        <span
+                          className="cic-su-manana-action-title is-disabled"
+                          title={denied.reason}
+                          aria-disabled="true"
+                        >
+                          {a.title}
+                        </span>
+                        <span className="cic-muted cic-inline-denied" role="note">
+                          {denied.title}: {denied.reason}
+                        </span>
+                      </>
+                    ) : (
+                      <Link href={a.href} className="cic-su-manana-action-title">
+                        {a.title}
+                      </Link>
+                    )}
+                    {a.detail ? (
+                      <span className="cic-muted cic-su-manana-action-detail">{a.detail}</span>
+                    ) : null}
+                  </div>
+                </li>
+              )
+            })}
+            {orphanNotes.map((n) => (
+              <li key={n.title} className="cic-su-manana-action is-denied">
                 <span className="cic-su-manana-action-index" aria-hidden="true">
-                  {index + 1}
+                  —
                 </span>
                 <div className="cic-su-manana-action-body">
-                  <span className="cic-su-manana-action-kind">
-                    {copy.hoy.actionKinds[a.kind]}
+                  <span
+                    className="cic-su-manana-action-title is-disabled"
+                    title={n.reason}
+                    aria-disabled="true"
+                  >
+                    {n.title}
                   </span>
-                  <Link href={a.href} className="cic-su-manana-action-title">
-                    {a.title}
-                  </Link>
-                  {a.detail ? (
-                    <span className="cic-muted cic-su-manana-action-detail">{a.detail}</span>
-                  ) : null}
+                  <span className="cic-muted cic-inline-denied" role="note">
+                    {n.reason}
+                  </span>
                 </div>
               </li>
             ))}
