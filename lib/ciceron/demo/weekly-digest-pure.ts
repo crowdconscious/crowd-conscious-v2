@@ -37,6 +37,8 @@ export type WeeklyDigestPreview = {
   headline: string
   movements: Array<{ id: string; text: string }>
   deadlines: Array<{ id: string; text: string }>
+  /** Plazos after the current week. */
+  upcomingDeadlines: Array<{ id: string; text: string }>
   reviews: Array<{ id: string; text: string }>
   closing: string
   simulated: true
@@ -50,17 +52,45 @@ function cleanAcuerdo(raw: string): string {
     .trim()
 }
 
+function dueDayIso(dueAt: string): string {
+  const m = dueAt.trim().match(/^(\d{4}-\d{2}-\d{2})/)
+  return m?.[1] ?? dueAt.slice(0, 10)
+}
+
+function formatDeadlineLine(d: DigestDeadline): { id: string; text: string } {
+  const day = weekdayNameEsFromIso(d.dueAt)
+  const dateLabel = formatDateLongEs(d.dueAt)
+  return {
+    id: d.id,
+    text: `${day} ${dateLabel} — ${d.clientName}: ${d.label}.`,
+  }
+}
+
 export function buildWeeklyDigestPreview(input: {
   partnerName: string
   weekStartIso: string
   weekEndIso: string
   movements: DigestMovement[]
+  /** All known plazos; split into this week vs próximas semanas. */
   deadlines: DigestDeadline[]
   reviews: DigestReview[]
 }): WeeklyDigestPreview {
   const range = formatDateRangeEs(input.weekStartIso, input.weekEndIso)
+  const weekStart = input.weekStartIso.slice(0, 10)
+  const weekEnd = input.weekEndIso.slice(0, 10)
+
+  const inWeek: DigestDeadline[] = []
+  const upcoming: DigestDeadline[] = []
+  for (const d of input.deadlines) {
+    if (!d.dueAt) continue
+    const day = dueDayIso(d.dueAt)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue
+    if (day >= weekStart && day <= weekEnd) inWeek.push(d)
+    else if (day > weekEnd) upcoming.push(d)
+  }
+
   const movedCount = input.movements.length
-  const plazoCount = input.deadlines.length
+  const plazoCount = inWeek.length
   const reviewCount = input.reviews.length
 
   const headlineParts: string[] = []
@@ -101,14 +131,8 @@ export function buildWeeklyDigestPreview(input: {
     }
   })
 
-  const deadlines = input.deadlines.slice(0, 8).map((d) => {
-    const day = weekdayNameEsFromIso(d.dueAt)
-    const dateLabel = formatDateLongEs(d.dueAt)
-    return {
-      id: d.id,
-      text: `${day} ${dateLabel} — ${d.clientName}: ${d.label}.`,
-    }
-  })
+  const deadlines = inWeek.slice(0, 8).map(formatDeadlineLine)
+  const upcomingDeadlines = upcoming.slice(0, 6).map(formatDeadlineLine)
 
   const reviews = input.reviews.slice(0, 6).map((r) => ({
     id: r.id,
@@ -122,6 +146,7 @@ export function buildWeeklyDigestPreview(input: {
     headline,
     movements,
     deadlines,
+    upcomingDeadlines,
     reviews,
     closing:
       'Este correo es una vista previa de demostración. No se envía a nadie. Datos de demostración.',

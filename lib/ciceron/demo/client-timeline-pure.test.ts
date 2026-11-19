@@ -39,4 +39,29 @@ describe('buildClientTimeline', () => {
     assert.equal(bulletin?.dateLabel, '18 de noviembre de 2026')
     assert.doesNotMatch(bulletin?.dateLabel ?? '', /\d{4}-\d{2}-\d{2}/)
   })
+
+  it('dedupes plazos with the same action + expediente', () => {
+    const events = buildClientTimeline({
+      bulletinHits: [],
+      dofNotes: [],
+      deadlines: [
+        {
+          id: 'a',
+          label: 'Contestar demanda — 1001/2026',
+          due: '20 de noviembre de 2026',
+          dueAt: '2026-11-20T23:59:00-06:00',
+        },
+        {
+          id: 'b',
+          label: 'Contestar demanda — 1001/2026',
+          due: '26 de noviembre de 2026',
+          dueAt: '2026-11-26T23:59:00-06:00',
+        },
+      ],
+      todayIso: '2026-11-19',
+    })
+    const dls = events.filter((e) => e.kind === 'deadline')
+    assert.equal(dls.length, 1)
+    assert.match(dls[0]?.dateLabel ?? '', /20.*26/)
+  })
 })

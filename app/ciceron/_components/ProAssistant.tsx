@@ -142,10 +142,14 @@ export function ProAssistant({
                 </span>
                 <span className="cic-pro-res-chip">
                   <span className="cic-pro-res-k">{copy.pro.chipMatter}</span>
-                  {draft.resolution.matterLabel}
-                  {draft.resolution.expedienteNumber
-                    ? ` · ${draft.resolution.expedienteNumber}`
-                    : ''}
+                  {(() => {
+                    const matter = draft.resolution.matterLabel
+                    const exp = draft.resolution.expedienteNumber
+                    if (!exp || exp === '—') return matter
+                    // Avoid «Expediente 512/2026 · 512/2026».
+                    if (matter.includes(exp)) return matter
+                    return `${matter} · ${exp}`
+                  })()}
                 </span>
                 <span className="cic-pro-res-chip">
                   <span className="cic-pro-res-k">{copy.pro.chipSource}</span>

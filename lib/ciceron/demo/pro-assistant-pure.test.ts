@@ -9,7 +9,7 @@ import {
 } from './pro-assistant-pure'
 
 describe('pro-assistant-pure', () => {
-  it('parses notify intent for Nexora with real entry', () => {
+  it('parses notify intent for Nexora with most urgent entry', () => {
     const intent = parseProIntent('escríbele a Nexora sobre el auto de hoy', {
       role: 'socio',
       clients: PRO_DEMO_CLIENTS,
@@ -18,9 +18,11 @@ describe('pro-assistant-pure', () => {
     if (intent.kind === 'notify') {
       assert.match(intent.client.name, /Nexora/)
       assert.equal(intent.denied, false)
-      assert.match(intent.entry.expedienteNumber, /123\/2026|1001\/2026/)
-      assert.match(intent.entry.courtName, /Juzgado/)
-      assert.match(intent.entry.acuerdoPlain, /presentado el escrito de demanda|vista/)
+      // Newest + demanda wording wins over older CDMX vista.
+      assert.equal(intent.entry.expedienteNumber, '123/2026')
+      assert.match(intent.entry.courtName, /Querétaro/)
+      assert.match(intent.entry.acuerdoPlain, /presentado el escrito de demanda/)
+      assert.doesNotMatch(intent.entry.matterLabel, /^Expediente /)
     }
   })
 

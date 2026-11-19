@@ -452,6 +452,11 @@ export const copy = {
     clockRemaining: 'Tiempo restante',
     clockUncovered: 'Entidades sin cobertura',
     clockPassed: 'Hora vencida',
+    /** Demo after-hours: milestones already met for the demo business day. */
+    clockMet: 'Cumplido (demostración)',
+    denialBannerPasante:
+      'Solo una socia o un asociado puede confirmar el resultado hacia el cliente. Usted puede capturar y preparar.',
+    denialCompactTitle: 'Acción restringida para pasante',
     mapTitle: 'Tablero por entidad',
     mapLead:
       'Mapa de las entidades federativas. El color y la etiqueta indican el estado de la revisión matutina.',
@@ -773,6 +778,7 @@ export const copy = {
       'Resumen breve de lo que movió la semana en sus asuntos (datos de demostración):',
     movementsTitle: 'Qué cambió por cliente',
     deadlinesTitle: 'Plazos de esta semana',
+    upcomingDeadlinesTitle: 'Próximas semanas',
     reviewsTitle: 'Revisiones pendientes',
     quietNote: 'Nada urgente en esta sección.',
   },

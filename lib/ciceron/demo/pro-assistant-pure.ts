@@ -23,7 +23,10 @@ export type ProEntry = {
   /** Plain-Spanish acuerdo (demo label stripped). */
   acuerdoPlain: string
   publicationDateLabel: string
+  /** YYYY-MM-DD for urgency sorting (newest first = most urgent for «hoy»). */
+  publicationDateIso: string
   sourceName: string
+  /** Human matter title — must NOT repeat the expediente number alone. */
   matterLabel: string
   caseFileId: string
   matterId: string
@@ -114,6 +117,18 @@ function findClient(query: string, clients: ProClientRef[]): ProClientRef | null
   return null
 }
 
+function entryUrgencyKey(e: ProEntry): string {
+  // Newest publication first; tie-break prefer demand/presentation wording.
+  const weight = /presentad|demanda|auto|audiencia/i.test(e.acuerdoPlain) ? '1' : '0'
+  return `${e.publicationDateIso}|${weight}|${e.expedienteNumber}`
+}
+
+/** Most urgent entry: newest publication, then substantive acuerdo keywords. */
+export function pickMostUrgentEntry(entries: ProEntry[]): ProEntry | null {
+  if (entries.length === 0) return null
+  return [...entries].sort((a, b) => entryUrgencyKey(b).localeCompare(entryUrgencyKey(a)))[0] ?? null
+}
+
 function pickEntry(query: string, client: ProClientRef, preferredEntryId?: string): ProEntry {
   if (preferredEntryId) {
     const hit = client.entries.find((e) => e.id === preferredEntryId)
@@ -125,12 +140,13 @@ function pickEntry(query: string, client: ProClientRef, preferredEntryId?: strin
     if (q.includes(normalize(e.courtName).slice(0, 12))) return e
   }
   return (
-    client.entries[0] ?? {
+    pickMostUrgentEntry(client.entries) ?? {
       id: `${client.id}-fallback`,
       expedienteNumber: '—',
       courtName: 'el juzgado correspondiente',
       acuerdoPlain: 'un acuerdo publicado en la lista',
       publicationDateLabel: formatDateLongEs('2026-11-18'),
+      publicationDateIso: '2026-11-18',
       sourceName: 'Boletín judicial (demostración)',
       matterLabel: client.name,
       caseFileId: client.caseFileId,
@@ -343,8 +359,9 @@ export const PRO_DEMO_CLIENTS: ProClientRef[] = [
         courtName: 'Juzgado Primero Civil de Querétaro',
         acuerdoPlain: 'Se tiene por presentado el escrito de demanda',
         publicationDateLabel: formatDateLongEs('2026-11-18'),
+        publicationDateIso: '2026-11-18',
         sourceName: 'Boletín judicial de Querétaro',
-        matterLabel: 'Demanda mercantil 123/2026',
+        matterLabel: 'Demanda mercantil',
         caseFileId: 'f1000000-0000-4000-8000-000000000021',
         matterId: 'nexora-cnbv',
       },
@@ -354,8 +371,9 @@ export const PRO_DEMO_CLIENTS: ProClientRef[] = [
         courtName: 'Juzgado Décimo de Distrito en Materia Civil',
         acuerdoPlain: 'Se ordena vista a la contraparte',
         publicationDateLabel: formatDateLongEs('2026-11-17'),
+        publicationDateIso: '2026-11-17',
         sourceName: 'Boletín judicial de la Ciudad de México',
-        matterLabel: 'Asunto federal 1001/2026',
+        matterLabel: 'Asunto federal',
         caseFileId: 'f1000000-0000-4000-8000-000000000021',
         matterId: 'nexora-cnbv',
       },
@@ -374,8 +392,9 @@ export const PRO_DEMO_CLIENTS: ProClientRef[] = [
         courtName: 'Juzgado Segundo de Distrito en Materia Administrativa',
         acuerdoPlain: 'Se admite el recurso de revisión',
         publicationDateLabel: formatDateLongEs('2026-11-18'),
+        publicationDateIso: '2026-11-18',
         sourceName: 'Boletín judicial federal',
-        matterLabel: 'Recurso COFEPRIS 455/2026',
+        matterLabel: 'Recurso COFEPRIS',
         caseFileId: 'f1000000-0000-4000-8000-000000000023',
         matterId: 'farma-cofepris',
       },
@@ -394,8 +413,9 @@ export const PRO_DEMO_CLIENTS: ProClientRef[] = [
         courtName: 'Juzgado Segundo Familiar de Querétaro',
         acuerdoPlain: 'Se señala fecha de audiencia',
         publicationDateLabel: formatDateLongEs('2026-11-18'),
+        publicationDateIso: '2026-11-18',
         sourceName: 'Boletín judicial de Querétaro',
-        matterLabel: 'Audiencia familiar 88/2025',
+        matterLabel: 'Audiencia familiar',
         caseFileId: 'f1000000-0000-4000-8000-000000000022',
         matterId: 'fondo-inmuebles',
       },
@@ -427,21 +447,23 @@ export function mergeProClientsWithHits(
     const client =
       next.find((c) => normalize(c.name).includes(normalize(name).split(',')[0] ?? '')) ?? null
     if (!client) continue
+    const pubIso = (h.publicationDate ?? '2026-11-18').slice(0, 10)
+    const court = h.courtName?.trim() || 'el juzgado correspondiente'
     const entry: ProEntry = {
       id: h.id,
       expedienteNumber: h.expedienteNumber?.trim() || '—',
-      courtName: h.courtName?.trim() || 'el juzgado correspondiente',
+      courtName: court,
       acuerdoPlain:
         cleanAcuerdoPlain(h.summary) || 'un acuerdo publicado en la lista',
       publicationDateLabel: h.publicationDate
         ? formatDateLongEs(h.publicationDate)
         : formatDateLongEs('2026-11-18'),
+      publicationDateIso: /^\d{4}-\d{2}-\d{2}$/.test(pubIso) ? pubIso : '2026-11-18',
       sourceName: h.stateName
         ? `Boletín judicial de ${h.stateName}`
         : 'Boletín judicial (demostración)',
-      matterLabel: h.expedienteNumber
-        ? `Expediente ${h.expedienteNumber}`
-        : name,
+      // Descriptive label without repeating the expediente (chip appends it).
+      matterLabel: court.replace(/^Juzgado\s+/i, 'Juzgado '),
       caseFileId: h.caseFileId ?? client.caseFileId,
       matterId: h.matterId ?? client.matterId,
     }
@@ -449,8 +471,13 @@ export function mergeProClientsWithHits(
       (e) => e.expedienteNumber === entry.expedienteNumber
     )
     if (idx >= 0) client.entries[idx] = entry
-    else client.entries.unshift(entry)
+    else client.entries.push(entry)
     if (h.caseFileId) client.caseFileId = h.caseFileId
+  }
+  for (const c of next) {
+    c.entries = [...c.entries].sort((a, b) =>
+      entryUrgencyKey(b).localeCompare(entryUrgencyKey(a))
+    )
   }
   return next
 }

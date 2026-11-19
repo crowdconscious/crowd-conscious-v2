@@ -67,6 +67,7 @@ export default async function ClienteTimelinePage({
       due: d.due,
       dueAt: d.dueAt ?? null,
     })),
+    todayIso: todayInMexicoCity(),
   })
 
   return (

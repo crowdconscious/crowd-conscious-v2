@@ -10,7 +10,9 @@ export function BulletinClockStrip({
 }: {
   board: BulletinStateBoardRow[]
 }) {
-  const clock = bulletinClockStrip()
+  // Demo mode: after firm hours, anchor to a morning reference so partners
+  // do not see «Hora vencida» on every strip during evening demos.
+  const clock = bulletinClockStrip(new Date(), { demoMode: true })
   const uncovered = uncoveredEntityCount(board)
 
   return (
@@ -20,6 +22,12 @@ export function BulletinClockStrip({
       </h2>
       <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 10 }}>
         Hora actual (Ciudad de México): {clock.nowHm}
+        {clock.demoAnchored ? (
+          <>
+            {' · '}
+            Reloj de demostración (horario matutino de referencia)
+          </>
+        ) : null}
       </p>
       <div className="cic-clock-grid">
         {(
