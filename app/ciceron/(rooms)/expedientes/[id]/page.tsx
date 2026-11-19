@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { DeadlineMarker } from '../../../_components/DeadlineMarker'
+import { DeadlineCountdown } from '../../../_components/DeadlineCountdown'
 import { MatterBreadcrumb } from '../../../_components/MatterBreadcrumb'
 import { MatterTopbarTitle } from '../../../_components/MatterChrome'
 import { CICERON_BASE } from '@/lib/ciceron/config'
@@ -103,7 +104,11 @@ export default async function CaseDetailPage({
                     padding: '12px 0',
                   }}
                 >
-                  <DeadlineMarker label={d.dueLabel} urgency={d.urgency} />
+                  {d.dueAt ? (
+                    <DeadlineCountdown dueAt={d.dueAt} dueLabel={d.dueLabel} />
+                  ) : (
+                    <DeadlineMarker label={d.dueLabel} urgency={d.urgency} />
+                  )}
                   <div style={{ marginTop: 6, fontSize: '0.85rem' }}>
                     <span className={`cic-review cic-review-${d.status === 'confirmado' ? 'aprobado' : d.status === 'descartado' ? 'rechazado' : 'borrador'}`}>
                       {copy.expedientes[d.status === 'propuesto' ? 'proposed' : d.status === 'confirmado' ? 'confirmed' : 'discarded']}
