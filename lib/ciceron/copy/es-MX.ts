@@ -746,7 +746,11 @@ export const copy = {
     simulatedBadge: 'Simulado · no enviado',
     subjectLabel: 'Asunto',
     intro:
-      'Este es el resumen de lo que movió la semana en sus asuntos (datos de demostración):',
+      'Resumen breve de lo que movió la semana en sus asuntos (datos de demostración):',
+    movementsTitle: 'Qué cambió por cliente',
+    deadlinesTitle: 'Plazos de esta semana',
+    reviewsTitle: 'Revisiones pendientes',
+    quietNote: 'Nada urgente en esta sección.',
   },
 
   clientes: {

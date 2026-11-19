@@ -6,14 +6,10 @@ import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { currentWeekWindow } from '@/lib/ciceron/deadlines/week-window-pure'
-import { countDeadlinesInCurrentWeek } from '@/lib/ciceron/deadlines/week-window-pure'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
 import { buildWeeklyDigestPreview } from '@/lib/ciceron/demo/weekly-digest-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
-import {
-  buildSuMananaSummary,
-} from '@/lib/ciceron/demo/su-manana-pure'
 
 export default async function DigestSemanalPage() {
   const persona = await getCiceronDemoSession()
@@ -25,30 +21,53 @@ export default async function DigestSemanalPage() {
     loadHoyBriefing(persona),
   ])
 
-  const dueAts = deadlines.map((d) => d.dueAt).filter((v): v is string => Boolean(v))
   const week = currentWeekWindow()
-  const morning = buildSuMananaSummary({
-    bulletinNoveltyKeys: bulletins.hits.map((h) => h.clientName ?? h.matterId ?? h.id),
-    dofNoveltyKeys: briefing.emptyToday ? [] : [...briefing.byClient.keys()],
-    deadlinesThisWeek: countDeadlinesInCurrentWeek(dueAts),
-    reviewsPending: briefing.reviews.length,
-    actions: [],
-  })
-  const moved = [
-    ...new Set(
-      bulletins.hits
-        .map((h) => h.clientName)
-        .filter((n): n is string => Boolean(n))
-    ),
-  ]
+  const weekStart = week.startIso
+  const weekEnd = week.endIso
+
+  // One row per client (first hit), with real acuerdo + expediente.
+  const seenClients = new Set<string>()
+  const movements = []
+  for (const h of bulletins.hits) {
+    const name = h.clientName?.trim()
+    if (!name || seenClients.has(name)) continue
+    seenClients.add(name)
+    movements.push({
+      id: h.id,
+      clientName: name,
+      acuerdo: h.summary ?? 'acuerdo publicado en lista',
+      expedienteNumber: h.expedienteNumber,
+      courtName: h.courtName,
+    })
+  }
+
+  const weekDeadlines = deadlines
+    .filter((d) => {
+      if (!d.dueAt) return false
+      const day = d.dueAt.slice(0, 10)
+      return day >= weekStart && day <= weekEnd
+    })
+    .map((d) => ({
+      id: d.id,
+      clientName: d.clientName,
+      label: d.label,
+      dueAt: d.dueAt as string,
+    }))
+
+  const reviews = briefing.reviews.map((r) => ({
+    id: r.id,
+    title: r.title,
+    clientName: r.clientName,
+    dueLabel: r.due,
+  }))
 
   const digest = buildWeeklyDigestPreview({
     partnerName: persona.displayName,
-    weekStartIso: week.startIso,
-    weekEndIso: week.endIso,
-    movedClients: moved,
-    plazosCount: morning.metrics.find((m) => m.id === 'plazosEstaSemana')?.value ?? 0,
-    reviewsPending: morning.metrics.find((m) => m.id === 'pendientesRevision')?.value ?? 0,
+    weekStartIso: weekStart,
+    weekEndIso: weekEnd,
+    movements,
+    deadlines: weekDeadlines,
+    reviews,
   })
 
   return (
@@ -83,12 +102,56 @@ export default async function DigestSemanalPage() {
           {digest.weekLabel}
         </p>
         <p>{digest.greeting}</p>
+        <p className="cic-digest-headline">
+          <strong>{digest.headline}</strong>
+        </p>
         <p>{copy.digest.intro}</p>
-        <ul className="cic-digest-bullets">
-          {digest.bullets.map((b) => (
-            <li key={b.id}>{b.text}</li>
-          ))}
-        </ul>
+
+        <section aria-labelledby="digest-movements">
+          <h2 id="digest-movements" className="cic-digest-section-title">
+            {copy.digest.movementsTitle}
+          </h2>
+          {digest.movements.length === 0 ? (
+            <p className="cic-muted">{copy.digest.quietNote}</p>
+          ) : (
+            <ul className="cic-digest-bullets">
+              {digest.movements.map((b) => (
+                <li key={b.id}>{b.text}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="digest-deadlines">
+          <h2 id="digest-deadlines" className="cic-digest-section-title">
+            {copy.digest.deadlinesTitle}
+          </h2>
+          {digest.deadlines.length === 0 ? (
+            <p className="cic-muted">{copy.digest.quietNote}</p>
+          ) : (
+            <ul className="cic-digest-bullets">
+              {digest.deadlines.map((b) => (
+                <li key={b.id}>{b.text}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="digest-reviews">
+          <h2 id="digest-reviews" className="cic-digest-section-title">
+            {copy.digest.reviewsTitle}
+          </h2>
+          {digest.reviews.length === 0 ? (
+            <p className="cic-muted">{copy.digest.quietNote}</p>
+          ) : (
+            <ul className="cic-digest-bullets">
+              {digest.reviews.map((b) => (
+                <li key={b.id}>{b.text}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <p className="cic-muted" style={{ marginTop: 20 }}>
           {digest.closing}
         </p>
