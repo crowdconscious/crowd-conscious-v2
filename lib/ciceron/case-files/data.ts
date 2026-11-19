@@ -230,10 +230,10 @@ function fixtureListRows(): CaseListRow[] {
     'case-4': 'farma-cofepris',
   }
   const lawyerByCase: Record<string, string> = {
-    'case-1': 'Asociado Demo Herrera',
-    'case-2': 'Socia Demo Rivera',
-    'case-3': 'Asociado Demo Herrera',
-    'case-4': 'Asociado Demo López',
+    'case-1': 'Asociado Martín Herrera',
+    'case-2': 'Socia Valeria Rivera',
+    'case-3': 'Asociado Martín Herrera',
+    'case-4': 'Asociado Martín Herrera',
   }
   return fixtureCases.map((c) => ({
     id: c.id,
@@ -247,7 +247,7 @@ function fixtureListRows(): CaseListRow[] {
     nextDeadline: c.nextDeadline,
     nextDeadlineAt: null,
     urgency: c.urgency === 'soon' ? 'soon' : 'normal',
-    lawyerName: lawyerByCase[c.id] ?? 'Asociado Demo Herrera',
+    lawyerName: lawyerByCase[c.id] ?? 'Asociado Martín Herrera',
     isSample: true,
   }))
 }

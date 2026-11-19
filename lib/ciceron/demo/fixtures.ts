@@ -8,7 +8,7 @@ export const fixtureMeta = {
   label: CICERON_DEMO_LABEL,
   firmName: CICERON_FIRM_NAME,
   role: 'Socia' as const,
-  userName: 'Socia Demo Rivera',
+  userName: 'Socia Valeria Rivera',
 }
 
 export const fixtureClients = [
@@ -103,7 +103,7 @@ export const fixtureReviews = [
     clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
     title: 'Alerta al cliente sobre conservación de registros',
     due: '11 de noviembre de 2026',
-    assignee: 'Socia Demo Rivera',
+    assignee: 'Socia Valeria Rivera',
     state: 'en_revision' as ReviewState,
   },
   {
@@ -111,7 +111,7 @@ export const fixtureReviews = [
     clientName: 'Distribuidora Farma Sierra, S.A. de C.V.',
     title: 'Resumen de aviso COFEPRIS — cadena de frío',
     due: '12 de noviembre de 2026',
-    assignee: 'Asociado Demo Herrera',
+    assignee: 'Asociado Martín Herrera',
     state: 'borrador' as ReviewState,
   },
 ] as const

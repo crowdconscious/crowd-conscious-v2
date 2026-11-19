@@ -55,7 +55,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
     juicio: 'Oral Merc.',
     secretaria: null,
     status: 'activo',
-    lawyerName: 'Asociado Demo Herrera',
+    lawyerName: 'Asociado Martín Herrera',
     isSample: true,
     events: [
       {
@@ -105,7 +105,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         dueAt: '2026-11-14T23:59:00-06:00',
         status: 'propuesto',
         basisText:
-          'Ejemplo de demostración — quince días hábiles para contestar la demanda (ilustrativo; no sustituye asesoría).',
+          'Código Federal de Procedimientos Civiles, art. 332 — término de quince días hábiles para contestar la demanda (cómputo ilustrativo).',
         computationText:
           'Regla: notificación de demanda · 15 días hábiles. Cómputo desde el día hábil siguiente al 22 de octubre de 2026 → vence el 14 de noviembre de 2026.',
         confirmedBy: null,
@@ -118,7 +118,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         dueLabel: '12 de noviembre de 2026',
         dueAt: '2026-11-12T23:59:00-06:00',
         status: 'propuesto',
-        basisText: 'Ejemplo de demostración — 5 días hábiles por requerimiento.',
+        basisText: 'Término de cinco días hábiles para desahogar el requerimiento (cómputo ilustrativo).',
         computationText:
           'Regla: acuerdo de requerimiento · 5 días hábiles. Día 1 = primer día hábil posterior al acuerdo.',
         confirmedBy: null,
@@ -139,7 +139,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
     juicio: 'Ejec. Merc.',
     secretaria: null,
     status: 'activo',
-    lawyerName: 'Socia Demo Rivera',
+    lawyerName: 'Socia Valeria Rivera',
     isSample: true,
     events: [
       {
@@ -162,7 +162,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         dueLabel: '20 de noviembre de 2026',
         dueAt: '2026-11-20T23:59:00-06:00',
         status: 'propuesto',
-        basisText: 'Ejemplo de demostración — término ilustrativo de ampliación.',
+        basisText: 'Término ilustrativo de ampliación de demanda (cómputo de demostración).',
         computationText:
           'Regla ejemplo de demostración · cómputo ilustrativo → 20 de noviembre de 2026.',
         confirmedBy: null,

@@ -1,6 +1,7 @@
 import type { CiceronMembershipRole } from '@/lib/ciceron/db/types'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { CICERON_FIRM_NAME } from '@/lib/ciceron/config'
+import { PERSONA_DISPLAY_NAMES } from '@/lib/ciceron/demo/display-names'
 import { CICERON_P9_SEED } from '@/lib/ciceron/demo/seed-ids'
 import {
   isPublicDemoInviteCode,
@@ -29,7 +30,7 @@ const OFFLINE: DemoPersona[] = [
     id: CICERON_SEED.personas.socio,
     firmId: CICERON_SEED.firmDemo,
     role: 'socio',
-    displayName: 'Socia Demo Rivera',
+    displayName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.socio]!,
     inviteCode: PUBLIC_DEMO_INVITE_CODES[0],
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
@@ -39,7 +40,7 @@ const OFFLINE: DemoPersona[] = [
     id: CICERON_SEED.personas.asociado,
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
-    displayName: 'Asociado Demo Herrera',
+    displayName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.asociado]!,
     inviteCode: 'nr-asociado-b1002',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
@@ -48,7 +49,7 @@ const OFFLINE: DemoPersona[] = [
     id: CICERON_SEED.personas.pasante,
     firmId: CICERON_SEED.firmDemo,
     role: 'pasante',
-    displayName: 'Pasante Demo López',
+    displayName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.pasante]!,
     inviteCode: PUBLIC_DEMO_INVITE_CODES[1],
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
@@ -57,7 +58,7 @@ const OFFLINE: DemoPersona[] = [
     id: CICERON_SEED.personas.admin,
     firmId: CICERON_SEED.firmDemo,
     role: 'admin',
-    displayName: 'Admin Demo Ortega',
+    displayName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.admin]!,
     inviteCode: 'nr-admin-b1004',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
@@ -66,7 +67,7 @@ const OFFLINE: DemoPersona[] = [
     id: CICERON_SEED.personas.asociado2,
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
-    displayName: 'Asociada Demo Méndez',
+    displayName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.asociado2]!,
     inviteCode: 'nr-asociado2-b1005',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
@@ -75,7 +76,7 @@ const OFFLINE: DemoPersona[] = [
     id: CICERON_SEED.personas.coordinador,
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
-    displayName: 'Coordinador Demo Salazar',
+    displayName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.coordinador]!,
     inviteCode: 'nr-coordinador-b1006',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',

@@ -25,13 +25,13 @@ describe('ciceron isolation contracts', () => {
     assert.match(sql, /set_actor/)
     assert.match(sql, /demo_personas/)
     assert.match(sql, /auth\.users/)
-    assert.match(sql, /Despacho Demo/)
+    assert.match(sql, /Despacho Altamirano y Asociados/)
   })
 
   it('prod-safe seed labels Datos de demostración and skips auth.users', () => {
     const sql = readFileSync('supabase/migrations/302_ciceron_seed_prod_safe.sql', 'utf8')
     assert.match(sql, /Datos de demostración/)
-    assert.match(sql, /Despacho Demo, S\.C\./)
+    assert.match(sql, /Despacho Altamirano y Asociados, S\.C\./)
     assert.match(sql, /Bufete Contraste/)
     assert.match(sql, /demo_personas/)
     assert.doesNotMatch(sql, /INSERT\s+INTO\s+auth\.users\b/)

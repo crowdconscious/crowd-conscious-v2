@@ -8,7 +8,7 @@ import {
 const FALLBACK = {
   subject: 'Actualización de su expediente 123/2026',
   body: [
-    'Estimado(a) representante de Cliente Demo:',
+    'Estimado(a) representante de Nexora Pagos, S.A.P.I. de C.V.:',
     '',
     'Le informamos sobre una actuación reciente en el expediente 123/2026.',
     '',

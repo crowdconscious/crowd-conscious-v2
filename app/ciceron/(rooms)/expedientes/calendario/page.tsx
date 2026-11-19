@@ -72,7 +72,7 @@ export default async function CalendarioPage({
       <div className="cic-outlook-cal">
         <div className="cic-outlook-cal-head">
           <span>Outlook</span>
-          <span className="cic-muted">{source === 'fixture' ? copy.demoLabel : 'Despacho Demo'}</span>
+          <span className="cic-muted">{source === 'fixture' ? copy.demoLabel : 'Despacho Altamirano y Asociados'}</span>
         </div>
         <ul className="cic-outlook-cal-list">
           {events.map((ev) => (

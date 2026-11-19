@@ -113,8 +113,20 @@ export default async function CoordinadorBoletinesPage() {
                       ? formatDateLongEs(row.publicationDate)
                       : '—'}
                     {row.bulletinNumber ? (
-                      <span className="cic-muted" style={{ display: 'block', fontSize: '0.8rem' }}>
-                        Núm. {row.bulletinNumber}
+                      <span
+                        className="cic-muted"
+                        style={{
+                          display: 'inline-flex',
+                          gap: 6,
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        {row.bulletinNumber}
+                        <span className="cic-demo-inline" style={{ fontSize: '0.7rem' }}>
+                          {copy.demoLabel}
+                        </span>
                       </span>
                     ) : null}
                   </td>

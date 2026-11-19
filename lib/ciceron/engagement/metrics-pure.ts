@@ -50,7 +50,7 @@ export function weekStartIso(d: Date): string {
 
 /** Offline / pre-migration demo numbers labelled Datos de demostración. */
 export function fixtureMetricsDashboard(): MetricsDashboard {
-  const firmName = 'Despacho Demo, S.C.'
+  const firmName = 'Despacho Altamirano y Asociados, S.C.'
   const firmId = CICERON_SEED.firmDemo
   const thisWeek = weekStartIso(new Date())
   const lastWeek = weekStartIso(new Date(Date.now() - 7 * 86400000))

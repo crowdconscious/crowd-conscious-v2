@@ -6,6 +6,7 @@ import { MatterTopbarTitle } from '../../../_components/MatterChrome'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
+  basisDisplayText,
   computationDisplayText,
   eventTypeLabel,
 } from '@/lib/ciceron/copy/labels'
@@ -109,7 +110,7 @@ export default async function CaseDetailPage({
                     </span>
                   </div>
                   <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
-                    <strong>{copy.expedientes.basis}:</strong> {d.basisText}
+                    <strong>{copy.expedientes.basis}:</strong> {basisDisplayText(d.basisText)}
                   </p>
                   <p className="cic-muted" style={{ fontSize: '0.8rem' }}>
                     <strong>{copy.expedientes.computation}:</strong>{' '}

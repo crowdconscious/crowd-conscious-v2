@@ -2,7 +2,7 @@
 export const copy = {
   brand: 'Cicerón.ai',
   demoLabel: 'Datos de demostración',
-  firmDemo: 'Despacho Demo, S.C.',
+  firmDemo: 'Despacho Altamirano y Asociados, S.C.',
   roleSocia: 'Socia',
   roleAsociado: 'Asociado',
   rolePasante: 'Pasante',
@@ -20,7 +20,7 @@ export const copy = {
     emailPlaceholder: 'nombre@despacho.mx',
     submit: 'Entrar a la demostración',
     error: 'El código no es válido o ha expirado.',
-    note: 'Esta es una demostración. Los datos del despacho y de sus clientes son ficticios. Entra como miembro de Despacho Demo, S.C.',
+    note: 'Esta es una demostración. Los datos del despacho y de sus clientes son ficticios. Entra como miembro de Despacho Altamirano y Asociados, S.C.',
   },
 
   demoBar: {
@@ -88,7 +88,7 @@ export const copy = {
       realItems:
         'Monitor DOF: módulo opcional; no forma parte de la validación de boletines estatales.',
       sampleItems:
-        'Despacho Demo, S.C.; clientes; boletines estatales; tablero 09:30; expedientes; plazos.',
+        'Despacho Altamirano y Asociados, S.C.; clientes; boletines estatales; tablero 09:30; expedientes; plazos.',
       cta: 'Solicitar un piloto',
       ctaHref: 'mailto:hola@ciceron.ai?subject=Piloto%20Cicer%C3%B3n.ai',
     },
@@ -99,7 +99,7 @@ export const copy = {
     lead: 'Compare dos modelos. Uno decide por rol; el otro por atributos del asunto (asignación, conflicto, sensibilidad, vigencia).',
     rbacTitle: 'Permisos por rol',
     rbacBody:
-      'Socia Demo Rivera: el acceso a aprobar revisiones y confirmar plazos viene de su rol de socia.',
+      'Socia Valeria Rivera: el acceso a aprobar revisiones y confirmar plazos viene de su rol de socia.',
     abacTitle: 'Permisos por asunto',
     abacBody:
       'Asociada Atributos Vega: el acceso depende de asignación al asunto, muros de conflicto, sensibilidad del documento y concesiones con vigencia.',
@@ -207,11 +207,11 @@ export const copy = {
   },
 
   review: {
-    borrador: 'borrador',
-    en_revision: 'en revisión',
-    aprobado: 'aprobado',
-    corregido: 'corregido',
-    rechazado: 'rechazado',
+    borrador: 'Borrador',
+    en_revision: 'En revisión',
+    aprobado: 'Aprobado',
+    corregido: 'Corregido',
+    rechazado: 'Rechazado',
   },
 
   empty: {
@@ -394,9 +394,9 @@ export const copy = {
     proposeDeadlines: 'Plazos propuestos',
     confirmDeadline: 'Confirmar plazo',
     discardDeadline: 'Descartar',
-    proposed: 'propuesto',
-    confirmed: 'confirmado',
-    discarded: 'descartado',
+    proposed: 'Propuesto',
+    confirmed: 'Confirmado',
+    discarded: 'Descartado',
     basis: 'Fundamento',
     computation: 'Cómputo',
     timeline: 'Línea de tiempo',
