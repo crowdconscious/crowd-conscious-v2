@@ -15,6 +15,7 @@ import {
   GuidedStoryResumeBar,
   GuidedStoryStartButton,
 } from './GuidedStory'
+import { ThemeToggle } from './ThemeToggle'
 import { MatterChromeProvider, useMatterChrome } from './MatterChrome'
 import { PersonaSwitcher, type SwitchablePersona } from './PersonaSwitcher'
 import './ciceron.css'
@@ -228,6 +229,7 @@ function ShellInner({
             {meta.guidedStory?.dismissed || meta.guidedStory?.completed ? (
               <GuidedStoryStartButton />
             ) : null}
+            <ThemeToggle />
             <div className="cic-user" title={copy.topbar.userMenu}>
               {meta.userName} · {meta.role}
             </div>
