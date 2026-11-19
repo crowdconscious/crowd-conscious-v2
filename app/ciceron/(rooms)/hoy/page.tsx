@@ -5,12 +5,17 @@ import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { ReviewBadge } from '../../_components/ReviewBadge'
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
+import { SuMananaHero } from '../../_components/SuMananaHero'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
+import {
+  buildSuMananaSummary,
+  type SuMananaAction,
+} from '@/lib/ciceron/demo/su-manana-pure'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { loadOnboarding } from '@/lib/ciceron/engagement/onboarding'
 import { loadFeedbackSuggestion } from '@/lib/ciceron/engagement/feedback-loop'
@@ -41,12 +46,95 @@ export default async function HoyPage() {
   })
 
   const upcomingDeadlines = deadlines.slice(0, 12)
+  const deadlinesThisWeek = deadlines.filter((d) => d.urgency === 'soon').length
+
+  const actions: SuMananaAction[] = []
+
+  for (const m of bulletins.manuals) {
+    actions.push({
+      id: `manual-${m.id}`,
+      kind: 'bulletin_manual',
+      priority: 0,
+      href: '/ciceron/boletines/coordinador',
+      title: `${copy.hoy.bulletinsManual}: ${m.stateName}`,
+      detail: m.sourceName,
+    })
+  }
+
+  for (const row of bulletins.board.filter((b) => b.status === 'fallo')) {
+    actions.push({
+      id: `fallo-${row.sourceId}`,
+      kind: 'bulletin_manual',
+      priority: 1,
+      href: '/ciceron/boletines/coordinador',
+      title: `${row.stateName}: ${row.statusLabel}`,
+      detail: row.failureMessage ?? undefined,
+    })
+  }
+
+  for (const r of briefing.reviews) {
+    actions.push({
+      id: `review-${r.id}`,
+      kind: 'review',
+      priority: 0,
+      href: `/ciceron/revision/${r.id}`,
+      title: r.title,
+      detail: `${r.clientName} · ${copy.revision.due} ${r.due}`,
+    })
+  }
+
+  for (const d of upcomingDeadlines.filter((x) => x.urgency === 'soon')) {
+    actions.push({
+      id: `deadline-${d.id}`,
+      kind: 'deadline',
+      priority: 0,
+      href: '/ciceron/expedientes',
+      title: d.label,
+      detail: `${d.clientName} · ${d.due}`,
+    })
+  }
+
+  for (const h of bulletins.hits.slice(0, 5)) {
+    actions.push({
+      id: `hit-${h.id}`,
+      kind: 'bulletin_hit',
+      priority: h.matchKind === 'exact' ? 0 : 1,
+      href: h.caseFileId ? `/ciceron/expedientes/${h.caseFileId}` : '/ciceron/boletines',
+      title: h.clientName ?? h.stateName,
+      detail: [h.courtName, h.expedienteNumber, h.summary]
+        .filter(Boolean)
+        .join(' · '),
+    })
+  }
+
+  if (!briefing.emptyToday) {
+    let dofPriority = 0
+    for (const [clientName, items] of briefing.byClient.entries()) {
+      const first = items[0]
+      if (!first) continue
+      actions.push({
+        id: `dof-${first.id}`,
+        kind: 'dof_match',
+        priority: dofPriority++,
+        href: '/ciceron/monitor-dof',
+        title: clientName,
+        detail: first.title,
+      })
+    }
+  }
+
+  const morning = buildSuMananaSummary({
+    bulletinNoveltyKeys: bulletins.hits.map((h) => h.clientName ?? h.matterId ?? h.id),
+    dofNoveltyKeys: briefing.emptyToday ? [] : [...briefing.byClient.keys()],
+    deadlinesThisWeek,
+    reviewsPending: briefing.reviews.length,
+    actions,
+  })
 
   return (
     <div className="cic-hoy-layout">
       <div className="cic-hoy-primary">
-        <h1 className="cic-h1">{copy.hoy.title}</h1>
-        <p className="cic-lead">{copy.hoy.lead}</p>
+        <SuMananaHero metrics={morning.metrics} actions={morning.actions} />
 
         <p className="cic-hoy-links">
           <Link href="/ciceron/hoy/briefing">{copy.engagement.openBriefing}</Link>
