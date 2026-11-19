@@ -11,7 +11,8 @@
     "test": "node scripts/run-tests.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "ciceron:research-eval": "tsx scripts/ciceron-research-eval.ts",
-    "ciceron:create-invite": "tsx scripts/ciceron/create-invite.ts"
+    "ciceron:create-invite": "tsx scripts/ciceron/create-invite.ts",
+    "ciceron:scan-wording": "tsx scripts/ciceron/scan-wording.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.142",
