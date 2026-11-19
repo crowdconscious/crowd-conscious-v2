@@ -992,6 +992,43 @@ export type CiceronDatabase = {
           CiceronDatabase['ciceron']['Tables']['match_comments']['Insert']
         >
       }
+      morning_email_preferences: {
+        Row: {
+          id: string
+          firm_id: string
+          actor_id: string
+          email: string
+          morning_enabled: boolean
+          include_novedades: boolean
+          include_plazos: boolean
+          include_assignments: boolean
+          unsubscribed_at: string | null
+          last_sent_at: string | null
+          last_preview_at: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          actor_id: string
+          email: string
+          morning_enabled?: boolean
+          include_novedades?: boolean
+          include_plazos?: boolean
+          include_assignments?: boolean
+          unsubscribed_at?: string | null
+          last_sent_at?: string | null
+          last_preview_at?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['morning_email_preferences']['Insert']
+        >
+      }
     }
     Functions: {
       decide_review: {

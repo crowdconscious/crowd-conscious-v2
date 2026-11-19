@@ -980,6 +980,27 @@ export const copy = {
     openDigest: 'Ver correo semanal (vista previa)',
   },
 
+  morningEmail: {
+    title: 'Correo de la mañana',
+    lead:
+      'Reciba a las 09:00 (Ciudad de México) un resumen con novedades, plazos de la semana y sus asignaciones.',
+    cronEnabled: 'El envío programado está activado en este entorno.',
+    cronDisabled:
+      'El envío programado está desactivado (CICERON_MORNING_EMAIL_ENABLED). Puede guardar preferencias y pedir una vista previa.',
+    demoSafety:
+      'En el despacho de demostración solo se envía a su propio correo verificado; nunca a direcciones ficticias de clientes.',
+    email: 'Su correo',
+    enable: 'Quiero recibir el correo de la mañana',
+    includeNovedades: 'Incluir novedades del día',
+    includePlazos: 'Incluir plazos de esta semana',
+    includeAssignments: 'Incluir mis asignaciones',
+    save: 'Guardar preferencias',
+    sendPreview: 'Enviarme una vista previa ahora',
+    sendPreviewNote:
+      'Usa Resend. Guarde primero un correo válido. En demostración solo se envía a esa dirección.',
+    openPrefs: 'Preferencias de correo',
+  },
+
   collab: {
     panelLabel: 'Asignación y comentarios',
     assignTitle: 'Asignar',
