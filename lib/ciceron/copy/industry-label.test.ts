@@ -8,6 +8,10 @@ describe('formatClientIndustryEs', () => {
     assert.equal(formatClientIndustryEs('comercio_exterior'), 'Comercio exterior')
   })
 
+  it('capitalizes unknown single-word slugs', () => {
+    assert.equal(formatClientIndustryEs('salud'), 'Salud')
+  })
+
   it('passes through Spanish labels', () => {
     assert.equal(formatClientIndustryEs('Energía renovable'), 'Energía renovable')
   })

@@ -30,9 +30,13 @@ export function formatClientIndustryEs(raw: string | null | undefined): string {
     const words = s.split('_').filter(Boolean)
     return words
       .map((w, i) =>
-        i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w.toLowerCase()
+        i === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase()
       )
       .join(' ')
+  }
+  // Single slug word: salud → Salud
+  if (/^[a-z0-9]+$/i.test(s)) {
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
   }
   return s
 }
