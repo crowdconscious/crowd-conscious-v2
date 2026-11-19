@@ -8,6 +8,7 @@ import {
 } from './morning-email-data'
 import { sendMorningEmailPreview } from './morning-email-send'
 import { sendDemoMorningSummaryTest } from './demo-morning-test-send'
+import { sendDemoMorningWhatsAppTest } from '@/lib/ciceron/whatsapp/demo-whatsapp-test-send'
 
 export async function saveMorningEmailPrefsAction(
   formData: FormData
@@ -47,5 +48,13 @@ export async function sendDemoMorningTestAction(): Promise<void> {
   const persona = await getCiceronDemoSession()
   if (!persona) return
   await sendDemoMorningSummaryTest({ persona })
+  revalidatePath('/ciceron/preferencias/correo')
+}
+
+/** Admin/socio demo-only: send live WhatsApp template to CICERON_DEMO_RECIPIENT_WHATSAPP. */
+export async function sendDemoMorningWhatsAppTestAction(): Promise<void> {
+  const persona = await getCiceronDemoSession()
+  if (!persona) return
+  await sendDemoMorningWhatsAppTest({ persona })
   revalidatePath('/ciceron/preferencias/correo')
 }
