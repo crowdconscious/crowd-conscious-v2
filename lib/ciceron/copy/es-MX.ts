@@ -107,6 +107,7 @@ export const copy = {
     back: 'Anterior',
     dismiss: 'Omitir recorrido',
     resume: 'Reanudar recorrido',
+    collapse: 'Minimizar',
     demoTag: 'Datos de demostración',
     storyClient: 'Nexora Pagos, S.A.P.I. de C.V.',
     steps: {
@@ -281,6 +282,9 @@ export const copy = {
     hoyNone:
       'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas del Diario Oficial disponibles en el corpus de demostración.',
     generic: 'No hay información que mostrar en este momento.',
+    nextStep: 'Qué puede hacer',
+    openHoy: 'Volver a Su mañana',
+    openBoletines: 'Abrir Boletines',
   },
 
   hoy: {
@@ -290,7 +294,8 @@ export const copy = {
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',
     weekStripTitle: 'Esta semana',
-    weekStripLead: 'Plazos en la semana laboral (Ciudad de México).',
+    weekStripLead:
+      'Plazos con vencimiento de lunes a domingo (hora de la Ciudad de México), misma ventana que la cifra de arriba.',
     weekStripEmpty: 'Sin plazos en esta semana.',
     countdown: {
       overdue: 'Vencido',
@@ -422,10 +427,14 @@ export const copy = {
     colNivel: 'Modalidad',
     colEntidad: 'Entidad',
     colPublicacion: 'Publicación',
+    colFecha: 'Fecha',
     colBuscados: 'Expedientes buscados',
+    colPublicaciones: 'Publicaciones',
     colExactas: 'Exactas',
+    colCoincidencias: 'Coincidencias',
     colPosibles: 'Posibles',
     colHoraCorrida: 'Hora de la corrida',
+    colUltimaConsulta: 'Última consulta',
     colAccion: 'Acción',
     colEstado: 'Estado',
     statusRevisado: 'Revisado',

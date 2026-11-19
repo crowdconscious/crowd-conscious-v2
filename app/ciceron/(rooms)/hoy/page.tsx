@@ -5,7 +5,7 @@ import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { ReviewBadge } from '../../_components/ReviewBadge'
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
-import { SuMananaHero } from '../../_components/SuMananaHero'
+import { SuMananaHero, type DeniedActionNote } from '../../_components/SuMananaHero'
 import { WeekDeadlineStrip } from '../../_components/WeekDeadlineStrip'
 import { DeadlineCountdown } from '../../_components/DeadlineCountdown'
 import { PersonaStartPanel } from '../../_components/PersonaStartPanel'
@@ -14,9 +14,11 @@ import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
+import { countDeadlinesInCurrentWeek } from '@/lib/ciceron/deadlines/week-window-pure'
 import {
   personaHomeKind,
   unavailableActionIdsFor,
+  type UnavailableActionId,
 } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import {
@@ -53,11 +55,38 @@ export default async function HoyPage() {
   })
 
   const upcomingDeadlines = deadlines.slice(0, 12)
-  const deadlinesThisWeek = deadlines.filter(
-    (d) => d.urgency === 'soon' || d.urgency === 'urgent'
-  ).length
+  const dueAts = upcomingDeadlines
+    .map((d) => d.dueAt)
+    .filter((v): v is string => Boolean(v))
+  // Same Mon–Sun CDMX window as WeekDeadlineStrip (not urgency).
+  const deadlinesThisWeek = countDeadlinesInCurrentWeek(dueAts)
   const homeKind = personaHomeKind(persona.role, persona.id)
   const unavailableIds = unavailableActionIdsFor(homeKind)
+
+  function deniedNotesFor(ids: UnavailableActionId[]): DeniedActionNote[] {
+    return ids.map((id) => {
+      const item = copy.personaHome.unavailable[id]
+      if (id === 'manual-queue-own') {
+        return {
+          kind: 'bulletin_manual' as const,
+          actionIdPrefix: 'manual-',
+          title: item.title,
+          reason: item.reason,
+        }
+      }
+      if (id === 'confirm-deadline') {
+        return {
+          kind: 'deadline' as const,
+          title: item.title,
+          reason: item.reason,
+        }
+      }
+      return { title: item.title, reason: item.reason }
+    })
+  }
+
+  // Denials sit beside the related action — never as a home hero above Su mañana.
+  const deniedNotes = deniedNotesFor(unavailableIds)
 
   const actions: SuMananaAction[] = []
 
@@ -145,14 +174,17 @@ export default async function HoyPage() {
   return (
     <div className="cic-hoy-layout">
       <div className="cic-hoy-primary">
-        <PersonaStartPanel kind={homeKind} unavailableIds={unavailableIds} />
+        <SuMananaHero
+          metrics={morning.metrics}
+          actions={morning.actions}
+          deniedNotes={deniedNotes}
+        />
 
-        {(homeKind === 'socio' ||
-          homeKind === 'asociado' ||
-          homeKind === 'admin' ||
-          homeKind === 'pasante') && (
-          <SuMananaHero metrics={morning.metrics} actions={morning.actions} />
-        )}
+        <WeekDeadlineStrip dueAts={dueAts} />
+
+        {homeKind === 'pasante' || homeKind === 'coordinador' ? (
+          <PersonaStartPanel kind={homeKind} unavailableIds={[]} />
+        ) : null}
 
         {homeKind === 'pasante' && bulletins.manuals.length > 0 ? (
           <section className="cic-section" aria-labelledby="pasante-manuals">
@@ -171,15 +203,14 @@ export default async function HoyPage() {
                       {copy.boletines.revisarManualmente}
                     </Link>
                   </p>
+                  <p className="cic-muted cic-inline-denied" role="note">
+                    {copy.personaHome.unavailable['confirm-deadline'].reason}
+                  </p>
                 </li>
               ))}
             </ul>
           </section>
         ) : null}
-
-        <WeekDeadlineStrip
-          dueAts={upcomingDeadlines.map((d) => d.dueAt).filter((v): v is string => Boolean(v))}
-        />
 
         <p className="cic-hoy-links">
           <Link href="/ciceron/hoy/briefing">{copy.engagement.openBriefing}</Link>

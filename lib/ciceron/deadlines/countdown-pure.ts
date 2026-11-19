@@ -7,6 +7,7 @@ import {
   toIsoDate,
 } from '@/lib/ciceron/case-files/business-days'
 import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
+import { currentWeekWindow } from '@/lib/ciceron/deadlines/week-window-pure'
 
 export type DeadlineUrgencyLevel = 'overdue' | 'today' | 'critical' | 'soon' | 'normal'
 
@@ -74,22 +75,19 @@ export type WeekDayCell = {
   deadlineCount: number
 }
 
-/** Monday-start week containing `todayIso` (CDMX calendar). */
+/** Monday–Sunday week containing `todayIso` (same window as the metric). */
 export function buildWeekStrip(
   deadlineDueIsos: string[],
   todayIso = todayInMexicoCity(),
   weekdayLabels: string[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 ): WeekDayCell[] {
-  const today = parseIsoDate(todayIso)
-  // getUTCDay: 0 Sun … 6 Sat → Monday-based offset
-  const dow = today.getUTCDay()
-  const mondayOffset = dow === 0 ? -6 : 1 - dow
-  const monday = new Date(today.getTime())
-  monday.setUTCDate(monday.getUTCDate() + mondayOffset)
+  const window = currentWeekWindow(todayIso)
+  const monday = parseIsoDate(window.startIso)
 
   const counts = new Map<string, number>()
   for (const raw of deadlineDueIsos) {
     const iso = raw.slice(0, 10)
+    if (iso < window.startIso || iso > window.endIso) continue
     counts.set(iso, (counts.get(iso) ?? 0) + 1)
   }
 

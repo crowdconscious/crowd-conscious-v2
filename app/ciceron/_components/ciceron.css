@@ -58,9 +58,10 @@
   background: var(--cic-bg);
   color: var(--cic-ink);
   font-family: var(--cic-sans);
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .ciceron-root *,
@@ -359,7 +360,7 @@
 
 .cic-lead {
   color: var(--cic-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.55;
   max-width: var(--cic-max-read);
   margin: calc(var(--cic-space) * 1) 0 0;
@@ -454,6 +455,56 @@
   overflow: auto;
   margin: 0;
   box-shadow: none;
+}
+
+.cic-guided-sheet-handle {
+  display: none;
+}
+
+.cic-guided-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.cic-guided-pill {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: 999px;
+  background: var(--cic-surface);
+  color: var(--cic-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cic-guided-pill-step {
+  color: var(--cic-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.cic-inline-denied {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.cic-su-manana-action.is-denied .cic-su-manana-action-title.is-disabled {
+  color: var(--cic-muted);
+  text-decoration: none;
+  cursor: not-allowed;
 }
 
 .cic-guided-demo-tag {
@@ -717,7 +768,7 @@ details[open] > .cic-secondary-summary::before {
 }
 
 .cic-content {
-  padding: calc(var(--cic-space) * 4) calc(var(--cic-space) * 3) calc(var(--cic-space) * 6);
+  padding: calc(var(--cic-space) * 5) calc(var(--cic-space) * 4) calc(var(--cic-space) * 8);
   max-width: 1100px;
 }
 
@@ -811,13 +862,14 @@ details[open] > .cic-secondary-summary::before {
 .cic-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 .cic-table th,
 .cic-table td {
   text-align: left;
-  padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
+  padding: calc(var(--cic-space) * 1.5) calc(var(--cic-space) * 1.75);
   border-top: 1px solid var(--cic-rule);
   border-bottom: 1px solid var(--cic-rule);
   vertical-align: top;
@@ -826,7 +878,7 @@ details[open] > .cic-secondary-summary::before {
 .cic-table th {
   color: var(--cic-muted);
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -876,18 +928,30 @@ details[open] > .cic-secondary-summary::before {
 
 .cic-empty {
   border: 1px dashed var(--cic-rule-strong);
-  padding: calc(var(--cic-space) * 4);
+  padding: calc(var(--cic-space) * 5) calc(var(--cic-space) * 4);
   color: var(--cic-muted);
   max-width: var(--cic-max-read);
   border-radius: var(--cic-radius);
   background: var(--cic-paper-2);
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 .cic-empty h2 {
   font-family: var(--cic-serif);
   color: var(--cic-ink);
-  font-size: 1.1rem;
-  margin: 0 0 calc(var(--cic-space) * 1);
+  font-size: 1.2rem;
+  margin: 0 0 calc(var(--cic-space) * 1.25);
+}
+
+.cic-empty-cta {
+  margin-top: calc(var(--cic-space) * 2);
+}
+
+/* Prefer the fixed top banner; hide page-level duplicate demo labels. */
+.cic-demo-inline,
+.cic-page-demo-label {
+  display: none !important;
 }
 
 .cic-btn {
@@ -1305,20 +1369,70 @@ textarea.cic-input {
     color: var(--cic-accent-mint);
     border-top: 2px solid var(--cic-accent-mint);
   }
+  /* Bottom sheet above mobile nav — never covers the tab bar. */
+  .cic-guided-dock,
+  .cic-guided-sheet {
+    left: 0;
+    right: 0;
+    bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: none;
+    max-height: 32vh;
+    overflow: auto;
+    padding: 6px 12px 8px;
+    border-radius: 12px 12px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .cic-guided-sheet .cic-guided-title {
+    font-size: 0.9rem;
+  }
+  .cic-guided-sheet .cic-guided-slim-body p {
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+  .cic-guided-sheet .cic-guided-actions {
+    margin-top: 6px;
+  }
+  .cic-guided-sheet-handle {
+    display: block;
+    width: 36px;
+    height: 3px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--cic-rule-strong);
+  }
+  .cic-guided-pill {
+    left: 50%;
+    right: auto;
+    bottom: calc(3.35rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    max-width: calc(100vw - 1.5rem);
+  }
   .cic-content {
     padding: calc(var(--cic-space) * 3) calc(var(--cic-space) * 2);
   }
   .cic-table thead {
     display: none;
   }
-  .cic-table tr {
+  .cic-table tr,
+  .cic-table-card-row {
     display: grid;
-    gap: 0.25rem;
-    padding: calc(var(--cic-space) * 1.5) 0;
+    gap: 0.55rem;
+    padding: calc(var(--cic-space) * 1.5);
+    margin: 0 0 calc(var(--cic-space) * 1.25);
+    border: 1px solid var(--cic-rule);
+    border-radius: var(--cic-radius);
+    background: var(--cic-surface);
   }
   .cic-table td {
     border: 0;
-    padding: 0.15rem 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 38%) 1fr;
+    gap: 0.5rem;
+    align-items: start;
   }
   .cic-table td::before {
     content: attr(data-label);
@@ -1328,6 +1442,10 @@ textarea.cic-input {
     letter-spacing: 0.04em;
     color: var(--cic-muted);
     font-weight: 600;
+  }
+  .cic-table td:empty::before,
+  .cic-table td[data-label='']::before {
+    display: none;
   }
 }
 
@@ -1849,12 +1967,35 @@ textarea.cic-input {
   .cic-persona-bar-hint {
     display: none;
   }
-  .cic-guided-dock {
-    right: 0.5rem;
-    bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
-    width: min(22rem, calc(100vw - 1rem));
-    max-height: 36vh;
-    padding: 10px 12px;
+  .cic-guided-dock,
+  .cic-guided-sheet {
+    left: 0;
+    right: 0;
+    bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: none;
+    max-height: 32vh;
+    overflow: auto;
+    padding: 6px 12px 8px;
+    border-radius: 12px 12px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .cic-guided-sheet-handle {
+    display: block;
+    width: 36px;
+    height: 3px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--cic-rule-strong);
+  }
+  .cic-guided-pill {
+    left: 50%;
+    right: auto;
+    bottom: calc(3.35rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    max-width: calc(100vw - 1.5rem);
   }
   .cic-guided-head {
     flex-wrap: wrap;
@@ -2690,5 +2831,36 @@ textarea.cic-input {
   a {
     color: inherit !important;
     text-decoration: none !important;
+  }
+}
+
+/* —— Phone polish: Su mañana + partner report —— */
+@media (max-width: 520px) {
+  .ciceron-root {
+    font-size: 15px;
+  }
+  .cic-content {
+    padding: calc(var(--cic-space) * 3) calc(var(--cic-space) * 2) calc(var(--cic-space) * 10);
+  }
+  .cic-su-manana-metrics {
+    gap: calc(var(--cic-space) * 1.25);
+  }
+  .cic-partner-letterhead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cic-partner-report-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cic-partner-report-actions .cic-btn {
+    justify-content: center;
+  }
+  .cic-persona-start {
+    padding: calc(var(--cic-space) * 1.5);
+  }
+  .cic-topbar {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }

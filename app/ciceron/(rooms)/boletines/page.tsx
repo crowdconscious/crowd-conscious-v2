@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BulletinClockStrip } from './BulletinClockStrip'
 import { BulletinMatchCard } from '../../_components/BulletinMatchCard'
-import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
+import { EmptyState } from '../../_components/EmptyState'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
@@ -34,9 +35,6 @@ export default async function BoletinesPage() {
 
   return (
     <div>
-      <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 8 }}>
-        {CICERON_DEMO_LABEL}
-      </p>
       <h1 className="cic-h1">{copy.boletines.title}</h1>
       <p className="cic-lead">{copy.boletines.lead}</p>
       <p className="cic-hoy-links">
@@ -83,21 +81,21 @@ export default async function BoletinesPage() {
             <thead>
               <tr>
                 <th scope="col">{copy.boletines.colEntidad}</th>
-                <th scope="col">{copy.boletines.colPublicacion}</th>
-                <th scope="col">{copy.boletines.colNivel}</th>
-                <th scope="col">{copy.boletines.colBuscados}</th>
-                <th scope="col">{copy.boletines.colExactas}</th>
-                <th scope="col">{copy.boletines.colPosibles}</th>
-                <th scope="col">{copy.boletines.colHoraCorrida}</th>
+                <th scope="col">{copy.boletines.colFecha}</th>
                 <th scope="col">{copy.boletines.colEstado}</th>
+                <th scope="col">{copy.boletines.colPublicaciones}</th>
+                <th scope="col">{copy.boletines.colCoincidencias}</th>
+                <th scope="col">{copy.boletines.colPosibles}</th>
+                <th scope="col">{copy.boletines.colUltimaConsulta}</th>
+                <th scope="col">{copy.boletines.colNivel}</th>
                 <th scope="col">{copy.boletines.colAccion}</th>
               </tr>
             </thead>
             <tbody>
               {data.board.map((row) => (
-                <tr key={row.sourceId}>
-                  <td>{row.stateName}</td>
-                  <td>
+                <tr key={row.sourceId} className="cic-table-card-row">
+                  <td data-label={copy.boletines.colEntidad}>{row.stateName}</td>
+                  <td data-label={copy.boletines.colFecha}>
                     {row.publicationDate
                       ? formatDateLongEs(row.publicationDate)
                       : '—'}
@@ -119,14 +117,7 @@ export default async function BoletinesPage() {
                       </span>
                     ) : null}
                   </td>
-                  <td>{row.tierLabel}</td>
-                  <td>{row.mattersSearched}</td>
-                  <td>{row.hitsExact}</td>
-                  <td>{row.hitsPossible}</td>
-                  <td>
-                    {row.runFinishedAt ? formatDateTimeEs(row.runFinishedAt) : '—'}
-                  </td>
-                  <td>
+                  <td data-label={copy.boletines.colEstado}>
                     <span className={statusClass(row.status)}>{row.statusLabel}</span>
                     {row.status === 'fallo' ? (
                       <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
@@ -139,7 +130,16 @@ export default async function BoletinesPage() {
                       </p>
                     ) : null}
                   </td>
-                  <td>
+                  <td data-label={copy.boletines.colPublicaciones}>{row.mattersSearched}</td>
+                  <td data-label={copy.boletines.colCoincidencias}>{row.hitsExact}</td>
+                  <td data-label={copy.boletines.colPosibles}>{row.hitsPossible}</td>
+                  <td data-label={copy.boletines.colUltimaConsulta}>
+                    {row.runFinishedAt ? formatDateTimeEs(row.runFinishedAt) : '—'}
+                  </td>
+                  <td data-label={copy.boletines.colNivel} className="cic-table-secondary-field">
+                    {row.tierLabel}
+                  </td>
+                  <td data-label={copy.boletines.colAccion}>
                     <a
                       className="cic-btn cic-btn-secondary cic-btn-compact"
                       href={row.sourceUrl}
@@ -164,7 +164,9 @@ export default async function BoletinesPage() {
           {copy.boletines.informative}
         </p>
         {data.hits.length === 0 ? (
-          <p className="cic-muted">{copy.boletines.emptyHits}</p>
+          <EmptyState title={copy.boletines.emptyHits} href="/ciceron/hoy" cta={copy.empty.openHoy}>
+            {copy.empty.generic}
+          </EmptyState>
         ) : (
           <ul className="cic-stack cic-match-list">
             {data.hits.map((h) => (

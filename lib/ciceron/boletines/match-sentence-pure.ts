@@ -24,8 +24,11 @@ export function buildMatchSentenceParts(input: MatchSentenceInput): MatchSentenc
   const client = (input.clientName ?? '').trim() || 'Cliente'
   const court = (input.courtName ?? '').trim() || 'Tribunal no indicado'
   const requirement =
-    (input.requirement ?? '').trim().replace(/^Datos de demostración\.\s*/i, '') ||
-    'Acuerdo publicado en la lista'
+    (input.requirement ?? '')
+      .trim()
+      .replace(/^Datos de demostración\.\s*/i, '')
+      .replace(/\s*Datos de demostración\.?\s*$/i, '')
+      .trim() || 'Acuerdo publicado en la lista'
   const metaBits: string[] = []
   if (input.expedienteNumber?.trim()) {
     metaBits.push(`Exp. ${input.expedienteNumber.trim()}`)

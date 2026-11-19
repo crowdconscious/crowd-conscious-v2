@@ -257,14 +257,15 @@ export type DeadlineView = {
 /** Roll demo plazos forward so Su mañana always shows live countdowns. */
 function rolledFixtureDeadlines(): DeadlineView[] {
   const today = todayInMexicoCity()
-  const soon = addTermDays({ startIso: today, termDays: 3, dayCount: 'business' })
+  // Keep at least one plazo inside the current Mon–Sun CDMX week (metric + strip).
+  const thisWeek = addTermDays({ startIso: today, termDays: 1, dayCount: 'business' })
   const later = addTermDays({ startIso: today, termDays: 8, dayCount: 'business' })
   return [
     {
       id: 'dl-1',
       label: 'Contestar demanda — 1001/2026',
-      due: formatDateLongEs(soon.dueIso),
-      dueAt: `${soon.dueIso}T23:59:00-06:00`,
+      due: formatDateLongEs(thisWeek.dueIso),
+      dueAt: `${thisWeek.dueIso}T23:59:00-06:00`,
       clientName: 'Nexora Pagos, S.A.P.I. de C.V.',
       urgency: 'soon',
     },
