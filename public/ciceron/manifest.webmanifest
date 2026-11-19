@@ -1,0 +1,32 @@
+{
+  "name": "Cicerón.ai",
+  "short_name": "Cicerón",
+  "description": "Demostración de vigilancia de boletines judiciales para despachos mexicanos. Datos de demostración. Equipo de Cicerón.",
+  "start_url": "/ciceron/hoy",
+  "scope": "/ciceron/",
+  "display": "standalone",
+  "background_color": "#020612",
+  "theme_color": "#020612",
+  "lang": "es-MX",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/ciceron/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ciceron/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/ciceron/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

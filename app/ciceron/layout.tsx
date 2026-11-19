@@ -28,10 +28,20 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: { absolute: 'Cicerón.ai · Demostración' },
   description:
-    'Demostración de Cicerón.ai, inteligencia jurídica para despachos mexicanos. Datos de demostración.',
+    'Demostración de Cicerón.ai, inteligencia jurídica para despachos mexicanos. Datos de demostración. Equipo de Cicerón.',
   applicationName: 'Cicerón.ai',
+  manifest: '/ciceron/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'Cicerón',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
-    icon: [{ url: '/ciceron/favicon.svg', type: 'image/svg+xml' }],
+    icon: [
+      { url: '/ciceron/favicon.svg', type: 'image/svg+xml' },
+      { url: '/ciceron/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/ciceron/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
     apple: [{ url: '/ciceron/apple-touch-icon.png', sizes: '180x180' }],
   },
   robots: {

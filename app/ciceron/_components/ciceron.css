@@ -3476,6 +3476,32 @@ textarea.cic-input {
 }
 
 /* —— Phone polish: Su mañana + partner report —— */
+/* Phone-first «Hoy» daily screen */
+@media (max-width: 720px) {
+  .cic-hoy-layout {
+    display: block;
+  }
+  .cic-hoy-primary {
+    min-width: 0;
+  }
+  .cic-hoy-secondary {
+    margin-top: calc(var(--cic-space) * 3);
+  }
+  .cic-su-manana .cic-h1 {
+    font-size: 1.55rem;
+  }
+  .cic-hoy-daily-line {
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+  .cic-partner-coverage .cic-coord-map-svg {
+    max-height: 280px;
+  }
+  .cic-guided-setup {
+    padding: calc(var(--cic-space) * 2);
+  }
+}
+
 @media (max-width: 520px) {
   .ciceron-root {
     font-size: 15px;
