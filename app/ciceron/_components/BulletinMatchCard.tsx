@@ -2,13 +2,17 @@
 
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
+import type { CardPrimaryActionId } from '@/lib/ciceron/boletines/card-action-pure'
 import {
   buildMatchSentenceParts,
   pickMatchPrimaryAction,
 } from '@/lib/ciceron/boletines/match-sentence-pure'
-import { buildQueCambio } from '@/lib/ciceron/boletines/que-cambio-pure'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 
+/**
+ * Primary CTA is precomputed on the server (label/href/denied) so SSR and
+ * client never diverge on the button text (hydration-safe).
+ */
 export type BulletinMatchCardProps = {
   id: string
   clientName: string | null
@@ -22,6 +26,15 @@ export type BulletinMatchCardProps = {
   caseFileId: string | null
   sourceUrl: string | null
   reason: string
+  /** Server-built Qué cambió copy (plain Spanish). */
+  queCambioBefore: string
+  queCambioAfter: string
+  queCambioLegalDetail: string
+  primaryActionId: CardPrimaryActionId
+  primaryLabel: string
+  primaryHref: string
+  primaryDenied: boolean
+  primaryDenyReason: string | null
 }
 
 const ACTION_LABEL: Record<'open' | 'capture' | 'review' | 'source', string> = {
@@ -54,15 +67,7 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
     deadlineLabel: props.deadlineLabel,
   })
 
-  const cambio = buildQueCambio({
-    clientName: props.clientName,
-    summary: props.summary,
-    matchKind: props.matchKind,
-    courtName: props.courtName,
-    expedienteNumber: props.expedienteNumber,
-  })
-
-  const { primary, secondary } = pickMatchPrimaryAction({
+  const { secondary } = pickMatchPrimaryAction({
     caseFileId: props.caseFileId,
     sourceUrl: props.sourceUrl,
   })
@@ -105,8 +110,8 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
 
       <section className="cic-que-cambio" aria-label={copy.boletines.queCambioTitle}>
         <h3 className="cic-que-cambio-title">{copy.boletines.queCambioTitle}</h3>
-        <p className="cic-que-cambio-before">{cambio.before}</p>
-        <p className="cic-que-cambio-after">{cambio.after}</p>
+        <p className="cic-que-cambio-before">{props.queCambioBefore}</p>
+        <p className="cic-que-cambio-after">{props.queCambioAfter}</p>
         {props.sourceUrl ? (
           <p className="cic-que-cambio-source">
             <a
@@ -122,25 +127,38 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
         <details className="cic-que-cambio-legal">
           <summary>{copy.boletines.legalDetailSummary}</summary>
           <p id={detailId} className="cic-muted">
-            {cambio.legalDetail}
+            {props.queCambioLegalDetail}
           </p>
         </details>
       </section>
 
       <p className="cic-muted cic-match-card-reason">{props.reason}</p>
       <div className="cic-match-card-actions" ref={rootRef}>
-        {primary.external ? (
-          <a
-            className="cic-btn cic-btn-compact"
-            href={primary.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {ACTION_LABEL[primary.id]}
-          </a>
+        {props.primaryDenied ? (
+          <div className="cic-match-primary-denied">
+            <button
+              type="button"
+              className="cic-btn cic-btn-compact"
+              disabled
+              title={props.primaryDenyReason ?? undefined}
+              aria-disabled="true"
+              data-primary-action={props.primaryActionId}
+            >
+              {props.primaryLabel}
+            </button>
+            {props.primaryDenyReason ? (
+              <p className="cic-muted cic-inline-denied" role="note">
+                {props.primaryDenyReason}
+              </p>
+            ) : null}
+          </div>
         ) : (
-          <Link className="cic-btn cic-btn-compact" href={primary.href}>
-            {ACTION_LABEL[primary.id]}
+          <Link
+            className="cic-btn cic-btn-compact"
+            href={props.primaryHref}
+            data-primary-action={props.primaryActionId}
+          >
+            {props.primaryLabel}
           </Link>
         )}
         {secondary.length > 0 ? (
