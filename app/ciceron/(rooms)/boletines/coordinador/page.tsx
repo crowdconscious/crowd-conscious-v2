@@ -5,12 +5,23 @@ import {
   CompleteButton,
   PartnerSummaryPreview,
 } from '../CoordinatorControls'
+import { BulletinClockStrip } from '../BulletinClockStrip'
 import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
+import {
+  formatDateLongEs,
+  formatDateTimeEs,
+} from '@/lib/ciceron/copy/format-date'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
+
+function statusClass(status: string): string {
+  if (status === 'fallo') return 'cic-bol-status is-critical'
+  if (status === 'manual' || status === 'parcial') return 'cic-bol-status is-warning'
+  if (status === 'sin_publicacion') return 'cic-bol-status is-neutral'
+  return 'cic-bol-status is-good'
+}
 
 export default async function CoordinadorBoletinesPage() {
   const persona = await getCiceronDemoSession()
@@ -34,7 +45,7 @@ export default async function CoordinadorBoletinesPage() {
       <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 8 }}>
         {CICERON_DEMO_LABEL} · {copy.roleCoordinador}
       </p>
-      <h1 className="cic-h1">Coordinación de boletines — 09:30</h1>
+      <h1 className="cic-h1">Coordinación de boletines</h1>
       <p className="cic-lead">
         Estado de todas las entidades a la hora objetivo del despacho. Asigne
         revisiones manuales a pasantes y prepare el resumen para socios (vista previa).
@@ -43,9 +54,11 @@ export default async function CoordinadorBoletinesPage() {
         <Link href="/ciceron/boletines">{copy.boletines.title}</Link>
       </p>
 
+      <BulletinClockStrip board={data.board} />
+
       <section className="cic-section" aria-labelledby="coord-board">
         <h2 id="coord-board" className="cic-h2">
-          Tablero 09:30
+          {copy.boletines.boardTitle}
         </h2>
         <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
           {formatDateLongEs(data.asOf)}
@@ -78,20 +91,53 @@ export default async function CoordinadorBoletinesPage() {
           <table className="cic-table">
             <thead>
               <tr>
-                <th scope="col">Entidad</th>
-                <th scope="col">Estado</th>
+                <th scope="col">{copy.boletines.colEntidad}</th>
+                <th scope="col">{copy.boletines.colPublicacion}</th>
                 <th scope="col">{copy.boletines.colNivel}</th>
-                <th scope="col">Fuente</th>
+                <th scope="col">{copy.boletines.colBuscados}</th>
+                <th scope="col">{copy.boletines.colExactas}</th>
+                <th scope="col">{copy.boletines.colPosibles}</th>
+                <th scope="col">{copy.boletines.colHoraCorrida}</th>
+                <th scope="col">{copy.boletines.colEstado}</th>
+                <th scope="col">{copy.boletines.colAccion}</th>
               </tr>
             </thead>
             <tbody>
               {data.board.map((row) => (
                 <tr key={row.sourceId}>
                   <td>{row.stateName}</td>
-                  <td>{row.statusLabel}</td>
-                  <td>{row.tierLabel}</td>
                   <td>
-                    <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    {row.publicationDate
+                      ? formatDateLongEs(row.publicationDate)
+                      : '—'}
+                    {row.bulletinNumber ? (
+                      <span className="cic-muted" style={{ display: 'block', fontSize: '0.8rem' }}>
+                        Núm. {row.bulletinNumber}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td>{row.tierLabel}</td>
+                  <td>{row.mattersSearched}</td>
+                  <td>{row.hitsExact}</td>
+                  <td>{row.hitsPossible}</td>
+                  <td>
+                    {row.runFinishedAt ? formatDateTimeEs(row.runFinishedAt) : '—'}
+                  </td>
+                  <td>
+                    <span className={statusClass(row.status)}>{row.statusLabel}</span>
+                    {row.status === 'fallo' ? (
+                      <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
+                        {copy.boletines.revisarManualmente}
+                      </p>
+                    ) : null}
+                  </td>
+                  <td>
+                    <a
+                      className="cic-btn cic-btn-secondary cic-btn-compact"
+                      href={row.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {copy.boletines.openSource}
                     </a>
                   </td>
@@ -123,7 +169,12 @@ export default async function CoordinadorBoletinesPage() {
                   {m.assignedToName ? ` · Asignado a ${m.assignedToName}` : ''}
                 </p>
                 <p style={{ margin: '0 0 8px' }}>
-                  <a href={m.sourceUrl} target="_blank" rel="noopener noreferrer">
+                  <a
+                    className="cic-btn cic-btn-secondary cic-btn-compact"
+                    href={m.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     {copy.boletines.openSource}
                   </a>
                 </p>
