@@ -49,6 +49,12 @@ export function SuMananaHero({
       )
   )
 
+  // Show each ABAC/RBAC reason once (first matching row), not on every denied item.
+  const denialTextShown = new Set<string>()
+  function denialKey(n: DeniedActionNote): string {
+    return `${n.kind ?? ''}|${n.actionIdPrefix ?? ''}|${n.reason}`
+  }
+
   return (
     <section className="cic-su-manana" aria-labelledby="su-manana-heading">
       <h1 id="su-manana-heading" className="cic-h1">
@@ -90,6 +96,14 @@ export function SuMananaHero({
           <ol className="cic-su-manana-action-list">
             {actions.map((a, index) => {
               const denied = noteFor(a)
+              let showDenialText = false
+              if (denied) {
+                const key = denialKey(denied)
+                if (!denialTextShown.has(key)) {
+                  denialTextShown.add(key)
+                  showDenialText = true
+                }
+              }
               return (
                 <li
                   key={a.id}
@@ -111,9 +125,11 @@ export function SuMananaHero({
                         >
                           {a.title}
                         </span>
-                        <span className="cic-muted cic-inline-denied" role="note">
-                          {denied.title}: {denied.reason}
-                        </span>
+                        {showDenialText ? (
+                          <span className="cic-muted cic-inline-denied" role="note">
+                            {denied.title}: {denied.reason}
+                          </span>
+                        ) : null}
                       </>
                     ) : (
                       <Link href={a.href} className="cic-su-manana-action-title">
