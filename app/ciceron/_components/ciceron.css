@@ -2595,6 +2595,14 @@ textarea.cic-input {
   }
 }
 
+.cic-empty-note {
+  margin: 0 0 10px;
+  font-family: var(--cic-serif);
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--cic-ink);
+}
+
 .cic-digest-toolbar {
   display: flex;
   justify-content: space-between;

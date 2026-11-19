@@ -14,7 +14,9 @@ import {
   decideCardPrimaryAction,
   type CardPersonaRole,
 } from '@/lib/ciceron/boletines/card-action-pure'
+import { formatConsultHm } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import { buildQueCambio } from '@/lib/ciceron/boletines/que-cambio-pure'
+import { buildEmptyHitsMessage } from '@/lib/ciceron/demo/empty-state-pure'
 import { personaHomeKind } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
@@ -177,8 +179,19 @@ export default async function BoletinesPage() {
           {copy.boletines.informative}
         </p>
         {data.hits.length === 0 ? (
-          <EmptyState title={copy.boletines.emptyHits} href="/ciceron/hoy" cta={copy.empty.openHoy}>
-            {copy.empty.generic}
+          <EmptyState
+            title={copy.empty.calmTitle}
+            href="/ciceron/hoy"
+            cta={copy.empty.openHoy}
+            countsNote={buildEmptyHitsMessage({
+              statesChecked: data.board.filter((b) => b.status !== 'sin_publicacion').length,
+              consultedAtHm:
+                formatConsultHm(
+                  data.board.map((b) => b.runFinishedAt).find((v): v is string => Boolean(v)) ?? null
+                ) ?? '09:30',
+            })}
+          >
+            {copy.boletines.informative}
           </EmptyState>
         ) : (
           <ul className="cic-stack cic-match-list">

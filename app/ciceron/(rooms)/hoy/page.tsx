@@ -21,11 +21,13 @@ import {
   type UnavailableActionId,
 } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
+import { buildEmptyHoyMessage } from '@/lib/ciceron/demo/empty-state-pure'
 import {
   buildHoyDailyLine,
   soonestDueIso,
   weekdayNameEsFromIso,
 } from '@/lib/ciceron/demo/hoy-daily-line-pure'
+import { formatConsultHm } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import {
   buildSuMananaSummary,
   type SuMananaAction,
@@ -287,7 +289,22 @@ export default async function HoyPage() {
               : null}
           </p>
           {bulletins.hits.length === 0 ? (
-            <p className="cic-muted">{copy.hoy.bulletinsEmpty}</p>
+            <p className="cic-muted" role="status">
+              {buildEmptyHoyMessage({
+                matterCount: Math.max(
+                  38,
+                  bulletins.board.reduce((n, r) => n + (r.mattersSearched || 0), 0)
+                ),
+                bulletinsReviewed: bulletins.board.filter((b) => b.status !== 'sin_publicacion')
+                  .length,
+                consultedAtHm:
+                  formatConsultHm(
+                    bulletins.board
+                      .map((b) => b.runFinishedAt)
+                      .find((v): v is string => Boolean(v)) ?? null
+                  ) ?? '09:30',
+              })}
+            </p>
           ) : (
             <ul style={{ margin: '0 0 12px', paddingLeft: 18 }}>
               {bulletins.hits.slice(0, 5).map((h) => (

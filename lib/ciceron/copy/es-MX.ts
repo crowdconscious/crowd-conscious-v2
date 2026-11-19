@@ -278,13 +278,14 @@ export const copy = {
   },
 
   empty: {
-    title: 'Sin elementos',
+    title: 'Sin novedades',
     hoyNone:
       'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas del Diario Oficial disponibles en el corpus de demostración.',
     generic: 'No hay información que mostrar en este momento.',
     nextStep: 'Qué puede hacer',
     openHoy: 'Volver a Su mañana',
     openBoletines: 'Abrir Boletines',
+    calmTitle: 'Todo en orden por ahora',
   },
 
   hoy: {
