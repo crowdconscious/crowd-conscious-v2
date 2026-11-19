@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { TermTip } from './TermTip'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import type {
   SuMananaAction,
@@ -64,7 +65,12 @@ export function SuMananaHero({
       <h1 id="su-manana-heading" className="cic-h1">
         {copy.hoy.title}
       </h1>
-      <p className="cic-lead">{copy.hoy.lead}</p>
+      <p className="cic-lead">
+        {copy.hoy.lead}{' '}
+        <TermTip term="DOF" tip={copy.tips.dof} /> ·{' '}
+        <TermTip term="boletín" tip={copy.tips.boletin} /> ·{' '}
+        <TermTip term="plazo" tip={copy.tips.plazo} />
+      </p>
 
       {dailyLine ? (
         <p className="cic-hoy-daily-line" role="status" aria-label={copy.hoy.dailyLineLabel}>

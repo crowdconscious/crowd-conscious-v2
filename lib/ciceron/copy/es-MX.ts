@@ -18,6 +18,15 @@ export const copy = {
     deadlinesTitle: 'Plazos',
     timelineTitle: 'Línea de tiempo del cliente',
   },
+  /** Short explanations for legal/tech terms kept in the UI. */
+  tips: {
+    dof: 'Diario Oficial de la Federación: publicación oficial del gobierno federal.',
+    boletin:
+      'Lista de acuerdos y acuerdos publicados por un tribunal estatal.',
+    plazo: 'Fecha límite procesal que el despacho debe vigilar.',
+    expediente: 'Carpeta o número de juicio que identifica el asunto.',
+    sidof: 'Servicio de consulta del Diario Oficial (fuente oficial).',
+  },
   guidedSetup: {
     title: 'Configuración rápida del despacho',
     progress: (n: number, total: number) => `Paso ${n} de ${total}`,
@@ -183,7 +192,7 @@ export const copy = {
       realLabel: 'Corpus de referencia (opcional)',
       sampleLabel: 'Datos de demostración',
       realItems:
-        'Monitor DOF: módulo opcional; no forma parte de la validación de boletines estatales.',
+        'Diario Oficial: módulo opcional; no forma parte de la validación de boletines estatales.',
       sampleItems:
         'Despacho Altamirano y Asociados, S.C.; Nexora Pagos; boletines estatales; plazos; resumen para socios.',
       cta: 'Solicitar un piloto',
@@ -235,7 +244,7 @@ export const copy = {
 
   fuentesCobertura: {
     title: 'Fuentes y cobertura',
-    lead: 'Orígenes del corpus, desde cuándo y última actualización con datos reales disponibles.',
+    lead: 'De dónde salen los textos vigilados, desde cuándo y cuándo se actualizaron por última vez.',
     sourcesTitle: 'Fuentes',
     sourcesBody:
       'Diario Oficial de la Federación vía SIDOF (JSON). Los boletines judiciales estatales públicos (listas de acuerdos) pueden consultarse automáticamente solo cuando el registro de la fuente está verificado por una persona nominada, con nivel A o B y revisión de términos (regla 9b). No se consultan expedientes electrónicos ni se inicia sesión en portales del Poder Judicial en esta demostración.',
@@ -244,7 +253,7 @@ export const copy = {
     lastUpdateTitle: 'Última actualización',
     lastUpdateFallback: 'Consulte el administrador de Fuentes para el estado del conector.',
     honesty:
-      'Sin recolección automática en vivo de boletines en esta demostración (fuentes deshabilitadas). La cobertura del DOF es la del corpus ya incorporado.',
+      'En esta demostración no se consultan boletines en vivo (fuentes apagadas). El Diario Oficial mostrado ya está cargado de antemano.',
     jurisdictionsTitle: 'Sus jurisdicciones',
     jurisdictionsLead:
       'Catálogo de demostración: entidades del pie del prospecto, con el número de asuntos ficticios, la modalidad de consulta y la fecha en que inició la cobertura.',
@@ -277,7 +286,7 @@ export const copy = {
   rooms: {
     hoy: 'Hoy',
     boletines: 'Boletines',
-    'monitor-dof': 'Monitor DOF',
+    'monitor-dof': 'Diario Oficial',
     expedientes: 'Expedientes',
     investigacion: 'Investigación',
     revision: 'Revisión',
@@ -293,13 +302,13 @@ export const copy = {
 
   command: {
     title: 'Ir a…',
-    placeholder: 'Sala, cliente, asunto, nota DOF…',
+    placeholder: 'Sala, cliente, asunto, nota del Diario Oficial…',
     empty: 'Sin coincidencias.',
     groups: {
       rooms: 'Salas',
       clients: 'Clientes',
       matters: 'Asuntos',
-      notes: 'Notas DOF',
+      notes: 'Notas del Diario Oficial',
     },
   },
 
@@ -314,7 +323,7 @@ export const copy = {
   empty: {
     title: 'Sin novedades',
     hoyNone:
-      'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas del Diario Oficial disponibles en el corpus de demostración.',
+      'No hay novedades que afecten a sus clientes en la última edición revisada. Se revisaron las notas del Diario Oficial disponibles en la demostración.',
     generic: 'No hay información que mostrar en este momento.',
     nextStep: 'Qué puede hacer',
     openHoy: 'Volver a Su mañana',
@@ -327,7 +336,7 @@ export const copy = {
     lead: 'Tres cifras para empezar el día, luego la lista ordenada de lo que requiere su atención.',
     dailyLineLabel: 'Resumen del día',
     dailyLineDemoNote: 'Datos de demostración',
-    matches: 'Clientes afectados (DOF)',
+    matches: 'Clientes afectados (Diario Oficial)',
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',
     weekStripTitle: 'Esta semana',
@@ -346,8 +355,8 @@ export const copy = {
     },
     unopened: 'Pendientes de ediciones anteriores sin abrir',
     emptyToday:
-      'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas clasificadas del corpus.',
-    reviewedCount: 'Notas clasificadas en el corpus',
+      'No hay novedades que afecten a sus clientes en la última edición revisada. Se revisaron las notas ya clasificadas de la demostración.',
+    reviewedCount: 'Notas clasificadas en la demostración',
     outlookCard: 'Conecte su Outlook',
     lastEdition: 'Última edición procesada',
     secondaryColumn: 'Herramientas y seguimiento',
@@ -494,7 +503,7 @@ export const copy = {
     colExactas: 'Exactas',
     colCoincidencias: 'Coincidencias',
     colPosibles: 'Posibles',
-    colHoraCorrida: 'Hora de la corrida',
+    colHoraCorrida: 'Hora de la revisión',
     colUltimaConsulta: 'Última consulta',
     colAccion: 'Acción',
     colEstado: 'Estado',
@@ -560,8 +569,8 @@ export const copy = {
   },
 
   monitor: {
-    title: 'Monitor DOF',
-    lead: 'Notas del Diario Oficial ordenadas por cliente afectado.',
+    title: 'Diario Oficial',
+    lead: 'Notas del Diario Oficial de la Federación, ordenadas por cliente afectado.',
     filters: 'Filtros',
     onlyMine: 'Solo lo que afecta a mis clientes',
     relevant: 'Relevante',
@@ -576,8 +585,8 @@ export const copy = {
     filterType: 'Tipo',
     all: 'Todos',
     emptyFiltered: 'No hay coincidencias con estos filtros.',
-    sourceSchema: 'Datos del corpus DOF',
-    sourceFixture: 'Vista de demostración (sin coincidencias en base aún)',
+    sourceSchema: 'Datos del Diario Oficial',
+    sourceFixture: 'Vista de demostración (aún sin coincidencias guardadas)',
     regulatorySection: 'Coincidencias regulatorias',
     procurementSection: 'Contratación pública',
     procurementLead:
@@ -649,7 +658,7 @@ export const copy = {
     archiveLead: 'Documentos de demostración del despacho. Etiquetados como datos ficticios.',
     calendarTitle: 'Calendario de Outlook (simulado)',
     calendarLead:
-      'Audiencias, plazos confirmados y alertas del Monitor DOF. Sin llamadas a Microsoft Graph.',
+      'Audiencias, plazos confirmados y alertas del Diario Oficial. Sin conexión a Outlook en esta vista.',
     notifyCompose: 'Redactar notificación al cliente',
     notifyPreview: 'Vista previa (Outlook simulado)',
     notifyApprove: 'Aprobar y marcar como enviado (simulado)',
@@ -667,13 +676,13 @@ export const copy = {
 
   investigacion: {
     title: 'Investigación',
-    lead: 'Respuestas fundadas en el corpus, con citas verificadas.',
+    lead: 'Respuestas basadas en los textos disponibles, con citas verificadas.',
     ask: 'Formule su pregunta',
     askPlaceholder: '¿Qué dispone el acuerdo respecto a…?',
-    suggested: 'Preguntas sugeridas (validadas sobre el corpus de demostración)',
-    coverage: 'Corpus actual: DOF de demostración (cobertura limitada).',
+    suggested: 'Preguntas sugeridas (validadas sobre la demostración)',
+    coverage: 'Material actual: Diario Oficial de demostración (cobertura limitada).',
     stubAnswer:
-      'La investigación con citas verificadas se habilita en un paso posterior. Por ahora puede explorar el corpus desde el Monitor DOF.',
+      'La investigación con citas verificadas se habilita en un paso posterior. Por ahora puede explorar las notas desde Diario Oficial.',
     submit: 'Consultar',
     generating: 'Consultando…',
     streaming: 'Generando borrador; la versión verificada sustituirá este estado.',
@@ -681,7 +690,7 @@ export const copy = {
     draftBadge: 'Borrador (nivel 1)',
     emptyAnswer: 'La respuesta verificada aparecerá aquí.',
     scope: 'Corpus',
-    scopeDof: 'DOF (disponible)',
+    scopeDof: 'Diario Oficial (disponible)',
     scopeLegislation: 'Legislación (próximamente)',
     scopeTheses: 'Tesis (próximamente)',
     scopeFirm: 'Archivo del despacho',
@@ -929,9 +938,9 @@ export const copy = {
       'Suma de las horas de consulta manual registradas en los recibos de corrida exitosos (datos de demostración).',
     timeSavedBasis:
       'Cada corrida exitosa registra las horas que habría tomado revisar esa fuente a mano; la cifra suma esos recibos del día.',
-    timeSavedDemo: 'Cifra de demostración — no es un KPI de producción.',
+    timeSavedDemo: 'Cifra de demostración — no es una métrica de producción.',
     hours: 'horas',
-    runs: 'corridas con recibo',
+    runs: 'revisiones con recibo',
   },
 
   engagement: {
