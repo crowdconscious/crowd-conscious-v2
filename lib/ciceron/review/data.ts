@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { auditEntityLabel } from '@/lib/ciceron/audit/entity-label'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
@@ -603,24 +604,34 @@ export async function loadAuditEvents(
     return {
       source: 'schema',
       canView: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        createdAt: r.created_at,
-        actorName: r.user_id ? (PERSONA_NAMES[r.user_id] ?? r.user_id.slice(0, 8)) : '—',
-        actorId: r.user_id,
-        action: r.action,
-        entityType: r.entity_type,
-        entityId: r.entity_id,
-        outcome: r.outcome ?? 'allowed',
-        policyId: r.policy_id,
-        policyReason: r.policy_reason,
-        snapshotHref:
-          r.entity_type === 'review_tasks' && r.entity_id
-            ? `/ciceron/revision/${r.entity_id}`
-            : r.snapshot_ref && typeof r.snapshot_ref.entity_id === 'string'
-              ? `/ciceron/revision/${String(r.snapshot_ref.entity_id)}`
-              : null,
-      })),
+      rows: rows.map((r) => {
+        // G4 — prefer simulated/demo persona over the hosting admin session user.
+        const simulated =
+          typeof r.payload?.simulated_actor === 'string'
+            ? r.payload.simulated_actor
+            : typeof r.payload?.persona_id === 'string'
+              ? r.payload.persona_id
+              : null
+        const actorId = simulated || r.user_id || persona.id
+        const actorName =
+          PERSONA_NAMES[actorId] ??
+          (actorId === persona.id ? persona.displayName : persona.displayName)
+        const ent = auditEntityLabel(r.entity_type, r.entity_id, r.payload)
+        return {
+          id: r.id,
+          createdAt: r.created_at,
+          actorName,
+          actorId,
+          action: r.action,
+          entityType: r.entity_type,
+          entityId: r.entity_id,
+          entityLabel: ent.label,
+          outcome: r.outcome ?? 'allowed',
+          policyId: r.policy_id,
+          policyReason: r.policy_reason,
+          snapshotHref: ent.href,
+        }
+      }),
     }
   } catch {
     return { source: 'fixture', rows: fixtureAuditRows, canView: true }

@@ -172,9 +172,10 @@ export const fixtureAuditRows: AuditViewerRow[] = [
     action: 'view_client_material',
     entityType: 'clients',
     entityId: CICERON_SEED.clients.nexora,
+    entityLabel: 'Cliente: Nexora Pagos, S.A.P.I. de C.V.',
     outcome: 'allowed',
     policyId: 'matter_member',
     policyReason: 'Socio viewed client material in demo seed',
-    snapshotHref: null,
+    snapshotHref: '/ciceron/clientes',
   },
 ]

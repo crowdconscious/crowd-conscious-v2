@@ -128,8 +128,11 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
                   <td>{r.actorName}</td>
                   <td>{auditActionLabel(r.action)}</td>
                   <td>
-                    {r.entityType}
-                    {r.entityId ? ` · ${r.entityId.slice(0, 8)}` : ''}
+                    {r.snapshotHref ? (
+                      <a href={r.snapshotHref}>{r.entityLabel}</a>
+                    ) : (
+                      r.entityLabel
+                    )}
                   </td>
                   <td>
                     <span

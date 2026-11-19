@@ -148,6 +148,14 @@ export const copy = {
     lastUpdateFallback: 'Consulte el administrador de Fuentes para el estado del conector.',
     honesty:
       'Sin recolección automática en vivo de boletines en esta demostración (fuentes deshabilitadas). La cobertura del DOF es la del corpus ya incorporado.',
+    jurisdictionsTitle: 'Sus jurisdicciones',
+    jurisdictionsLead:
+      'Catálogo de demostración: entidades del pie del prospecto, con el número de asuntos ficticios, la modalidad de consulta y la fecha en que inició la cobertura.',
+    colJurisdiction: 'Jurisdicción',
+    colMatters: 'Asuntos',
+    colModality: 'Modalidad',
+    colCoverageSince: 'Cobertura desde',
+    coveragePending: 'Pendiente de verificación',
   },
 
   adminVentas: {
@@ -255,6 +263,19 @@ export const copy = {
     partnerSummaryTitle: 'Resumen para socios (vista previa)',
     partnerSummaryCta: 'Generar vista previa',
     partnerSummaryNote: 'No se envía correo. Solo vista previa en pantalla.',
+    partnerReportTitle: 'Resumen matutino',
+    partnerExportDocx: 'Exportar Word',
+    partnerExportPdf: 'Exportar PDF',
+    partnerLetterhead:
+      'Membrete de demostración — sustituir por el membrete del despacho',
+    partnerColActor: 'Actor',
+    partnerColDemandado: 'Demandado',
+    partnerColExp: 'Exp.',
+    partnerColJuicio: 'Juicio',
+    partnerColSria: 'Sría.',
+    partnerColPublicado: 'Publicado',
+    partnerColActualizacion: 'Actualización',
+    partnerClientMark: 'cliente del despacho',
     assign: 'Asignar a pasante',
     markDone: 'Marcar hecha',
     denied: 'Acción denegada',

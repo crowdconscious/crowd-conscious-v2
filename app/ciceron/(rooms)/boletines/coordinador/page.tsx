@@ -6,8 +6,10 @@ import {
   PartnerSummaryPreview,
 } from '../CoordinatorControls'
 import { BulletinClockStrip } from '../BulletinClockStrip'
+import { PartnerMorningReport } from '../PartnerMorningReport'
 import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
+import { buildPartnerReport } from '@/lib/ciceron/boletines/partner-report'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
   formatDateLongEs,
@@ -189,6 +191,13 @@ export default async function CoordinadorBoletinesPage() {
       </section>
 
       <PartnerSummaryPreview />
+
+      <section className="cic-section" aria-labelledby="partner-morning">
+        <h2 id="partner-morning" className="cic-h2">
+          {copy.boletines.partnerReportTitle}
+        </h2>
+        <PartnerMorningReport courts={buildPartnerReport(data.hits)} />
+      </section>
     </div>
   )
 }
