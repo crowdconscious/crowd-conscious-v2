@@ -15,6 +15,7 @@ import { setResumeCursor } from '@/lib/ciceron/engagement/resume'
 import {
   GUIDED_STORY_STEPS,
   guidedStepHref,
+  normalizeGuidedStep,
   type GuidedStoryState,
   type GuidedStoryStep,
 } from '@/lib/ciceron/demo/guided-story-pure'
@@ -22,7 +23,7 @@ import {
 const OFFLINE_STORY_COOKIE = 'ciceron_guided_story'
 
 export type { GuidedStoryState, GuidedStoryStep }
-export { GUIDED_STORY_STEPS, guidedStepHref }
+export { GUIDED_STORY_STEPS, guidedStepHref, normalizeGuidedStep }
 
 export function guidedStepCopy(step: GuidedStoryStep) {
   const s = copy.guidedStory.steps
@@ -38,8 +39,6 @@ export function guidedStepCopy(step: GuidedStoryStep) {
     case 5:
       return s[5]
     case 6:
-      return s[6]
-    case 7:
       return copy.guidedStory.finale
     default:
       return s[1]
@@ -60,12 +59,12 @@ async function readOfflineStoryCookie(): Promise<GuidedStoryState> {
   try {
     const parsed = JSON.parse(raw) as Partial<GuidedStoryState>
     if (parsed.dismissed) return { ...OFFLINE_STATE, dismissed: true }
-    const currentStep = Number(parsed.currentStep ?? 1) as GuidedStoryStep
+    const currentStep = normalizeGuidedStep(Number(parsed.currentStep ?? 1))
     return {
-      currentStep: currentStep >= 1 && currentStep <= 7 ? currentStep : 1,
+      currentStep,
       completedSteps: Array.isArray(parsed.completedSteps) ? parsed.completedSteps : [],
       dismissed: false,
-      completed: Boolean(parsed.completed) || currentStep >= 7,
+      completed: Boolean(parsed.completed) || currentStep >= 6,
     }
   } catch {
     return OFFLINE_STATE
@@ -116,15 +115,15 @@ export async function loadGuidedStory(
     const row = Array.isArray(data) ? data[0] : null
     if (!row) return cookieState
     if (row.dismissed) return { ...OFFLINE_STATE, dismissed: true }
-    const currentStep = Number(row.current_step) as GuidedStoryStep
+    const currentStep = normalizeGuidedStep(Number(row.current_step))
     const completedSteps = Array.isArray(row.completed_steps)
       ? (row.completed_steps as number[])
       : []
     return {
-      currentStep: currentStep >= 1 && currentStep <= 7 ? currentStep : 1,
+      currentStep,
       completedSteps,
       dismissed: false,
-      completed: Boolean(row.completed_at) || currentStep >= 7,
+      completed: Boolean(row.completed_at) || currentStep >= 6,
     }
   } catch {
     return cookieState
@@ -178,7 +177,7 @@ export async function advanceGuidedStory(
       // p_dismiss=false clears dismissed; finished tours restart via migration 325
       await db.rpc('update_guided_story', {
         p_token_hash: hashSessionToken(session.token),
-        p_step: Math.min(Math.max(Number(step) || 1, 1), 6),
+        p_step: Math.min(Math.max(Number(step) || 1, 1), 5),
         p_dismiss: false,
       })
     }
@@ -196,13 +195,12 @@ export async function advanceGuidedStory(
   }
 
   const labelCode =
-    `guided_step_${Math.min(Number(step), 6)}` as
+    `guided_step_${Math.min(Number(step), 5)}` as
       | 'guided_step_1'
       | 'guided_step_2'
       | 'guided_step_3'
       | 'guided_step_4'
       | 'guided_step_5'
-      | 'guided_step_6'
   await setResumeCursor(session.persona, {
     room: 'hoy',
     href: guidedStepHref(step),
@@ -221,12 +219,12 @@ export async function advanceGuidedStory(
   })
 
   if (session.offline || !isSessionTokenShape(session.token)) {
-    const completedSteps = GUIDED_STORY_STEPS.filter((s) => s <= Math.min(step, 6))
+    const completedSteps = GUIDED_STORY_STEPS.filter((s) => s <= Math.min(step, 5))
     const next: GuidedStoryState = {
-      currentStep: step,
+      currentStep: normalizeGuidedStep(step),
       completedSteps: [...completedSteps],
       dismissed: false,
-      completed: step >= 7,
+      completed: step >= 6,
     }
     await writeOfflineStoryCookie(next)
     return next
@@ -235,32 +233,32 @@ export async function advanceGuidedStory(
   const db = tryCreateCiceronAdminClient()
   if (!db) {
     return {
-      currentStep: step,
+      currentStep: normalizeGuidedStep(step),
       completedSteps: [],
       dismissed: false,
-      completed: step >= 7,
+      completed: step >= 6,
     }
   }
 
   const { data } = await db.rpc('update_guided_story', {
     p_token_hash: hashSessionToken(session.token),
-    p_step: step,
+    p_step: Math.min(Number(step), 6),
     p_dismiss: false,
   })
   const row = data as Record<string, unknown> | null
   if (!row || row.ok === false) {
     return {
-      currentStep: step,
+      currentStep: normalizeGuidedStep(step),
       completedSteps: [],
       dismissed: false,
-      completed: step >= 7,
+      completed: step >= 6,
     }
   }
   const completedSteps = Array.isArray(row.completed_steps)
     ? (row.completed_steps as number[])
     : []
   return {
-    currentStep: Number(row.current_step) as GuidedStoryStep,
+    currentStep: normalizeGuidedStep(Number(row.current_step)),
     completedSteps,
     dismissed: false,
     completed: Boolean(row.completed),
