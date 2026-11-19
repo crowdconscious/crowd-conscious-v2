@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BulletinClockStrip } from './BulletinClockStrip'
+import { BulletinMatchCard } from '../../_components/BulletinMatchCard'
 import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
@@ -165,80 +166,25 @@ export default async function BoletinesPage() {
         {data.hits.length === 0 ? (
           <p className="cic-muted">{copy.boletines.emptyHits}</p>
         ) : (
-          <ul className="cic-stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul className="cic-stack cic-match-list">
             {data.hits.map((h) => (
-              <li key={h.id} className="cic-card" style={{ margin: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <div>
-                    {h.clientName ? (
-                      <p style={{ margin: '0 0 4px' }}>
-                        <strong>{h.clientName}</strong>
-                        {h.clientSide ? (
-                          <span className="cic-muted">
-                            {' '}
-                            (
-                            {h.clientSide === 'actor'
-                              ? copy.boletines.clientSideActor
-                              : copy.boletines.clientSideDemandado}
-                            )
-                          </span>
-                        ) : null}
-                      </p>
-                    ) : null}
-                    <strong>
-                      {h.stateName} · {h.expedienteNumber ?? '—'}
-                    </strong>
-                  </div>
-                  <span className="cic-muted" style={{ fontSize: '0.85rem' }}>
-                    {h.matchKind === 'exact'
-                      ? copy.boletines.matchExact
-                      : copy.boletines.matchPossible}
-                  </span>
-                </div>
-                <p style={{ margin: '6px 0' }}>{h.reason}</p>
-                <p className="cic-muted" style={{ margin: '0 0 6px', fontSize: '0.85rem' }}>
-                  {copy.boletines.publicationDate}:{' '}
-                  {h.publicationDate ? formatDateLongEs(h.publicationDate) : '—'}
-                  {' · '}
-                  {h.courtName ?? '—'}
-                  {' · '}
-                  {copy.boletines.secretaria}: {h.secretaria?.trim() ? h.secretaria : '—'}
-                </p>
-                <p className="cic-legal" style={{ margin: '0 0 10px', fontSize: '0.95rem' }}>
-                  {h.summary}
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {h.caseFileId ? (
-                    <Link
-                      className="cic-btn cic-btn-compact"
-                      href={`/ciceron/expedientes/${h.caseFileId}`}
-                    >
-                      {copy.boletines.openExpedienteBtn}
-                    </Link>
-                  ) : null}
-                  <Link
-                    className="cic-btn cic-btn-secondary cic-btn-compact"
-                    href="/ciceron/expedientes/captura"
-                  >
-                    {copy.boletines.captureAcuerdoBtn}
-                  </Link>
-                  <Link
-                    className="cic-btn cic-btn-secondary cic-btn-compact"
-                    href="/ciceron/revision"
-                  >
-                    {copy.boletines.sendReviewBtn}
-                  </Link>
-                  {h.sourceUrl ? (
-                    <a
-                      className="cic-btn cic-btn-secondary cic-btn-compact"
-                      href={h.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {copy.boletines.openSource}
-                    </a>
-                  ) : null}
-                </div>
+              <li key={h.id}>
+                <BulletinMatchCard
+                  id={h.id}
+                  clientName={h.clientName}
+                  clientSide={h.clientSide}
+                  courtName={h.courtName}
+                  summary={h.summary}
+                  publicationDateLabel={
+                    h.publicationDate ? formatDateLongEs(h.publicationDate) : null
+                  }
+                  expedienteNumber={h.expedienteNumber}
+                  deadlineLabel={null}
+                  matchKind={h.matchKind}
+                  caseFileId={h.caseFileId}
+                  sourceUrl={h.sourceUrl}
+                  reason={h.reason}
+                />
               </li>
             ))}
           </ul>

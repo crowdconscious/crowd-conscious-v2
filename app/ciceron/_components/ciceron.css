@@ -2201,3 +2201,86 @@ textarea.cic-input {
   stroke: var(--cic-accent-mint);
   stroke-width: 2.5;
 }
+
+/* —— Sentence-style match cards —— */
+.cic-match-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cic-match-card {
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  background: var(--cic-surface);
+  padding: calc(var(--cic-space) * 2);
+}
+
+.cic-match-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--cic-space) * 1.5);
+  align-items: flex-start;
+}
+
+.cic-match-card-sentence {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--cic-ink);
+  max-width: 68ch;
+}
+
+.cic-match-card-kind {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--cic-muted);
+}
+
+.cic-match-card-meta,
+.cic-match-card-reason {
+  margin: calc(var(--cic-space) * 0.75) 0 0;
+  font-size: 0.85rem;
+}
+
+.cic-match-card-actions {
+  margin-top: calc(var(--cic-space) * 1.5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cic-space) * 1);
+  align-items: center;
+}
+
+.cic-match-overflow {
+  position: relative;
+}
+
+.cic-match-overflow-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 12rem;
+  margin: 0;
+  padding: calc(var(--cic-space) * 0.5);
+  list-style: none;
+  background: var(--cic-paper-2);
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.cic-match-overflow-menu a {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 4px;
+  color: var(--cic-ink);
+  font-size: 0.9rem;
+}
+
+.cic-match-overflow-menu a:hover,
+.cic-match-overflow-menu a:focus-visible {
+  background: rgba(110, 231, 183, 0.1);
+  color: var(--cic-accent-mint);
+}

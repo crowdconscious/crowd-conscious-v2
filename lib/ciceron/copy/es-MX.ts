@@ -381,6 +381,7 @@ export const copy = {
     openExpedienteBtn: 'Abrir expediente',
     captureAcuerdoBtn: 'Capturar acuerdo',
     sendReviewBtn: 'Enviar a revisión',
+    moreActions: 'Más acciones',
     clientSideActor: 'actor',
     clientSideDemandado: 'demandado',
     secretaria: 'Secretaría',
