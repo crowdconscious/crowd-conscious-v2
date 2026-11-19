@@ -58,9 +58,10 @@
   background: var(--cic-bg);
   color: var(--cic-ink);
   font-family: var(--cic-sans);
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .ciceron-root *,
@@ -359,7 +360,7 @@
 
 .cic-lead {
   color: var(--cic-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.55;
   max-width: var(--cic-max-read);
   margin: calc(var(--cic-space) * 1) 0 0;
@@ -717,7 +718,7 @@ details[open] > .cic-secondary-summary::before {
 }
 
 .cic-content {
-  padding: calc(var(--cic-space) * 4) calc(var(--cic-space) * 3) calc(var(--cic-space) * 6);
+  padding: calc(var(--cic-space) * 5) calc(var(--cic-space) * 4) calc(var(--cic-space) * 8);
   max-width: 1100px;
 }
 
@@ -811,13 +812,14 @@ details[open] > .cic-secondary-summary::before {
 .cic-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 .cic-table th,
 .cic-table td {
   text-align: left;
-  padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
+  padding: calc(var(--cic-space) * 1.5) calc(var(--cic-space) * 1.75);
   border-top: 1px solid var(--cic-rule);
   border-bottom: 1px solid var(--cic-rule);
   vertical-align: top;
@@ -826,7 +828,7 @@ details[open] > .cic-secondary-summary::before {
 .cic-table th {
   color: var(--cic-muted);
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -876,18 +878,30 @@ details[open] > .cic-secondary-summary::before {
 
 .cic-empty {
   border: 1px dashed var(--cic-rule-strong);
-  padding: calc(var(--cic-space) * 4);
+  padding: calc(var(--cic-space) * 5) calc(var(--cic-space) * 4);
   color: var(--cic-muted);
   max-width: var(--cic-max-read);
   border-radius: var(--cic-radius);
   background: var(--cic-paper-2);
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 .cic-empty h2 {
   font-family: var(--cic-serif);
   color: var(--cic-ink);
-  font-size: 1.1rem;
-  margin: 0 0 calc(var(--cic-space) * 1);
+  font-size: 1.2rem;
+  margin: 0 0 calc(var(--cic-space) * 1.25);
+}
+
+.cic-empty-cta {
+  margin-top: calc(var(--cic-space) * 2);
+}
+
+/* Prefer the fixed top banner; hide page-level duplicate demo labels. */
+.cic-demo-inline,
+.cic-page-demo-label {
+  display: none !important;
 }
 
 .cic-btn {
@@ -2690,5 +2704,36 @@ textarea.cic-input {
   a {
     color: inherit !important;
     text-decoration: none !important;
+  }
+}
+
+/* —— Phone polish: Su mañana + partner report —— */
+@media (max-width: 520px) {
+  .ciceron-root {
+    font-size: 15px;
+  }
+  .cic-content {
+    padding: calc(var(--cic-space) * 3) calc(var(--cic-space) * 2) calc(var(--cic-space) * 10);
+  }
+  .cic-su-manana-metrics {
+    gap: calc(var(--cic-space) * 1.25);
+  }
+  .cic-partner-letterhead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cic-partner-report-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cic-partner-report-actions .cic-btn {
+    justify-content: center;
+  }
+  .cic-persona-start {
+    padding: calc(var(--cic-space) * 1.5);
+  }
+  .cic-topbar {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }

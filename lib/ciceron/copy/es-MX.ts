@@ -281,6 +281,9 @@ export const copy = {
     hoyNone:
       'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas del Diario Oficial disponibles en el corpus de demostración.',
     generic: 'No hay información que mostrar en este momento.',
+    nextStep: 'Qué puede hacer',
+    openHoy: 'Volver a Su mañana',
+    openBoletines: 'Abrir Boletines',
   },
 
   hoy: {

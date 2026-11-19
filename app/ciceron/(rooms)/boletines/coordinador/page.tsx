@@ -8,7 +8,7 @@ import {
 import { BulletinClockStrip } from '../BulletinClockStrip'
 import { CoordinatorMexicoMap } from '../CoordinatorMexicoMap'
 import { PartnerMorningReport } from '../PartnerMorningReport'
-import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { buildPartnerReport } from '@/lib/ciceron/boletines/partner-report'
 import { copy } from '@/lib/ciceron/copy/es-MX'
@@ -45,9 +45,6 @@ export default async function CoordinadorBoletinesPage() {
 
   return (
     <div>
-      <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 8 }}>
-        {CICERON_DEMO_LABEL} · {copy.roleCoordinador}
-      </p>
       <h1 className="cic-h1">Coordinación de boletines</h1>
       <p className="cic-lead">
         Estado de todas las entidades a la hora objetivo del despacho. Asigne

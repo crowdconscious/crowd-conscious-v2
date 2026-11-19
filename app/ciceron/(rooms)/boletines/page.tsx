@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BulletinClockStrip } from './BulletinClockStrip'
 import { BulletinMatchCard } from '../../_components/BulletinMatchCard'
-import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
+import { EmptyState } from '../../_components/EmptyState'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
@@ -34,9 +35,6 @@ export default async function BoletinesPage() {
 
   return (
     <div>
-      <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 8 }}>
-        {CICERON_DEMO_LABEL}
-      </p>
       <h1 className="cic-h1">{copy.boletines.title}</h1>
       <p className="cic-lead">{copy.boletines.lead}</p>
       <p className="cic-hoy-links">
@@ -164,7 +162,9 @@ export default async function BoletinesPage() {
           {copy.boletines.informative}
         </p>
         {data.hits.length === 0 ? (
-          <p className="cic-muted">{copy.boletines.emptyHits}</p>
+          <EmptyState title={copy.boletines.emptyHits} href="/ciceron/hoy" cta={copy.empty.openHoy}>
+            {copy.empty.generic}
+          </EmptyState>
         ) : (
           <ul className="cic-stack cic-match-list">
             {data.hits.map((h) => (
