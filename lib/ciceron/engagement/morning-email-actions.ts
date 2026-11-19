@@ -7,6 +7,7 @@ import {
   upsertMorningEmailPrefs,
 } from './morning-email-data'
 import { sendMorningEmailPreview } from './morning-email-send'
+import { sendDemoMorningSummaryTest } from './demo-morning-test-send'
 
 export async function saveMorningEmailPrefsAction(
   formData: FormData
@@ -38,5 +39,13 @@ export async function sendMorningPreviewAction(): Promise<void> {
   const prefs = await loadMorningEmailPrefs(persona)
   if (!prefs?.email) return
   await sendMorningEmailPreview({ persona, prefs })
+  revalidatePath('/ciceron/preferencias/correo')
+}
+
+/** Admin/socio demo-only: send live summary to CICERON_DEMO_RECIPIENT_EMAIL. */
+export async function sendDemoMorningTestAction(): Promise<void> {
+  const persona = await getCiceronDemoSession()
+  if (!persona) return
+  await sendDemoMorningSummaryTest({ persona })
   revalidatePath('/ciceron/preferencias/correo')
 }

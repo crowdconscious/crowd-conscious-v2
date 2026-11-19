@@ -1024,6 +1024,10 @@ export const copy = {
     sendPreview: 'Enviarme una vista previa ahora',
     sendPreviewNote:
       'Usa Resend. Guarde primero un correo válido. En demostración solo se envía a esa dirección.',
+    sendDemoTest: 'Enviar resumen de prueba ahora',
+    sendDemoTestNote:
+      'Envía el resumen real del despacho de demostración (datos ficticios, etiquetados) al correo configurado para la prueba en vivo. Solo socio o administrador. Requiere el envío programado activado.',
+    sendDemoTestForbidden: 'Solo socio o administrador del despacho de demostración puede enviar la prueba.',
     openPrefs: 'Preferencias de correo',
   },
 
