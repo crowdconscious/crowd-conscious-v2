@@ -6,6 +6,7 @@ import {
   buildMatchSentenceParts,
   pickMatchPrimaryAction,
 } from '@/lib/ciceron/boletines/match-sentence-pure'
+import { buildQueCambio } from '@/lib/ciceron/boletines/que-cambio-pure'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 
 export type BulletinMatchCardProps = {
@@ -32,6 +33,7 @@ const ACTION_LABEL: Record<'open' | 'capture' | 'review' | 'source', string> = {
 
 export function BulletinMatchCard(props: BulletinMatchCardProps) {
   const menuId = useId()
+  const detailId = useId()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -50,6 +52,14 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
     publicationDateLabel: props.publicationDateLabel,
     expedienteNumber: props.expedienteNumber,
     deadlineLabel: props.deadlineLabel,
+  })
+
+  const cambio = buildQueCambio({
+    clientName: props.clientName,
+    summary: props.summary,
+    matchKind: props.matchKind,
+    courtName: props.courtName,
+    expedienteNumber: props.expedienteNumber,
   })
 
   const { primary, secondary } = pickMatchPrimaryAction({
@@ -92,6 +102,31 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
       {parts.meta ? (
         <p className="cic-muted cic-match-card-meta">{parts.meta}</p>
       ) : null}
+
+      <section className="cic-que-cambio" aria-label={copy.boletines.queCambioTitle}>
+        <h3 className="cic-que-cambio-title">{copy.boletines.queCambioTitle}</h3>
+        <p className="cic-que-cambio-before">{cambio.before}</p>
+        <p className="cic-que-cambio-after">{cambio.after}</p>
+        {props.sourceUrl ? (
+          <p className="cic-que-cambio-source">
+            <a
+              className="cic-btn cic-btn-secondary cic-btn-compact"
+              href={props.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {copy.boletines.verFuenteOficial}
+            </a>
+          </p>
+        ) : null}
+        <details className="cic-que-cambio-legal">
+          <summary>{copy.boletines.legalDetailSummary}</summary>
+          <p id={detailId} className="cic-muted">
+            {cambio.legalDetail}
+          </p>
+        </details>
+      </section>
+
       <p className="cic-muted cic-match-card-reason">{props.reason}</p>
       <div className="cic-match-card-actions" ref={rootRef}>
         {primary.external ? (

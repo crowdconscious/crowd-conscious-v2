@@ -2488,6 +2488,53 @@ textarea.cic-input {
   padding: calc(var(--cic-space) * 2);
 }
 
+.cic-que-cambio {
+  margin: calc(var(--cic-space) * 1.5) 0;
+  padding: calc(var(--cic-space) * 1.25) 0 0;
+  border-top: 1px solid var(--cic-rule);
+}
+
+.cic-que-cambio-title {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+  font-weight: 600;
+}
+
+.cic-que-cambio-before,
+.cic-que-cambio-after {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.cic-que-cambio-after {
+  color: var(--cic-ink);
+  font-weight: 600;
+}
+
+.cic-que-cambio-source {
+  margin: 10px 0;
+}
+
+.cic-que-cambio-legal {
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.cic-que-cambio-legal summary {
+  cursor: pointer;
+  color: var(--cic-accent-mint);
+  font-weight: 600;
+}
+
+.cic-que-cambio-legal p {
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
 .cic-match-card-top {
   display: flex;
   justify-content: space-between;
