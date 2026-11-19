@@ -43,8 +43,11 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#020612',
-  colorScheme: 'dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#020612' },
+    { media: '(prefers-color-scheme: light)', color: '#f4f7fb' },
+  ],
+  colorScheme: 'dark light',
 }
 
 export default function CiceronRootLayout({ children }: { children: React.ReactNode }) {

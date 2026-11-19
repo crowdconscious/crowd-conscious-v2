@@ -2,6 +2,10 @@
 export const copy = {
   brand: 'Cicerón.ai',
   demoLabel: 'Datos de demostración',
+  theme: {
+    toLight: 'Modo claro',
+    toDark: 'Modo oscuro',
+  },
   firmDemo: 'Despacho Altamirano y Asociados, S.C.',
   roleSocia: 'Socia',
   roleAsociado: 'Asociado',
@@ -362,6 +366,7 @@ export const copy = {
     partnerReportTitle: 'Resumen matutino',
     partnerExportDocx: 'Exportar Word',
     partnerExportPdf: 'Exportar PDF',
+    partnerPrint: 'Imprimir resumen',
     partnerLetterhead:
       'Membrete de demostración — sustituir por el membrete del despacho',
     partnerColActor: 'Actor',

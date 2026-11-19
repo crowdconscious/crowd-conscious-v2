@@ -1,3 +1,5 @@
+import { CiceronLockup } from '../../_components/CiceronLogo'
+import { PrintReportButton } from '../../_components/PrintReportButton'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import type { PartnerReportCourt } from '@/lib/ciceron/boletines/partner-report'
 
@@ -13,10 +15,18 @@ export function PartnerMorningReport({
   }
 
   return (
-    <div>
-      <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 12 }}>
-        {copy.boletines.partnerLetterhead}
-      </p>
+    <div className="cic-partner-report">
+      <header className="cic-partner-letterhead">
+        <div className="cic-partner-letterhead-mark" aria-hidden="true">
+          <CiceronLockup />
+        </div>
+        <div>
+          <p className="cic-partner-letterhead-firm">{copy.firmDemo}</p>
+          <p className="cic-muted cic-partner-letterhead-note">
+            {copy.boletines.partnerLetterhead}
+          </p>
+        </div>
+      </header>
       <p className="cic-bol-notice" role="note">
         {copy.boletines.informative}
       </p>
@@ -67,13 +77,14 @@ export function PartnerMorningReport({
           </div>
         </section>
       ))}
-      <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+      <p className="cic-partner-report-actions">
         <a className="cic-btn cic-btn-secondary" href="/api/ciceron/partner-report?format=docx">
           {copy.boletines.partnerExportDocx}
         </a>
         <a className="cic-btn cic-btn-secondary" href="/api/ciceron/partner-report?format=pdf">
           {copy.boletines.partnerExportPdf}
         </a>
+        <PrintReportButton />
       </p>
     </div>
   )

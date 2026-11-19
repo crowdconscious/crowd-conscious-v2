@@ -2528,3 +2528,167 @@ textarea.cic-input {
   gap: 2px;
   font-size: 0.9rem;
 }
+
+/* —— Theme toggle —— */
+.cic-theme-toggle {
+  appearance: none;
+  border: 1px solid var(--cic-rule);
+  background: var(--cic-surface);
+  color: var(--cic-ink);
+  border-radius: var(--cic-radius);
+  padding: 6px 10px;
+  font-family: var(--cic-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cic-theme-toggle:hover {
+  border-color: var(--cic-accent-mint);
+  color: var(--cic-accent-mint);
+}
+
+/* —— Light theme tokens —— */
+.ciceron-root.is-light,
+.ciceron-root[data-theme='light'] {
+  color-scheme: light;
+  --cic-bg: #f4f7fb;
+  --cic-paper: #f4f7fb;
+  --cic-paper-2: #ffffff;
+  --cic-surface: #ffffff;
+  --cic-surface-2: #eef3f8;
+  --cic-ink: #0f1b2d;
+  --cic-muted: #5b6b7c;
+  --cic-rule: #d5dee8;
+  --cic-rule-strong: #b7c4d3;
+  --cic-accent-mint: #0f8f6a;
+  --cic-accent: #0f8f6a;
+  --cic-accent-deep: #0b6b50;
+  --cic-accent-soft: #e5f6ef;
+  --cic-accent-gradient: linear-gradient(135deg, #1aa87c 0%, #0b6b50 100%);
+  --cic-focus: #0f8f6a;
+  --cic-on-accent: #ffffff;
+  --cic-urgent: #b42318;
+  --cic-soon: #9a6700;
+  --cic-normal: #0f8f6a;
+  --cic-borrador-fg: #7a5b00;
+  --cic-borrador-bg: #fff6d6;
+  --cic-revision-fg: #1849a9;
+  --cic-revision-bg: #e8eefc;
+  --cic-aprobado-fg: #0f8f6a;
+  --cic-aprobado-bg: #e5f6ef;
+  --cic-corregido-fg: #445466;
+  --cic-corregido-bg: #eef2f6;
+  --cic-rechazado-fg: #b42318;
+  --cic-rechazado-bg: #fde8e8;
+}
+
+.ciceron-root.is-light *,
+.ciceron-root.is-light *::before,
+.ciceron-root.is-light *::after,
+.ciceron-root[data-theme='light'] *,
+.ciceron-root[data-theme='light'] *::before,
+.ciceron-root[data-theme='light'] *::after {
+  color-scheme: light !important;
+}
+
+.ciceron-root.is-light input,
+.ciceron-root.is-light textarea,
+.ciceron-root.is-light select,
+.ciceron-root[data-theme='light'] input,
+.ciceron-root[data-theme='light'] textarea,
+.ciceron-root[data-theme='light'] select {
+  background-color: var(--cic-paper-2) !important;
+  color: var(--cic-ink) !important;
+  border-color: var(--cic-rule) !important;
+  color-scheme: light !important;
+}
+
+/* —— Partner report letterhead + print —— */
+.cic-partner-letterhead {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px dashed var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+}
+
+.cic-partner-letterhead-firm {
+  margin: 0;
+  font-family: var(--cic-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.cic-partner-letterhead-note {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
+
+.cic-partner-report-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+@media print {
+  .cic-demo-banner,
+  .cic-persona-bar,
+  .cic-rail,
+  .cic-topbar,
+  .cic-mobile-nav,
+  .cic-guided,
+  .cic-guided-dock,
+  .cic-guided-resume,
+  .cic-partner-report-actions,
+  .cic-hoy-links,
+  .cic-theme-toggle,
+  .cic-cmd-btn {
+    display: none !important;
+  }
+
+  .ciceron-root,
+  .ciceron-root.is-light,
+  .ciceron-root[data-theme='light'] {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .cic-shell {
+    display: block !important;
+  }
+
+  .cic-content {
+    padding: 0 !important;
+  }
+
+  .cic-partner-letterhead {
+    border-style: solid;
+    border-color: #222;
+    break-after: avoid;
+  }
+
+  .cic-partner-report {
+    max-width: 100%;
+  }
+
+  .cic-table {
+    font-size: 11pt;
+  }
+
+  .cic-table th,
+  .cic-table td {
+    color: #111 !important;
+    border-color: #999 !important;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
