@@ -18,9 +18,16 @@ export type FirmWeekRow = {
   cost: MetricCell
 }
 
+export type BulletinTimeSavedMetric = {
+  hoursReplaced: number
+  runsCounted: number
+}
+
 export type MetricsDashboard = {
   source: 'schema' | 'fixture'
   overall: FirmWeekRow
   byFirm: FirmWeekRow[]
   weeks: string[]
+  /** C4 — hours of manual review replaced (admin only; not on user rooms). */
+  bulletinTimeSaved: BulletinTimeSavedMetric
 }

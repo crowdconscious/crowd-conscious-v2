@@ -234,11 +234,39 @@ export async function loadMetricsDashboard(
       byFirm[0] ??
       fixtureMetricsDashboard().overall
 
+    let bulletinTimeSaved = fixtureMetricsDashboard().bulletinTimeSaved
+    try {
+      const { data: runs } = await db
+        .from('bulletin_runs')
+        .select('status, metadata, is_demo')
+        .eq('firm_id', scopedFirmId)
+        .eq('is_demo', true)
+      let hours = 0
+      let runsCounted = 0
+      for (const r of Array.isArray(runs) ? runs : []) {
+        const row = r as {
+          status: string
+          metadata?: Record<string, unknown> | null
+        }
+        const h = row.metadata?.hours_manual_replaced
+        if (typeof h === 'number' && row.status === 'ok') {
+          hours += h
+          runsCounted += 1
+        }
+      }
+      if (runsCounted > 0) {
+        bulletinTimeSaved = { hoursReplaced: hours, runsCounted }
+      }
+    } catch {
+      // keep fixture time-saved
+    }
+
     return {
       source: 'schema',
       overall,
       byFirm,
       weeks: weeks.length ? weeks : [primaryWeek],
+      bulletinTimeSaved,
     }
   } catch {
     return fixtureMetricsDashboard()

@@ -5,6 +5,12 @@ import {
   pickDemoBulletinPublicationDate,
 } from '@/lib/ciceron/boletines/demo-freshness'
 import { CICERON_BOLETIN_SOURCES } from '@/lib/ciceron/boletines/seed-ids'
+import {
+  failureStageLabel,
+  hitReasonLabel,
+  partyVariantFromStoredReason,
+  sourceTierLabel,
+} from '@/lib/ciceron/copy/labels'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
@@ -25,10 +31,14 @@ export type BulletinStateBoardRow = {
   status: BulletinBoardStatus
   statusLabel: string
   runId: string | null
+  /** Lawyer-facing failure copy (from failure_stage); never raw stored developer text. */
   failureMessage: string | null
+  failureStage: string | null
   hitsExact: number
   hitsPossible: number
+  /** Internal tier key (A/B/…); UI must render tierLabel. */
   tier: string
+  tierLabel: string
 }
 
 export type BulletinHitView = {
@@ -96,6 +106,7 @@ type RunRow = {
   source_id: string
   status: string
   failure_message: string | null
+  failure_stage: string | null
   hits_exact: number
   hits_possible: number
   metadata: Record<string, unknown> | null
@@ -214,9 +225,11 @@ export function fixtureBulletinBoard(): {
       statusLabel: STATUS_LABEL.revisado,
       runId: 'fixture-qro',
       failureMessage: null,
+      failureStage: null,
       hitsExact: 2,
       hitsPossible: 0,
       tier: 'B',
+      tierLabel: sourceTierLabel('B'),
     },
     {
       stateCode: 'JAL',
@@ -228,9 +241,11 @@ export function fixtureBulletinBoard(): {
       statusLabel: STATUS_LABEL.revisado,
       runId: 'fixture-jal',
       failureMessage: null,
+      failureStage: null,
       hitsExact: 1,
       hitsPossible: 1,
       tier: 'A',
+      tierLabel: sourceTierLabel('A'),
     },
     {
       stateCode: 'CDMX',
@@ -242,11 +257,12 @@ export function fixtureBulletinBoard(): {
       status: 'fallo',
       statusLabel: STATUS_LABEL.fallo,
       runId: 'fixture-cdmx-fail',
-      failureMessage:
-        'Datos de demostración. Sondeo fallido (Cloudflare/bloqueo simulado) — nunca presentar como «sin novedades».',
+      failureStage: 'fetch',
+      failureMessage: failureStageLabel('fetch'),
       hitsExact: 1,
       hitsPossible: 0,
       tier: 'A',
+      tierLabel: sourceTierLabel('A'),
     },
     {
       stateCode: 'MEX',
@@ -258,9 +274,11 @@ export function fixtureBulletinBoard(): {
       statusLabel: STATUS_LABEL.revisado,
       runId: 'fixture-mex',
       failureMessage: null,
+      failureStage: null,
       hitsExact: 1,
       hitsPossible: 0,
       tier: 'not_verified',
+      tierLabel: sourceTierLabel('not_verified'),
     },
     {
       stateCode: 'GTO',
@@ -272,10 +290,12 @@ export function fixtureBulletinBoard(): {
       status: 'manual',
       statusLabel: STATUS_LABEL.manual,
       runId: 'fixture-gto',
-      failureMessage: 'Fuente tier D (captcha): revisión manual pendiente.',
+      failureStage: 'manual_required',
+      failureMessage: failureStageLabel('manual_required'),
       hitsExact: 0,
       hitsPossible: 0,
       tier: 'D',
+      tierLabel: sourceTierLabel('D'),
     },
     {
       stateCode: 'NL',
@@ -286,10 +306,12 @@ export function fixtureBulletinBoard(): {
       status: 'manual',
       statusLabel: STATUS_LABEL.manual,
       runId: 'fixture-nl',
-      failureMessage: 'Fuente tier D (captcha): revisión manual pendiente.',
+      failureStage: 'manual_required',
+      failureMessage: failureStageLabel('manual_required'),
       hitsExact: 0,
       hitsPossible: 0,
       tier: 'D',
+      tierLabel: sourceTierLabel('D'),
     },
   ]
 
@@ -300,8 +322,11 @@ export function fixtureBulletinBoard(): {
       stateName: 'Querétaro',
       matchKind: 'exact',
       score: 1,
-      reason:
-        'Coincidencia exacta de expediente (123/2026) y juzgado («Juzgado Primero Civil de Querétaro»).',
+      reason: hitReasonLabel({
+        matchKind: 'exact',
+        expedienteNumber: '123/2026',
+        courtName: 'Juzgado Primero Civil de Querétaro',
+      }),
       courtName: 'Juzgado Primero Civil de Querétaro',
       expedienteNumber: '123/2026',
       partyNames: 'Nexora Pagos, S.A.P.I. de C.V. / Comercial Ficticia Delta, S.A. de C.V.',
@@ -319,8 +344,11 @@ export function fixtureBulletinBoard(): {
       stateName: 'Querétaro',
       matchKind: 'exact',
       score: 1,
-      reason:
-        'Coincidencia exacta de expediente (88/2025) y juzgado («Juzgado Segundo Familiar de Querétaro»).',
+      reason: hitReasonLabel({
+        matchKind: 'exact',
+        expedienteNumber: '88/2025',
+        courtName: 'Juzgado Segundo Familiar de Querétaro',
+      }),
       courtName: 'Juzgado Segundo Familiar de Querétaro',
       expedienteNumber: '88/2025',
       partyNames:
@@ -339,7 +367,11 @@ export function fixtureBulletinBoard(): {
       stateName: 'Jalisco',
       matchKind: 'exact',
       score: 1,
-      reason: 'Coincidencia exacta de expediente (210/2026) y juzgado.',
+      reason: hitReasonLabel({
+        matchKind: 'exact',
+        expedienteNumber: '210/2026',
+        courtName: 'Juzgado Primero de lo Civil — Ciudad Judicial',
+      }),
       courtName: 'Juzgado Primero de lo Civil — Ciudad Judicial',
       expedienteNumber: '210/2026',
       partyNames:
@@ -357,8 +389,10 @@ export function fixtureBulletinBoard(): {
       stateName: 'Jalisco',
       matchKind: 'possible',
       score: 0.86,
-      reason:
-        'Posible coincidencia por tokens de nombre de parte (variante demo «Fondo Pedregal Inmuebles»).',
+      reason: hitReasonLabel({
+        matchKind: 'possible',
+        partyVariant: 'Fondo Pedregal Inmuebles',
+      }),
       courtName: 'Juzgado Familiar de Zapopan',
       expedienteNumber: '15/2026',
       partyNames: 'Pedregal Fondo Inmuebles Demo / Demo Contraparte Familiar',
@@ -375,7 +409,11 @@ export function fixtureBulletinBoard(): {
       stateName: 'Ciudad de México',
       matchKind: 'exact',
       score: 1,
-      reason: 'Coincidencia exacta de expediente (512/2026) y juzgado (CDMX demo).',
+      reason: hitReasonLabel({
+        matchKind: 'exact',
+        expedienteNumber: '512/2026',
+        courtName: 'Juzgado 32 Civil CDMX',
+      }),
       courtName: 'Juzgado 32 Civil CDMX',
       expedienteNumber: '512/2026',
       partyNames: 'Nexora Pagos, S.A.P.I. de C.V. / Demandado Ficticio Centro',
@@ -392,7 +430,11 @@ export function fixtureBulletinBoard(): {
       stateName: 'Estado de México',
       matchKind: 'exact',
       score: 1,
-      reason: 'Coincidencia exacta de expediente (901/2026) y juzgado (Edomex demo).',
+      reason: hitReasonLabel({
+        matchKind: 'exact',
+        expedienteNumber: '901/2026',
+        courtName: 'Juzgado Primero Civil Toluca',
+      }),
       courtName: 'Juzgado Primero Civil Toluca',
       expedienteNumber: '901/2026',
       partyNames: 'Distribuidora Farma Sierra, S.A. de C.V. / Contraparte Demo Toluca',
@@ -541,7 +583,7 @@ export async function loadBulletinBoard(
     let runsQuery = db
       .from('bulletin_runs')
       .select(
-        'id, source_id, status, failure_message, hits_exact, hits_possible, publication_date, metadata, is_demo'
+        'id, source_id, status, failure_message, failure_stage, hits_exact, hits_possible, publication_date, metadata, is_demo'
       )
       .eq('firm_id', persona.firmId)
       .eq('publication_date', runPublicationDate)
@@ -581,9 +623,11 @@ export async function loadBulletinBoard(
           statusLabel: STATUS_LABEL[status],
           runId: null,
           failureMessage: null,
+          failureStage: null,
           hitsExact: 0,
           hitsPossible: 0,
           tier: s.proposed_tier,
+          tierLabel: sourceTierLabel(s.proposed_tier),
         }
       })
       return {
@@ -614,6 +658,7 @@ export async function loadBulletinBoard(
     ).map((s) => {
       const run = runBySource.get(s.id)
       const status = mapStatus(run?.status)
+      const stage = run?.failure_stage ?? null
       return {
         stateCode: s.state_code,
         stateName: s.state_name,
@@ -623,10 +668,13 @@ export async function loadBulletinBoard(
         status,
         statusLabel: STATUS_LABEL[status],
         runId: run?.id ?? null,
-        failureMessage: run?.failure_message ?? null,
+        failureStage: stage,
+        // Prefer structured stage labels over stored developer failure_message.
+        failureMessage: failureStageLabel(stage),
         hitsExact: run?.hits_exact ?? 0,
         hitsPossible: run?.hits_possible ?? 0,
         tier: s.proposed_tier,
+        tierLabel: sourceTierLabel(s.proposed_tier),
       }
     })
 
@@ -693,13 +741,23 @@ export async function loadBulletinBoard(
         const ent = entryMap.get(hit.entry_id)
         const src = ent ? sourceMeta.get(ent.source_id) : null
         if (!ent || !src) return null
+        const partyVariant = partyVariantFromStoredReason(hit.reason)
         return {
           id: hit.id,
           stateCode: src.state_code,
           stateName: src.state_name,
           matchKind: hit.match_kind,
           score: Number(hit.score),
-          reason: hit.reason,
+          reason: hitReasonLabel({
+            matchKind: hit.match_kind,
+            expedienteNumber: ent.expediente_number,
+            courtName: ent.court_name,
+            partyVariant,
+            numberWithoutCourt:
+              hit.match_kind === 'possible' &&
+              Boolean(ent.expediente_number) &&
+              !ent.court_name,
+          }),
           courtName: ent.court_name,
           expedienteNumber: ent.expediente_number,
           partyNames: ent.party_names,

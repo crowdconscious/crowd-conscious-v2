@@ -32,22 +32,6 @@ export default async function BoletinesPage() {
         <Link href="/ciceron/revision">{copy.boletines.openRevision}</Link>
       </p>
 
-      <section className="cic-section" aria-labelledby="bol-time">
-        <h2 id="bol-time" className="cic-h2">
-          {copy.boletines.timeSavedTitle}
-        </h2>
-        <p>
-          <strong style={{ fontFamily: 'var(--cic-serif)', fontSize: '1.6rem' }}>
-            {data.timeSaved.hoursReplaced.toFixed(1)}
-          </strong>{' '}
-          {copy.boletines.hours}
-          <span className="cic-muted"> · {data.timeSaved.runsCounted} {copy.boletines.runs}</span>
-        </p>
-        <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
-          {copy.boletines.timeSavedBody} {copy.boletines.timeSavedDemo}
-        </p>
-      </section>
-
       <section className="cic-section" aria-labelledby="bol-board">
         <h2 id="bol-board" className="cic-h2">
           {copy.boletines.boardTitle}
@@ -190,7 +174,10 @@ export default async function BoletinesPage() {
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             {data.manuals.map((m) => (
               <li key={m.id}>
-                <strong>{m.stateName}</strong> — {m.status}
+                <strong>{m.stateName}</strong> —{' '}
+                {copy.boletines.manualStatus[
+                  m.status as keyof typeof copy.boletines.manualStatus
+                ] ?? m.status}
                 {m.assignedToName ? ` · ${m.assignedToName}` : ''}
                 {' · '}
                 <a href={m.sourceUrl} target="_blank" rel="noopener noreferrer">

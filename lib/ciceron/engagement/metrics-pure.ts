@@ -86,6 +86,7 @@ export function fixtureMetricsDashboard(): MetricsDashboard {
     overall: current,
     byFirm: [current, previous],
     weeks: [thisWeek, lastWeek],
+    bulletinTimeSaved: { hoursReplaced: 6.5, runsCounted: 4 },
   }
 }
 

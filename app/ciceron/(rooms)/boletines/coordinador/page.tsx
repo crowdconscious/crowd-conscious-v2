@@ -79,7 +79,7 @@ export default async function CoordinadorBoletinesPage() {
               <tr>
                 <th scope="col">Entidad</th>
                 <th scope="col">Estado</th>
-                <th scope="col">Nivel</th>
+                <th scope="col">{copy.boletines.colNivel}</th>
                 <th scope="col">Fuente</th>
               </tr>
             </thead>
@@ -88,7 +88,7 @@ export default async function CoordinadorBoletinesPage() {
                 <tr key={row.sourceId}>
                   <td>{row.stateName}</td>
                   <td>{row.statusLabel}</td>
-                  <td>{row.tier}</td>
+                  <td>{row.tierLabel}</td>
                   <td>
                     <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer">
                       {copy.boletines.openSource}
@@ -115,7 +115,10 @@ export default async function CoordinadorBoletinesPage() {
                   {m.stateName} — {m.sourceName}
                 </strong>
                 <p className="cic-muted" style={{ margin: '6px 0', fontSize: '0.9rem' }}>
-                  Estado: {m.status}
+                  Estado:{' '}
+                  {copy.boletines.manualStatus[
+                    m.status as keyof typeof copy.boletines.manualStatus
+                  ] ?? m.status}
                   {m.assignedToName ? ` · Asignado a ${m.assignedToName}` : ''}
                 </p>
                 <p style={{ margin: '0 0 8px' }}>
@@ -134,21 +137,6 @@ export default async function CoordinadorBoletinesPage() {
       </section>
 
       <PartnerSummaryPreview />
-
-      <section className="cic-section" aria-labelledby="coord-time">
-        <h2 id="coord-time" className="cic-h2">
-          {copy.boletines.timeSavedTitle}
-        </h2>
-        <p>
-          <strong style={{ fontFamily: 'var(--cic-serif)', fontSize: '1.6rem' }}>
-            {data.timeSaved.hoursReplaced.toFixed(1)}
-          </strong>{' '}
-          {copy.boletines.hours}
-        </p>
-        <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
-          {copy.boletines.timeSavedDemo}
-        </p>
-      </section>
     </div>
   )
 }
