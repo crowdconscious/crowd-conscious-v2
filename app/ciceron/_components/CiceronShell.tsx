@@ -67,7 +67,7 @@ function ShellInner({
   })
 
   return (
-    <div className="ciceron-root" lang="es">
+    <div className="ciceron-root" lang="es-MX">
       <div className="cic-demo-banner" role="note">
         {copy.demoLabel}
       </div>

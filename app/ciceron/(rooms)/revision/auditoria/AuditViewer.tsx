@@ -3,6 +3,11 @@
 import { useMemo, useState } from 'react'
 import { formatPolicyCell } from '@/lib/ciceron/audit/policy-labels'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import {
+  DATE_FILTER_PLACEHOLDER,
+  formatDateTimeEs,
+  parseDateFilterEs,
+} from '@/lib/ciceron/copy/format-date'
 import { auditActionLabel } from '@/lib/ciceron/copy/labels'
 import type { AuditViewerRow } from '@/lib/ciceron/review/types'
 import { auditRowsToCsv } from '@/lib/ciceron/review/data-client'
@@ -14,11 +19,17 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
   const [to, setTo] = useState('')
 
   const filtered = useMemo(() => {
+    const fromIso = parseDateFilterEs(from)
+    const toIso = parseDateFilterEs(to)
     return rows.filter((r) => {
       if (actor && !(r.actorName.includes(actor) || r.actorId === actor)) return false
       if (action && r.action !== action) return false
-      if (from && Date.parse(r.createdAt) < Date.parse(from)) return false
-      if (to && Date.parse(r.createdAt) > Date.parse(to)) return false
+      if (fromIso && Date.parse(r.createdAt) < Date.parse(`${fromIso}T00:00:00-06:00`)) {
+        return false
+      }
+      if (toIso && Date.parse(r.createdAt) > Date.parse(`${toIso}T23:59:59-06:00`)) {
+        return false
+      }
       return true
     })
   }, [rows, actor, action, from, to])
@@ -68,8 +79,11 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
         <label className="cic-label">
           {copy.audit.filterFrom}
           <input
-            type="date"
+            type="text"
+            inputMode="numeric"
             className="cic-input"
+            placeholder={DATE_FILTER_PLACEHOLDER}
+            aria-description={copy.audit.filterDateHint}
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           />
@@ -77,8 +91,11 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
         <label className="cic-label">
           {copy.audit.filterTo}
           <input
-            type="date"
+            type="text"
+            inputMode="numeric"
             className="cic-input"
+            placeholder={DATE_FILTER_PLACEHOLDER}
+            aria-description={copy.audit.filterDateHint}
             value={to}
             onChange={(e) => setTo(e.target.value)}
           />
@@ -107,7 +124,7 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
             <tbody>
               {filtered.map((r) => (
                 <tr key={r.id}>
-                  <td>{new Date(r.createdAt).toLocaleString('es-MX')}</td>
+                  <td>{formatDateTimeEs(r.createdAt)}</td>
                   <td>{r.actorName}</td>
                   <td>{auditActionLabel(r.action)}</td>
                   <td>

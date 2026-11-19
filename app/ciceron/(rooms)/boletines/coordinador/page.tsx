@@ -8,6 +8,7 @@ import {
 import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
 
@@ -47,7 +48,7 @@ export default async function CoordinadorBoletinesPage() {
           Tablero 09:30
         </h2>
         <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
-          {data.asOf}
+          {formatDateLongEs(data.asOf)}
           {' · '}
           <span
             role="status"

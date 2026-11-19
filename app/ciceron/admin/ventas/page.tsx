@@ -1,4 +1,5 @@
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { formatDateTimeEs } from '@/lib/ciceron/copy/format-date'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { loadSalesInviteProgress } from '@/lib/ciceron/demo/sales'
 import { redirect } from 'next/navigation'
@@ -59,9 +60,7 @@ export default async function AdminVentasPage() {
                   <td>{r.maxStoryStepsCompleted}</td>
                   <td>{r.storiesFinished}</td>
                   <td className="cic-muted" style={{ fontSize: '0.85rem' }}>
-                    {r.lastSeenAt
-                      ? new Date(r.lastSeenAt).toLocaleString('es-MX')
-                      : '—'}
+                    {r.lastSeenAt ? formatDateTimeEs(r.lastSeenAt) : '—'}
                   </td>
                 </tr>
               ))}

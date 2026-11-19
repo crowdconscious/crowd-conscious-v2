@@ -76,12 +76,14 @@ describe('eventTypeLabel / computationDisplayText (A1, G3)', () => {
     assert.equal(eventTypeLabel('acuerdo_requerimiento'), 'Acuerdo de requerimiento')
   })
 
-  it('rewrites computation text without snake_case tokens', () => {
+  it('rewrites computation text without snake_case tokens or ISO dates', () => {
     const raw =
       'Regla: notificacion_demanda · 15 días hábiles. Cómputo desde el día hábil siguiente a 2026-10-22 → vence 2026-11-14.'
     const display = computationDisplayText(raw)
     assert.doesNotMatch(display, /notificacion_demanda/)
+    assert.doesNotMatch(display, /\d{4}-\d{2}-\d{2}/)
     assert.match(display, /Notificación de demanda/)
+    assert.match(display, /22 oct 2026/)
     assert.equal(findForbiddenUiToken(display), null)
   })
 })

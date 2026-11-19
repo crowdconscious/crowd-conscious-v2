@@ -6,6 +6,10 @@ import { EvidencePanel } from '../../_components/EvidencePanel'
 import { ResearchAnswerView } from '../../_components/ResearchAnswerView'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
+  formatDateTimeEs,
+  parseDateFilterEs,
+} from '@/lib/ciceron/copy/format-date'
+import {
   buildCitationIndex,
   formatAnswerForCopy,
   orderSourcesByCitations,
@@ -55,6 +59,7 @@ export function ResearchDesk({
   const [scope, setScope] = useState('dof')
   const [matterId, setMatterId] = useState('')
   const [asOf, setAsOf] = useState('')
+  const asOfIso = useMemo(() => parseDateFilterEs(asOf) ?? '', [asOf])
   const [questionDraft, setQuestionDraft] = useState('')
   const [streamHint, setStreamHint] = useState(false)
   const [historyFilter, setHistoryFilter] = useState('')
@@ -253,13 +258,15 @@ export function ResearchDesk({
               {copy.investigacion.asOf}
             </span>
             <input
-              type="date"
-              name="asOfDate"
+              type="text"
+              inputMode="numeric"
               className="cic-input"
               style={{ marginTop: 4 }}
+              placeholder="dd/mm/aaaa"
               value={asOf}
               onChange={(e) => setAsOf(e.target.value)}
             />
+            <input type="hidden" name="asOfDate" value={asOfIso} />
           </label>
         </div>
 
@@ -394,7 +401,7 @@ export function ResearchDesk({
               >
                 <span>
                   <span className="cic-muted" style={{ fontSize: '0.75rem', marginRight: 8 }}>
-                    {new Date(h.created_at).toLocaleString('es-MX')}
+                    {formatDateTimeEs(h.created_at)}
                   </span>
                   {h.question}
                 </span>
