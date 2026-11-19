@@ -2141,8 +2141,14 @@ textarea.cic-input {
   margin: calc(var(--cic-space) * 3) 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: calc(var(--cic-space) * 2);
+}
+
+@media (max-width: 900px) {
+  .cic-su-manana-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .cic-su-manana-metric {

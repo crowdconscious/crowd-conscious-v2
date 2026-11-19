@@ -9,9 +9,10 @@ import type {
 } from '@/lib/ciceron/demo/su-manana-pure'
 
 const METRIC_LABEL: Record<SuMananaMetricId, string> = {
-  asuntosConNovedad: copy.hoy.metrics.asuntosConNovedad,
+  asuntosVigilados: copy.hoy.metrics.asuntosVigilados,
+  novedadesHoy: copy.hoy.metrics.novedadesHoy,
   plazosEstaSemana: copy.hoy.metrics.plazosEstaSemana,
-  pendientesRevision: copy.hoy.metrics.pendientesRevision,
+  estadosCubiertos: copy.hoy.metrics.estadosCubiertos,
 }
 
 export type DeniedActionNote = {
