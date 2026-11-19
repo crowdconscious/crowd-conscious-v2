@@ -18,6 +18,7 @@ type CiceronQuery = {
     opts?: { onConflict?: string; ignoreDuplicates?: boolean }
   ) => CiceronQuery
   update: (values: Record<string, unknown>) => CiceronQuery
+  delete: () => CiceronQuery
   eq: (column: string, value: string | boolean | number | null) => CiceronQuery
   gte: (column: string, value: string | number) => CiceronQuery
   in: (column: string, values: readonly string[]) => CiceronQuery

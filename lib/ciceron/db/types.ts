@@ -1077,6 +1077,42 @@ export type CiceronDatabase = {
           CiceronDatabase['ciceron']['Tables']['google_workspace_connections']['Insert']
         >
       }
+      /** Server-only vault — never select ciphertext from the browser. */
+      google_oauth_credentials: {
+        Row: {
+          firm_id: string
+          actor_id: string
+          google_sub: string | null
+          account_email: string | null
+          access_token_ciphertext: string
+          refresh_token_ciphertext: string | null
+          token_iv: string
+          token_auth_tag: string
+          access_token_expires_at: string | null
+          scopes: string[]
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          actor_id: string
+          google_sub?: string | null
+          account_email?: string | null
+          access_token_ciphertext: string
+          refresh_token_ciphertext?: string | null
+          token_iv: string
+          token_auth_tag: string
+          access_token_expires_at?: string | null
+          scopes?: string[]
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['google_oauth_credentials']['Insert']
+        >
+      }
     }
     Functions: {
       decide_review: {
