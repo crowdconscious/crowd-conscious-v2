@@ -3534,6 +3534,51 @@ textarea.cic-input {
   align-items: center;
 }
 
+.cic-guided-setup {
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+  padding: calc(var(--cic-space) * 2.5);
+  margin: calc(var(--cic-space) * 2) 0;
+}
+
+.cic-guided-setup-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.cic-guided-setup-panel {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--cic-accent-mint);
+  background: var(--cic-surface);
+}
+
+.cic-guided-setup-firm {
+  margin: 0;
+  font-family: var(--cic-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.cic-guided-setup-list {
+  margin: 12px 0 0;
+  padding-left: 1.15rem;
+}
+
+.cic-guided-setup-list li {
+  margin: 0 0 6px;
+}
+
+.cic-guided-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 /* Coordinator board: cards default + table toggle */
 .cic-coord-board-head {
   display: flex;

@@ -18,6 +18,29 @@ export const copy = {
     deadlinesTitle: 'Plazos',
     timelineTitle: 'Línea de tiempo del cliente',
   },
+  guidedSetup: {
+    title: 'Configuración rápida del despacho',
+    progress: (n: number, total: number) => `Paso ${n} de ${total}`,
+    skip: 'Omitir',
+    back: 'Anterior',
+    next: 'Continuar',
+    finish: 'Listo',
+    firmNote: 'Datos de demostración ya cargados. Equipo de Cicerón.',
+    steps: {
+      despacho: {
+        title: 'Su despacho',
+        body: 'Confirmamos el despacho de demostración con el que entra. En un piloto usaría el nombre real de su firma.',
+      },
+      clientes: {
+        title: 'Sus clientes',
+        body: 'Estos son los clientes de muestra vigilados hoy. Ábralos para ver la línea de tiempo de cada uno.',
+      },
+      estados: {
+        title: 'Estados cubiertos',
+        body: 'Estas entidades federativas ya tienen boletín en la demostración. El mapa de Su mañana resume el mismo estado.',
+      },
+    },
+  },
   roleSocia: 'Socia',
   roleAsociado: 'Asociado',
   rolePasante: 'Pasante',

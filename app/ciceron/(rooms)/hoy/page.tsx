@@ -7,18 +7,16 @@ import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { SuMananaHero, type DeniedActionNote } from '../../_components/SuMananaHero'
 import { PartnerCoverageMap } from './PartnerCoverageMap'
-<<<<<<< HEAD
 import { applyHitCountsToBoard } from '@/lib/ciceron/boletines/board-hit-counts-pure'
-=======
 import { ExportViewButton } from '../../_components/ExportViewButton'
->>>>>>> e8c0252e (feat(ciceron): one-click PDF/Excel/CSV export of current views)
+import { GuidedFirmSetup } from '../../_components/GuidedFirmSetup'
 import { WeekDeadlineStrip } from '../../_components/WeekDeadlineStrip'
+import { loadClientsRoom, loadDeadlines } from '@/lib/ciceron/demo/data'
 import { DeadlineCountdown } from '../../_components/DeadlineCountdown'
 import { PersonaStartPanel } from '../../_components/PersonaStartPanel'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
-import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
 import { countDeadlinesInCurrentWeek } from '@/lib/ciceron/deadlines/week-window-pure'
 import {
@@ -49,16 +47,25 @@ export default async function HoyPage() {
   const persona = await getCiceronDemoSession()
   if (!persona) redirect(CICERON_BASE)
 
-  const [briefing, { deadlines }, onboarding, suggestion, engagement, budget, bulletins] =
-    await Promise.all([
-      loadHoyBriefing(persona),
-      loadDeadlines(persona),
-      loadOnboarding(persona),
-      loadFeedbackSuggestion(persona),
-      loadHoyEngagement(persona),
-      loadFirmBudgetStatus(persona.firmId),
-      loadBulletinBoard(persona),
-    ])
+  const [
+    briefing,
+    { deadlines },
+    onboarding,
+    suggestion,
+    engagement,
+    budget,
+    bulletins,
+    { clients },
+  ] = await Promise.all([
+    loadHoyBriefing(persona),
+    loadDeadlines(persona),
+    loadOnboarding(persona),
+    loadFeedbackSuggestion(persona),
+    loadHoyEngagement(persona),
+    loadFirmBudgetStatus(persona.firmId),
+    loadBulletinBoard(persona),
+    loadClientsRoom(persona),
+  ])
 
   await recordCiceronEvent({
     name: 'room_opened',
@@ -223,6 +230,22 @@ export default async function HoyPage() {
           deniedNotes={deniedNotes}
           dailyLine={dailyLine}
           coverageHero={partnerMap}
+        />
+
+        <GuidedFirmSetup
+          snapshot={{
+            firmName: copy.firmDemo,
+            clients: clients.map((c) => ({
+              id: c.id,
+              name: c.name,
+              industry: c.industry,
+            })),
+            states: boardWithHits.map((b) => ({
+              code: b.stateCode,
+              name: b.stateName,
+              statusLabel: b.statusLabel,
+            })),
+          }}
         />
 
         <WeekDeadlineStrip dueAts={dueAts} />
