@@ -568,7 +568,7 @@ export function fixtureBulletinBoard(): {
   ]
 
   return {
-    board,
+    board: sortBoardRows(board),
     hits,
     manuals,
     timeSaved: {
