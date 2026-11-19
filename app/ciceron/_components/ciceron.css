@@ -2443,6 +2443,21 @@ textarea.cic-input {
   font-size: 0.9rem;
 }
 
+.cic-coord-state-empty {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.cic-coord-state-prompt {
+  display: flex;
+  align-items: center;
+  min-height: 8rem;
+  color: var(--cic-muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
 @media (max-width: 959px) {
   .cic-coord-state-panel {
     position: fixed;

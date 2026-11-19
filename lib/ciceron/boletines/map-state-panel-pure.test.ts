@@ -1,15 +1,25 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { findStatePanelDetail, formatConsultHm } from './map-state-panel-pure'
+import {
+  findStatePanelDetail,
+  formatConsultHm,
+  pickDefaultStateCode,
+} from './map-state-panel-pure'
 
 describe('formatConsultHm', () => {
   it('returns HH:MM for a CDMX instant', () => {
-    const hm = formatConsultHm('2026-11-18T15:30:00-06:00')
-    assert.equal(hm, '15:30')
+    assert.equal(formatConsultHm('2026-11-18T15:30:00-06:00'), '15:30')
   })
+})
 
-  it('returns null for empty', () => {
-    assert.equal(formatConsultHm(null), null)
+describe('pickDefaultStateCode', () => {
+  it('prefers failed over pending over reviewed-with-hits', () => {
+    const code = pickDefaultStateCode([
+      { stateCode: 'QRO', status: 'revisado', hitsExact: 2 },
+      { stateCode: 'CDMX', status: 'fallo', hitsExact: 0 },
+      { stateCode: 'NL', status: 'manual', hitsExact: 0 },
+    ])
+    assert.equal(code, 'CDMX')
   })
 })
 

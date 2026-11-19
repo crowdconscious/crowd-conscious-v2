@@ -476,6 +476,9 @@ export const copy = {
     mapPanelNoReviewer: 'Sin asignar',
     mapPanelMatters: 'Asuntos coincidentes',
     mapPanelNoMatters: 'Ningún asunto coincidente en esta entidad hoy.',
+    mapPanelPrompt: 'Seleccione una entidad en el mapa para ver su boletín de hoy.',
+    mapPanelNoCoverage: (stateName: string) =>
+      `Hoy no hay cobertura de boletín para ${stateName}. No forma parte de las fuentes activas de esta demostración.`,
     openExpedienteBtn: 'Abrir expediente',
     captureAcuerdoBtn: 'Capturar acuerdo',
     sendReviewBtn: 'Enviar a revisión',

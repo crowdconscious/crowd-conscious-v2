@@ -82,7 +82,17 @@ export default async function CoordinadorBoletinesPage() {
 
       <BulletinClockStrip board={data.board} />
 
-      <CoordinatorMexicoMap board={data.board} details={mapDetails} />
+      <CoordinatorMexicoMap
+        board={data.board.map((r) => ({
+          stateCode: r.stateCode,
+          stateName: r.stateName,
+          status: r.status,
+          statusLabel: r.statusLabel,
+          hitsExact: r.hitsExact,
+          hitsPossible: r.hitsPossible,
+        }))}
+        details={mapDetails}
+      />
 
       <section className="cic-section" aria-labelledby="coord-board">
         <h2 id="coord-board" className="cic-h2">

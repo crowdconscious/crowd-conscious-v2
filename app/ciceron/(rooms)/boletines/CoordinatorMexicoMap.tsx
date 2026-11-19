@@ -16,6 +16,7 @@ import {
 } from '@/lib/ciceron/boletines/map-progress-pure'
 import {
   findStatePanelDetail,
+  pickDefaultStateCode,
   type MapStatePanelDetail,
 } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import { copy } from '@/lib/ciceron/copy/es-MX'
@@ -25,6 +26,8 @@ export type CoordinatorMapRow = {
   stateName: string
   status: MapBoardStatus
   statusLabel: string
+  hitsExact?: number
+  hitsPossible?: number
 }
 
 const LEGEND_ORDER: MapLegendStatus[] = [
@@ -34,6 +37,24 @@ const LEGEND_ORDER: MapLegendStatus[] = [
   'sin_publicacion',
 ]
 
+/** Full Spanish names keyed by board code (never abbreviations). */
+const FULL_NAME_BY_BOARD = (() => {
+  const map = new Map<string, string>()
+  for (const s of MEXICO_STATE_PATHS) {
+    const board = MEXICO_ISO_TO_BOARD[s.id] ?? s.id
+    map.set(board, s.name)
+  }
+  return map
+})()
+
+function fullStateName(boardCode: string, fallback?: string | null): string {
+  return (
+    FULL_NAME_BY_BOARD.get(boardCode) ??
+    fallback?.trim() ??
+    boardCode
+  )
+}
+
 export function CoordinatorMexicoMap({
   board,
   details = [],
@@ -42,14 +63,23 @@ export function CoordinatorMexicoMap({
   details?: MapStatePanelDetail[]
 }) {
   const panelTitleId = useId()
-  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const defaultCode = useMemo(() => pickDefaultStateCode(board), [board])
+  const [selectedCode, setSelectedCode] = useState<string | null>(defaultCode)
+  const [userPicked, setUserPicked] = useState(false)
+
+  useEffect(() => {
+    if (!userPicked) setSelectedCode(defaultCode)
+  }, [defaultCode, userPicked])
 
   const byCode = useMemo(
     () => new Map(board.map((r) => [r.stateCode, r.status] as const)),
     [board]
   )
   const nameByCode = useMemo(
-    () => new Map(board.map((r) => [r.stateCode, r.stateName] as const)),
+    () =>
+      new Map(
+        board.map((r) => [r.stateCode, fullStateName(r.stateCode, r.stateName)] as const)
+      ),
     [board]
   )
   const progress = buildMapProgress({
@@ -65,11 +95,35 @@ export function CoordinatorMexicoMap({
   const pct =
     progress.total === 0 ? 0 : Math.round((progress.reviewed / progress.total) * 100)
 
-  const selected = selectedCode
-    ? findStatePanelDetail(details, selectedCode)
-    : null
+  const selected = useMemo(() => {
+    if (!selectedCode) return null
+    const found = findStatePanelDetail(details, selectedCode)
+    if (found) {
+      return {
+        ...found,
+        stateName: fullStateName(found.stateCode, found.stateName),
+      }
+    }
+    const legend = mapStatusForState(byCode, selectedCode)
+    return {
+      stateCode: selectedCode,
+      stateName: fullStateName(selectedCode, nameByCode.get(selectedCode)),
+      statusLabel: copy.boletines.mapLegend[legend],
+      status: legend,
+      sourceName: '',
+      lastConsultHm: null,
+      reviewerName: null,
+      matters: [],
+      hitsExact: 0,
+      hitsPossible: 0,
+      noCoverage: true,
+    } satisfies MapStatePanelDetail
+  }, [selectedCode, details, byCode, nameByCode])
 
-  const close = useCallback(() => setSelectedCode(null), [])
+  const close = useCallback(() => {
+    setUserPicked(true)
+    setSelectedCode(null)
+  }, [])
 
   useEffect(() => {
     if (!selectedCode) return
@@ -81,6 +135,7 @@ export function CoordinatorMexicoMap({
   }, [selectedCode, close])
 
   function selectState(boardCode: string) {
+    setUserPicked(true)
     setSelectedCode(boardCode)
   }
 
@@ -127,7 +182,7 @@ export function CoordinatorMexicoMap({
             {MEXICO_STATE_PATHS.map((state) => {
               const boardCode = MEXICO_ISO_TO_BOARD[state.id] ?? state.id
               const legend = mapStatusForState(byCode, boardCode)
-              const label = nameByCode.get(boardCode) ?? state.name
+              const label = fullStateName(boardCode, state.name)
               const statusWord = copy.boletines.mapLegend[legend]
               const isSelected = selectedCode === boardCode
               return (
@@ -172,65 +227,85 @@ export function CoordinatorMexicoMap({
             <p className="cic-demo-inline" style={{ margin: '4px 0 10px' }}>
               {copy.demoLabel}
             </p>
-            <dl className="cic-coord-state-dl">
-              <div>
-                <dt>{copy.boletines.colEstado}</dt>
-                <dd>
-                  <span className={`cic-bol-status is-${selected.status === 'fallo' ? 'critical' : selected.status === 'revisado' ? 'good' : 'warning'}`}>
-                    {selected.statusLabel}
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt>{copy.boletines.mapPanelSource}</dt>
-                <dd>{selected.sourceName || '—'}</dd>
-              </div>
-              <div>
-                <dt>{copy.boletines.mapPanelLastConsult}</dt>
-                <dd>
-                  {selected.lastConsultHm
-                    ? copy.boletines.mapPanelLastConsultValue(selected.lastConsultHm)
-                    : copy.boletines.mapPanelNeverConsulted}
-                </dd>
-              </div>
-              <div>
-                <dt>{copy.boletines.mapPanelReviewer}</dt>
-                <dd>{selected.reviewerName ?? copy.boletines.mapPanelNoReviewer}</dd>
-              </div>
-              <div>
-                <dt>{copy.boletines.colCoincidencias}</dt>
-                <dd>{selected.hitsExact}</dd>
-              </div>
-              <div>
-                <dt>{copy.boletines.colPosibles}</dt>
-                <dd>{selected.hitsPossible}</dd>
-              </div>
-            </dl>
-            <h4 className="cic-coord-state-matters-title">{copy.boletines.mapPanelMatters}</h4>
-            {selected.matters.length === 0 ? (
-              <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
-                {copy.boletines.mapPanelNoMatters}
+            {selected.noCoverage ? (
+              <p className="cic-coord-state-empty" role="status">
+                {copy.boletines.mapPanelNoCoverage(selected.stateName)}
               </p>
             ) : (
-              <ul className="cic-coord-state-matters">
-                {selected.matters.map((m) => (
-                  <li key={m.id}>
-                    <strong>{m.label}</strong>
-                    <span className="cic-muted">
-                      {' · '}
-                      {m.matchKind === 'exact'
-                        ? copy.boletines.matchExact
-                        : copy.boletines.matchPossible}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <dl className="cic-coord-state-dl">
+                  <div>
+                    <dt>{copy.boletines.colEstado}</dt>
+                    <dd>
+                      <span
+                        className={`cic-bol-status is-${
+                          selected.status === 'fallo'
+                            ? 'critical'
+                            : selected.status === 'revisado'
+                              ? 'good'
+                              : 'warning'
+                        }`}
+                      >
+                        {selected.statusLabel}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{copy.boletines.mapPanelSource}</dt>
+                    <dd>{selected.sourceName || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>{copy.boletines.mapPanelLastConsult}</dt>
+                    <dd>
+                      {selected.lastConsultHm
+                        ? copy.boletines.mapPanelLastConsultValue(selected.lastConsultHm)
+                        : copy.boletines.mapPanelNeverConsulted}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{copy.boletines.mapPanelReviewer}</dt>
+                    <dd>{selected.reviewerName ?? copy.boletines.mapPanelNoReviewer}</dd>
+                  </div>
+                  <div>
+                    <dt>{copy.boletines.colCoincidencias}</dt>
+                    <dd>{selected.hitsExact}</dd>
+                  </div>
+                  <div>
+                    <dt>{copy.boletines.colPosibles}</dt>
+                    <dd>{selected.hitsPossible}</dd>
+                  </div>
+                </dl>
+                <h4 className="cic-coord-state-matters-title">{copy.boletines.mapPanelMatters}</h4>
+                {selected.matters.length === 0 ? (
+                  <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+                    {copy.boletines.mapPanelNoMatters}
+                  </p>
+                ) : (
+                  <ul className="cic-coord-state-matters">
+                    {selected.matters.map((m) => (
+                      <li key={m.id}>
+                        <strong>{m.label}</strong>
+                        <span className="cic-muted">
+                          {' · '}
+                          {m.matchKind === 'exact'
+                            ? copy.boletines.matchExact
+                            : copy.boletines.matchPossible}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
             <p className="cic-bol-notice" role="note" style={{ marginTop: 12 }}>
               {copy.boletines.informative}
             </p>
           </aside>
-        ) : null}
+        ) : (
+          <aside className="cic-coord-state-panel cic-coord-state-prompt" role="status">
+            <p style={{ margin: 0 }}>{copy.boletines.mapPanelPrompt}</p>
+          </aside>
+        )}
       </div>
     </section>
   )
