@@ -743,6 +743,19 @@ export const copy = {
     lead: 'Clientes ficticios del despacho de demostración y sus perfiles de vigilancia.',
     matters: 'Asuntos',
     watch: 'Perfil de vigilancia',
+    openTimeline: 'Ver línea de tiempo',
+    backToList: 'Todos los clientes',
+    timelineLead:
+      'Todo lo que ha pasado en los asuntos de este cliente, de lo más reciente a lo más antiguo. Sirve para mostrárselo al cliente.',
+    timelineEmpty: 'Aún no hay movimientos registrados para este cliente en la demostración.',
+    timelineOpen: 'Abrir detalle',
+    timelineDeadlineMargin: 'Plazo',
+    timelineKinds: {
+      bulletin: 'Boletín',
+      dof: 'Diario Oficial',
+      deadline: 'Plazo',
+      review: 'Revisión',
+    },
   },
 
   components: {
