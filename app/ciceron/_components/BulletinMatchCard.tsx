@@ -35,6 +35,8 @@ export type BulletinMatchCardProps = {
   primaryHref: string
   primaryDenied: boolean
   primaryDenyReason: string | null
+  /** When false, denied reason is omitted (shown once at page level). */
+  showDenyReason?: boolean
 }
 
 const ACTION_LABEL: Record<'open' | 'capture' | 'review' | 'source', string> = {
@@ -138,19 +140,21 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
           <div className="cic-match-primary-denied">
             <button
               type="button"
-              className="cic-btn cic-btn-compact"
+              className="cic-btn cic-btn-compact is-locked"
               disabled
-              title={props.primaryDenyReason ?? undefined}
+              title={props.primaryDenyReason ?? copy.boletines.denialCompactTitle}
               aria-disabled="true"
               data-primary-action={props.primaryActionId}
             >
               {props.primaryLabel}
             </button>
-            {props.primaryDenyReason ? (
+            {props.showDenyReason !== false && props.primaryDenyReason ? (
               <p className="cic-muted cic-inline-denied" role="note">
                 {props.primaryDenyReason}
               </p>
-            ) : null}
+            ) : (
+              <span className="cic-sr-only">{copy.boletines.denialCompactTitle}</span>
+            )}
           </div>
         ) : (
           <Link

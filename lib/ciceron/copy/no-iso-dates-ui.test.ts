@@ -35,6 +35,7 @@ describe('Cicerón UI dates — no ISO in rendered labels', () => {
     assertNoIsoInUi('digest.subject', d.subject)
     assertNoIsoInUi('digest.weekLabel', d.weekLabel)
     assertNoIsoInUi('digest.headline', d.headline)
+    assert.equal(d.upcomingDeadlines.length, 0)
   })
 
   it('client timeline dateLabel is Spanish', () => {

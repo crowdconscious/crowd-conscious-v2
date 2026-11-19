@@ -12,7 +12,7 @@ export type HoyDailyLineInput = {
    * (e.g. «jueves»), or null when none.
    */
   nextPlazoWeekday: string | null
-  /** Pending reviews (metric 3) — mentioned only when > 0 and no other news. */
+  /** Pending reviews (metric 3) — always reflected when > 0. */
   reviewsPending?: number
 }
 
@@ -77,7 +77,7 @@ export function buildHoyDailyLine(input: HoyDailyLineInput): string {
     )
   }
 
-  if (moved === 0 && plazos === 0 && reviews > 0) {
+  if (reviews > 0) {
     parts.push(
       reviews === 1
         ? '1 revisión pendiente'

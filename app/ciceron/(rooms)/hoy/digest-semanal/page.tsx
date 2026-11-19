@@ -41,17 +41,13 @@ export default async function DigestSemanalPage() {
     })
   }
 
-  const weekDeadlines = deadlines
-    .filter((d) => {
-      if (!d.dueAt) return false
-      const day = d.dueAt.slice(0, 10)
-      return day >= weekStart && day <= weekEnd
-    })
+  const allDeadlines = deadlines
+    .filter((d): d is typeof d & { dueAt: string } => Boolean(d.dueAt))
     .map((d) => ({
       id: d.id,
       clientName: d.clientName,
       label: d.label,
-      dueAt: d.dueAt as string,
+      dueAt: d.dueAt,
     }))
 
   const reviews = briefing.reviews.map((r) => ({
@@ -66,7 +62,7 @@ export default async function DigestSemanalPage() {
     weekStartIso: weekStart,
     weekEndIso: weekEnd,
     movements,
-    deadlines: weekDeadlines,
+    deadlines: allDeadlines,
     reviews,
   })
 
@@ -136,6 +132,19 @@ export default async function DigestSemanalPage() {
             </ul>
           )}
         </section>
+
+        {digest.upcomingDeadlines.length > 0 ? (
+          <section aria-labelledby="digest-upcoming">
+            <h2 id="digest-upcoming" className="cic-digest-section-title">
+              {copy.digest.upcomingDeadlinesTitle}
+            </h2>
+            <ul className="cic-digest-bullets">
+              {digest.upcomingDeadlines.map((b) => (
+                <li key={b.id}>{b.text}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section aria-labelledby="digest-reviews">
           <h2 id="digest-reviews" className="cic-digest-section-title">

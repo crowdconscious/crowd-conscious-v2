@@ -45,4 +45,33 @@ describe('buildWeeklyDigestPreview', () => {
     assert.equal(d.simulated, true)
     assert.match(d.closing, /no se envía/i)
   })
+
+  it('keeps out-of-week plazos under próximas semanas', () => {
+    const d = buildWeeklyDigestPreview({
+      partnerName: 'Socia',
+      weekStartIso: '2026-11-16',
+      weekEndIso: '2026-11-22',
+      movements: [],
+      deadlines: [
+        {
+          id: 'in',
+          clientName: 'Nexora',
+          label: 'Contestar demanda',
+          dueAt: '2026-11-19T23:59:00-06:00',
+        },
+        {
+          id: 'out',
+          clientName: 'Nexora',
+          label: 'Desahogar requerimiento',
+          dueAt: '2026-11-28T23:59:00-06:00',
+        },
+      ],
+      reviews: [],
+    })
+    assert.equal(d.deadlines.length, 1)
+    assert.match(d.deadlines[0]?.text ?? '', /Contestar demanda/)
+    assert.equal(d.upcomingDeadlines.length, 1)
+    assert.match(d.upcomingDeadlines[0]?.text ?? '', /28 de noviembre/)
+    assert.doesNotMatch(d.headline, /2 plazos esta semana/)
+  })
 })

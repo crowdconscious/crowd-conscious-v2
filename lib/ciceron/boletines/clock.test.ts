@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  DEMO_CLOCK_MORNING_HM,
+  bulletinClockStrip,
   minutesFromMidnight,
   remainingToMilestone,
   uncoveredEntityCount,
@@ -30,5 +32,16 @@ describe('bulletin clock', () => {
 
   it('parses HH:MM to minutes', () => {
     assert.equal(minutesFromMidnight('12:00'), 720)
+  })
+
+  it('demo mode after hours anchors to morning and avoids Hora vencida', () => {
+    // 21:00 CDMX ≈ 03:00 UTC next day in winter; use explicit local via Date with offset.
+    const evening = new Date('2026-11-19T21:00:00-06:00')
+    const strip = bulletinClockStrip(evening, { demoMode: true })
+    assert.equal(strip.demoAnchored, true)
+    assert.match(strip.nowHm, new RegExp(DEMO_CLOCK_MORNING_HM))
+    assert.equal(strip.objetivo.passed, false)
+    assert.equal(strip.respaldo.passed, false)
+    assert.equal(strip.limite.passed, false)
   })
 })

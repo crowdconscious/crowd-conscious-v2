@@ -494,6 +494,18 @@
   font-size: 0.8rem;
 }
 
+.cic-denial-banner {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--cic-accent, #2dd4bf);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.cic-btn.is-locked {
+  opacity: 0.72;
+}
+
 .cic-inline-denied {
   display: block;
   margin-top: 4px;

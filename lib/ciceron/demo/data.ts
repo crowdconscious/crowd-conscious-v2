@@ -11,6 +11,7 @@ import {
   type ReviewState,
 } from '@/lib/ciceron/demo/fixtures'
 import { addTermDays } from '@/lib/ciceron/case-files/business-days'
+import { formatClientIndustryEs } from '@/lib/ciceron/copy/industry-label'
 import { isDueWithinNextDaysCdmx, todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 
@@ -114,7 +115,7 @@ export async function loadClientsRoom(persona: DemoPersona): Promise<{
         return {
           id: c.id,
           name: c.display_name,
-          industry: c.external_ref ?? '',
+          industry: formatClientIndustryEs(c.external_ref),
           watch: watch.replace(/^Datos de demostración\.\s*/i, ''),
           matters: clientMatters.map((m) => ({ id: m.id, title: m.title })),
         }

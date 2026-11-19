@@ -194,8 +194,9 @@ export default async function BoletinesPage() {
             {copy.boletines.informative}
           </EmptyState>
         ) : (
-          <ul className="cic-stack cic-match-list">
-            {data.hits.map((h) => {
+          (() => {
+            let pageDenialReason: string | null = null
+            const cards = data.hits.map((h) => {
               const needsManual = manualStates.has(h.stateCode)
               const primary = decideCardPrimaryAction({
                 role: personaRole,
@@ -221,36 +222,52 @@ export default async function BoletinesPage() {
                       : primary.id === 'capture'
                         ? copy.boletines.captureAcuerdoBtn
                         : copy.boletines.openExpedienteBtn
-              return (
-              <li key={h.id}>
-                <BulletinMatchCard
-                  id={h.id}
-                  clientName={h.clientName}
-                  clientSide={h.clientSide}
-                  courtName={h.courtName}
-                  summary={h.summary}
-                  publicationDateLabel={
-                    h.publicationDate ? formatDateLongEs(h.publicationDate) : null
-                  }
-                  expedienteNumber={h.expedienteNumber}
-                  deadlineLabel={null}
-                  matchKind={h.matchKind}
-                  caseFileId={h.caseFileId}
-                  sourceUrl={h.sourceUrl}
-                  reason={h.reason}
-                  queCambioBefore={cambio.before}
-                  queCambioAfter={cambio.after}
-                  queCambioLegalDetail={cambio.legalDetail}
-                  primaryActionId={primary.id}
-                  primaryLabel={primaryLabel}
-                  primaryHref={primary.href}
-                  primaryDenied={primary.denied}
-                  primaryDenyReason={primary.denyReason}
-                />
-              </li>
-              )
-            })}
-          </ul>
+              if (primary.denied && primary.denyReason && !pageDenialReason) {
+                pageDenialReason = primary.denyReason
+              }
+              return { h, primary, cambio, primaryLabel }
+            })
+            return (
+              <>
+                {pageDenialReason ? (
+                  <p className="cic-muted cic-inline-denied cic-denial-banner" role="note">
+                    {pageDenialReason}
+                  </p>
+                ) : null}
+                <ul className="cic-stack cic-match-list">
+                  {cards.map(({ h, primary, cambio, primaryLabel }) => (
+                    <li key={h.id}>
+                      <BulletinMatchCard
+                        id={h.id}
+                        clientName={h.clientName}
+                        clientSide={h.clientSide}
+                        courtName={h.courtName}
+                        summary={h.summary}
+                        publicationDateLabel={
+                          h.publicationDate ? formatDateLongEs(h.publicationDate) : null
+                        }
+                        expedienteNumber={h.expedienteNumber}
+                        deadlineLabel={null}
+                        matchKind={h.matchKind}
+                        caseFileId={h.caseFileId}
+                        sourceUrl={h.sourceUrl}
+                        reason={h.reason}
+                        queCambioBefore={cambio.before}
+                        queCambioAfter={cambio.after}
+                        queCambioLegalDetail={cambio.legalDetail}
+                        primaryActionId={primary.id}
+                        primaryLabel={primaryLabel}
+                        primaryHref={primary.href}
+                        primaryDenied={primary.denied}
+                        primaryDenyReason={primary.denyReason}
+                        showDenyReason={false}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )
+          })()
         )}
       </section>
 

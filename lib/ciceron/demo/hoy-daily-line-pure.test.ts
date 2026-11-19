@@ -44,4 +44,16 @@ describe('buildHoyDailyLine', () => {
     assert.match(line, /ningún asunto se movió/)
     assert.match(line, /2 revisiones pendientes/)
   })
+
+  it('mentions pending reviews even when there is other news', () => {
+    const line = buildHoyDailyLine({
+      asuntosMoved: 4,
+      plazosThisWeek: 1,
+      nextPlazoWeekday: 'sábado',
+      reviewsPending: 5,
+    })
+    assert.match(line, /4 asuntos se movieron/)
+    assert.match(line, /5 revisiones pendientes/)
+    assert.doesNotMatch(line, /sin novedades/)
+  })
 })
