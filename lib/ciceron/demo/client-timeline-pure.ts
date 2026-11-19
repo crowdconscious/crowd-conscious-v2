@@ -2,6 +2,8 @@
  * Client matter timeline — newest first, deadlines marked for the margin.
  */
 
+import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
+
 export type ClientTimelineKind = 'bulletin' | 'dof' | 'deadline' | 'review'
 
 export type ClientTimelineEvent = {
@@ -57,7 +59,7 @@ export function buildClientTimeline(input: {
       id: `bol-${h.id}`,
       kind: 'bulletin',
       sortIso,
-      dateLabel: h.publicationDate?.slice(0, 10) ?? '—',
+      dateLabel: h.publicationDate ? formatDateLongEs(h.publicationDate) : '—',
       title: h.courtName ?? 'Boletín judicial',
       detail: [h.expedienteNumber, h.summary].filter(Boolean).join(' · ') || 'Coincidencia',
       deadlineLabel: null,

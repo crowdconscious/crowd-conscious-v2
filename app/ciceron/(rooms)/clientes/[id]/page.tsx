@@ -10,6 +10,7 @@ import { buildClientTimeline } from '@/lib/ciceron/demo/client-timeline-pure'
 import { loadClientsRoom, loadDeadlines } from '@/lib/ciceron/demo/data'
 import { fixtureDofNotes } from '@/lib/ciceron/demo/fixtures'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
+import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 
 const KIND_LABEL: Record<string, string> = {
   bulletin: copy.clientes.timelineKinds.bulletin,
@@ -81,7 +82,7 @@ export default async function ClienteTimelinePage({
           </h1>
           <p className="cic-lead">{copy.clientes.timelineLead}</p>
           <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
-            {client.industry} · {formatDateLongEs(new Date().toISOString())}
+            {client.industry} · {formatDateLongEs(todayInMexicoCity())}
           </p>
         </div>
         <div className="no-print">

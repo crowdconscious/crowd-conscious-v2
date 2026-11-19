@@ -35,5 +35,8 @@ describe('buildClientTimeline', () => {
     assert.equal(events[0]?.kind, 'deadline')
     assert.equal(events[1]?.kind, 'bulletin')
     assert.ok(events.find((e) => e.kind === 'deadline')?.deadlineLabel)
+    const bulletin = events.find((e) => e.kind === 'bulletin')
+    assert.equal(bulletin?.dateLabel, '18 de noviembre de 2026')
+    assert.doesNotMatch(bulletin?.dateLabel ?? '', /\d{4}-\d{2}-\d{2}/)
   })
 })
