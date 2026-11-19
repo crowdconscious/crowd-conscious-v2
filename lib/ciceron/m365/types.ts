@@ -1,4 +1,7 @@
-/** Simulated Microsoft 365 types — demo only; no Graph SDK or tokens. */
+/**
+ * Simulated Microsoft 365 types — demo only; no Graph SDK or tokens.
+ * Prefer `lib/ciceron/integrations/` (WorkspaceProvider) for new call sites.
+ */
 
 export type M365ConnectionStatus = 'disconnected' | 'connected'
 
