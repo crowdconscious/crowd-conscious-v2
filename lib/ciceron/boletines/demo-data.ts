@@ -4,6 +4,9 @@ import {
   currentCdmxBusinessDay,
   pickDemoBulletinPublicationDate,
 } from '@/lib/ciceron/boletines/demo-freshness'
+import { sortBoardRows } from '@/lib/ciceron/boletines/board-sort'
+import { bulletinNumberDisplay } from '@/lib/ciceron/boletines/bulletin-number-display'
+import { fictionalMatterCountForState } from '@/lib/ciceron/boletines/fictional-catalogue'
 import { CICERON_BOLETIN_SOURCES } from '@/lib/ciceron/boletines/seed-ids'
 import {
   failureStageLabel,
@@ -13,6 +16,7 @@ import {
 } from '@/lib/ciceron/copy/labels'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
+import { PERSONA_DISPLAY_NAMES } from '@/lib/ciceron/demo/display-names'
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
 
 export type BulletinBoardStatus =
@@ -108,23 +112,7 @@ const STATUS_LABEL: Record<BulletinBoardStatus, string> = {
   sin_publicacion: 'Sin publicación prevista',
 }
 
-const STATUS_SORT: Record<BulletinBoardStatus, number> = {
-  fallo: 0,
-  manual: 1,
-  parcial: 2,
-  sin_publicacion: 3,
-  revisado: 4,
-}
-
-export function sortBoardRows(
-  rows: BulletinStateBoardRow[]
-): BulletinStateBoardRow[] {
-  return [...rows].sort(
-    (a, b) =>
-      STATUS_SORT[a.status] - STATUS_SORT[b.status] ||
-      a.stateName.localeCompare(b.stateName, 'es-MX')
-  )
-}
+export { sortBoardRows }
 
 const INFORMATIVE =
   'Informativo: no constituye notificación judicial. Consulte la fuente oficial.'
@@ -283,8 +271,8 @@ export function fixtureBulletinBoard(): {
       tier: 'B',
       tierLabel: sourceTierLabel('B'),
       publicationDate: currentCdmxBusinessDay(),
-      bulletinNumber: 'QRO-DEMO',
-      mattersSearched: 6,
+      bulletinNumber: 'Boletín 214',
+      mattersSearched: fictionalMatterCountForState('Querétaro'),
       runFinishedAt: '2026-11-18T15:25:00.000Z',
     },
     {
@@ -303,8 +291,8 @@ export function fixtureBulletinBoard(): {
       tier: 'A',
       tierLabel: sourceTierLabel('A'),
       publicationDate: currentCdmxBusinessDay(),
-      bulletinNumber: 'JAL-DEMO',
-      mattersSearched: 6,
+      bulletinNumber: 'Boletín 187',
+      mattersSearched: fictionalMatterCountForState('Jalisco'),
       runFinishedAt: '2026-11-18T15:35:00.000Z',
     },
     {
@@ -324,8 +312,8 @@ export function fixtureBulletinBoard(): {
       tier: 'A',
       tierLabel: sourceTierLabel('A'),
       publicationDate: currentCdmxBusinessDay(),
-      bulletinNumber: 'CDMX-DEMO-512',
-      mattersSearched: 6,
+      bulletinNumber: 'Boletín 512',
+      mattersSearched: fictionalMatterCountForState('Ciudad de México'),
       runFinishedAt: '2026-11-18T15:40:00.000Z',
     },
     {
@@ -344,8 +332,8 @@ export function fixtureBulletinBoard(): {
       tier: 'not_verified',
       tierLabel: sourceTierLabel('not_verified'),
       publicationDate: currentCdmxBusinessDay(),
-      bulletinNumber: 'MEX-LISTA-DEMO',
-      mattersSearched: 6,
+      bulletinNumber: 'Boletín 901',
+      mattersSearched: fictionalMatterCountForState('Estado de México'),
       runFinishedAt: '2026-11-18T15:15:00.000Z',
     },
     {
@@ -366,7 +354,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('D'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: null,
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Guanajuato'),
       runFinishedAt: '2026-11-18T15:50:00.000Z',
     },
     {
@@ -386,7 +374,7 @@ export function fixtureBulletinBoard(): {
       tierLabel: sourceTierLabel('D'),
       publicationDate: currentCdmxBusinessDay(),
       bulletinNumber: null,
-      mattersSearched: 6,
+      mattersSearched: fictionalMatterCountForState('Nuevo León'),
       runFinishedAt: '2026-11-18T15:52:00.000Z',
     },
   ]
@@ -433,7 +421,7 @@ export function fixtureBulletinBoard(): {
       courtName: 'Juzgado Segundo Familiar de Querétaro',
       expedienteNumber: '88/2025',
       partyNames:
-        'Fondo Pedregal Inmuebles, S.A. de C.V. / Contraparte Demo Arrendamiento',
+        'Fondo Pedregal Inmuebles, S.A. de C.V. / Arrendamientos Ficticios del Centro, S.A. de C.V.',
       summary: 'Se señala fecha de audiencia. Datos de demostración.',
       sourceUrl:
         'https://www.poderjudicialqro.gob.mx/acuerdos/lista-de-acuerdos-primera-instancia.php',
@@ -486,7 +474,7 @@ export function fixtureBulletinBoard(): {
       }),
       courtName: 'Juzgado Familiar de Zapopan',
       expedienteNumber: '15/2026',
-      partyNames: 'Pedregal Fondo Inmuebles Demo / Demo Contraparte Familiar',
+      partyNames: 'Fondo Pedregal Inmuebles, S.A. de C.V. / Familia Ficticia Pedregal',
       summary: 'Se provee escrito de desahogo. Datos de demostración.',
       sourceUrl: 'https://cjj.gob.mx/bulletin',
       matterId: CICERON_SEED.matters.fondoPedregal,
@@ -538,7 +526,7 @@ export function fixtureBulletinBoard(): {
       }),
       courtName: 'Juzgado Primero Civil Toluca',
       expedienteNumber: '901/2026',
-      partyNames: 'Distribuidora Farma Sierra, S.A. de C.V. / Contraparte Demo Toluca',
+      partyNames: 'Distribuidora Farma Sierra, S.A. de C.V. / Comercial Toluca Ficticia, S.A. de C.V.',
       summary: 'Lista de acuerdos (demostración): se admite prueba. Datos de demostración.',
       sourceUrl: 'https://notificacion.pjedomex.gob.mx/',
       matterId: CICERON_SEED.matters.farmaCofepris,
@@ -563,7 +551,7 @@ export function fixtureBulletinBoard(): {
         'https://www.poderjudicial-gto.gob.mx/modules.php?name=Acuerdos&file=primera_instancia',
       status: 'asignado',
       assignedTo: CICERON_SEED.personas.pasante,
-      assignedToName: 'Pasante Demo López',
+      assignedToName: PERSONA_DISPLAY_NAMES[CICERON_SEED.personas.pasante]!,
       notes: null,
     },
     {
@@ -580,7 +568,7 @@ export function fixtureBulletinBoard(): {
   ]
 
   return {
-    board,
+    board: sortBoardRows(board),
     hits,
     manuals,
     timeSaved: {
@@ -786,7 +774,7 @@ export async function loadBulletinBoard(
         tier: s.proposed_tier,
         tierLabel: sourceTierLabel(s.proposed_tier),
         publicationDate: run?.publication_date ?? null,
-        bulletinNumber: run?.bulletin_number ?? null,
+        bulletinNumber: bulletinNumberDisplay(run?.bulletin_number ?? null),
         mattersSearched: run?.matters_searched ?? 0,
         runFinishedAt: run?.finished_at ?? run?.started_at ?? null,
       }
@@ -927,8 +915,8 @@ export async function loadBulletinBoard(
         status: row.status,
         assignedTo: row.assigned_to,
         assignedToName:
-          row.assigned_to === CICERON_SEED.personas.pasante
-            ? 'Pasante Demo López'
+          row.assigned_to && PERSONA_DISPLAY_NAMES[row.assigned_to]
+            ? PERSONA_DISPLAY_NAMES[row.assigned_to]!
             : row.assigned_to,
         notes: row.notes,
       }

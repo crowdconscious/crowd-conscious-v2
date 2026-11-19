@@ -21,11 +21,11 @@ describe('CaseFileConnector', () => {
     const c = new ManualCaptureConnector()
     const events = await c.ingest({
       kind: 'paste',
-      text: 'TFJA Sala Regional Metropolitana. Expediente DEMO-TFJA-1001/2026. Notificación de demanda el 22 de octubre de 2026.',
+      text: 'Trigésimo Primero Civil de Proceso Oral. Expediente 1001/2026. Notificación de demanda el 22 de octubre de 2026.',
     })
     assert.equal(events.length, 1)
     assert.equal(events[0]!.captureKind, 'paste')
-    assert.ok(events[0]!.fileNumber?.includes('DEMO-TFJA-1001'))
+    assert.ok(events[0]!.fileNumber?.includes('1001/2026'))
     assert.match(events[0]!.eventType, /notif|demanda|actuacion/i)
   })
 

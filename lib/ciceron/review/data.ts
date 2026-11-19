@@ -40,11 +40,11 @@ function formatDueLabel(iso: string | null): string {
 export { formatDueLabel }
 
 const PERSONA_NAMES: Record<string, string> = {
-  [CICERON_SEED.personas.socio]: 'Socia Demo Rivera',
-  [CICERON_SEED.personas.asociado]: 'Asociado Demo Herrera',
-  [CICERON_SEED.personas.pasante]: 'Pasante Demo López',
-  [CICERON_SEED.personas.admin]: 'Admin Demo Ortega',
-  [CICERON_SEED.personas.asociado2]: 'Asociada Demo Méndez',
+  [CICERON_SEED.personas.socio]: 'Socia Valeria Rivera',
+  [CICERON_SEED.personas.asociado]: 'Asociado Martín Herrera',
+  [CICERON_SEED.personas.pasante]: 'Pasante Sofía López',
+  [CICERON_SEED.personas.admin]: 'Administrador Luis Ortega',
+  [CICERON_SEED.personas.asociado2]: 'Asociada Carmen Méndez',
 }
 
 async function matterIdsForPersona(

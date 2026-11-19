@@ -12,6 +12,10 @@ import {
   normalizeInviteCode,
 } from '@/lib/ciceron/demo/invite-hash'
 import {
+  lawyerFacingFirmName,
+  lawyerFacingPersonaName,
+} from '@/lib/ciceron/demo/display-names'
+import {
   offlinePersonaById,
   offlinePersonaByInvite,
   offlineSwitchablePersonas,
@@ -57,9 +61,9 @@ function mapResolved(row: ResolveRow, token: string): DemoSession | null {
       id: row.persona_id,
       firmId: row.firm_id,
       role: row.role,
-      displayName: row.display_name ?? 'Usuario Demo',
+      displayName: lawyerFacingPersonaName(row.display_name, row.persona_id),
       inviteCode: '',
-      firmName: row.firm_name ?? CICERON_FIRM_NAME,
+      firmName: lawyerFacingFirmName(row.firm_name ?? CICERON_FIRM_NAME),
       firmSlug: row.firm_slug ?? 'despacho-demo',
     },
   }
@@ -132,9 +136,12 @@ export async function redeemInviteCode(opts: {
               id: personaId,
               firmId: String(row.firm_id),
               role: row.role as CiceronMembershipRole,
-              displayName: 'Usuario Demo',
+              displayName: lawyerFacingPersonaName(
+                String(row.display_name ?? ''),
+                personaId
+              ),
               inviteCode: '',
-              firmName: CICERON_FIRM_NAME,
+              firmName: lawyerFacingFirmName(String(row.firm_name ?? CICERON_FIRM_NAME)),
               firmSlug: 'despacho-demo',
             },
           }
@@ -321,9 +328,12 @@ export async function switchPersona(
       id: String(row.persona_id),
       firmId: full.persona.firmId,
       role: row.role as CiceronMembershipRole,
-      displayName: String(row.display_name ?? 'Usuario Demo'),
+      displayName: lawyerFacingPersonaName(
+        String(row.display_name ?? ''),
+        String(row.persona_id)
+      ),
       inviteCode: '',
-      firmName: full.persona.firmName,
+      firmName: lawyerFacingFirmName(full.persona.firmName),
       firmSlug: full.persona.firmSlug,
     } satisfies DemoPersona)
   return { ok: true, persona }

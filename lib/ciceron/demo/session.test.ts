@@ -21,7 +21,7 @@ function createLazyRpc(calls: RpcCall[]) {
             firm_id: CICERON_SEED.firmDemo,
             persona_id: CICERON_SEED.personas.socio,
             role: 'socio',
-            display_name: 'Socia Demo Rivera',
+            display_name: 'Socia Valeria Rivera',
             invite_code_id: 'i1000000-0000-4000-8000-000000000001',
             story_dismissed: false,
             last_freshness_at: null,

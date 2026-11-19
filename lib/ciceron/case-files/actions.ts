@@ -320,7 +320,7 @@ export async function draftClientNotifyEmail(formData: FormData): Promise<Action
       '',
       'Quedamos a su disposición para cualquier duda.',
       '',
-      `Atentamente,\n${persona.displayName}\nDespacho Demo, S.C.`,
+      `Atentamente,\n${persona.displayName}\nDespacho Altamirano y Asociados, S.C.`,
       '',
       CICERON_DEMO_LABEL,
     ].join('\n'),

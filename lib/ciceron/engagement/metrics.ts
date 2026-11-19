@@ -172,7 +172,7 @@ export async function loadMetricsDashboard(
       if (r.firm_id === scopedFirmId) firms.set(r.firm_id, r.firm_name)
     }
     if (!firms.size) {
-      firms.set(scopedFirmId, 'Despacho Demo, S.C.')
+      firms.set(scopedFirmId, 'Despacho Altamirano y Asociados, S.C.')
     }
 
     const byFirm: FirmWeekRow[] = []

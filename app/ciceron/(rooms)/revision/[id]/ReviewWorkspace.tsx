@@ -18,9 +18,9 @@ import { diffLines } from '@/lib/ciceron/review/diff'
 import type { ReviewTaskDetail } from '@/lib/ciceron/review/types'
 
 const REASSIGN_OPTIONS = [
-  { id: CICERON_SEED.personas.socio, label: 'Socia Demo Rivera' },
-  { id: CICERON_SEED.personas.asociado, label: 'Asociado Demo Herrera' },
-  { id: CICERON_SEED.personas.asociado2, label: 'Asociada Demo Méndez' },
+  { id: CICERON_SEED.personas.socio, label: 'Socia Valeria Rivera' },
+  { id: CICERON_SEED.personas.asociado, label: 'Asociado Martín Herrera' },
+  { id: CICERON_SEED.personas.asociado2, label: 'Asociada Carmen Méndez' },
 ]
 
 export function ReviewWorkspace({

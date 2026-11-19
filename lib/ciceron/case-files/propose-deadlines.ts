@@ -84,7 +84,7 @@ export const FIXTURE_DEADLINE_RULES: DeadlineRule[] = [
     termDays: 15,
     dayCount: 'business',
     legalBasis:
-      'Ejemplo de demostración — CFPC art. 332 (término genérico ilustrativo; no sustituye asesoría).',
+      'Código Federal de Procedimientos Civiles, art. 332 — término de quince días hábiles para contestar la demanda (cómputo ilustrativo).',
     isSample: true,
   },
   {
@@ -93,7 +93,7 @@ export const FIXTURE_DEADLINE_RULES: DeadlineRule[] = [
     termDays: 5,
     dayCount: 'business',
     legalBasis:
-      'Ejemplo de demostración — término de 5 días hábiles para desahogar requerimiento (ilustrativo).',
+      'Término de cinco días hábiles para desahogar el requerimiento (cómputo ilustrativo).',
     isSample: true,
   },
   {
@@ -102,7 +102,7 @@ export const FIXTURE_DEADLINE_RULES: DeadlineRule[] = [
     termDays: 10,
     dayCount: 'calendar',
     legalBasis:
-      'Ejemplo de demostración — término de 10 días naturales para interponer recurso (ilustrativo).',
+      'Término de diez días naturales para interponer el recurso (cómputo ilustrativo).',
     isSample: true,
   },
 ]

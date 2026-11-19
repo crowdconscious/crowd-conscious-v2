@@ -151,7 +151,14 @@ export default async function ExpedientesPage({
               key: 'file',
               header: copy.table.file,
               cell: (r) => (
-                <Link href={`/ciceron/expedientes/${r.id}`}>{r.fileNumber}</Link>
+                <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                  <Link href={`/ciceron/expedientes/${r.id}`}>{r.fileNumber}</Link>
+                  {r.isSample ? (
+                    <span className="cic-demo-inline" style={{ fontSize: '0.75rem' }}>
+                      {copy.demoLabel}
+                    </span>
+                  ) : null}
+                </span>
               ),
             },
             {

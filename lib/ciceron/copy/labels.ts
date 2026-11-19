@@ -118,9 +118,19 @@ export function computationDisplayText(raw: string | null | undefined): string {
     text = text.replaceAll(key, label)
   }
   text = text.replace(/\bRegla ejemplo\b/gi, copy.expedientes.ruleExample)
+  text = text.replace(
+    /^Ejemplo de demostración\s*[—–-]\s*/i,
+    ''
+  )
   // ISO dates → short Spanish (B1); never leave yyyy-mm-dd in the UI.
   text = text.replace(/\b(\d{4}-\d{2}-\d{2})\b/g, (iso) => formatDateShortEs(iso))
   return text
+}
+
+/** Fundamento text without «Ejemplo de demostración» prefix (legacy DB rows). */
+export function basisDisplayText(raw: string | null | undefined): string {
+  if (!raw) return '—'
+  return computationDisplayText(raw)
 }
 
 export function auditActionLabel(action: string | null | undefined): string {

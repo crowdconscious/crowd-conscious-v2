@@ -22,9 +22,9 @@ export type SalesInviteRow = {
 const FIXTURE: SalesInviteRow[] = [
   {
     inviteCodeId: 'e3000000-0000-4000-8000-000000000001',
-    prospectLabel: 'Prospecto socio — Despacho Demo',
+    prospectLabel: 'Prospecto socio — Despacho Altamirano y Asociados',
     firmId: 'a1000000-0000-4000-8000-000000000001',
-    firmName: 'Despacho Demo, S.C.',
+    firmName: 'Despacho Altamirano y Asociados, S.C.',
     useCount: 3,
     maxUses: 500,
     expiresAt: null,
@@ -37,9 +37,9 @@ const FIXTURE: SalesInviteRow[] = [
   },
   {
     inviteCodeId: 'e3000000-0000-4000-8000-000000000002',
-    prospectLabel: 'Prospecto pasante — Despacho Demo',
+    prospectLabel: 'Prospecto pasante — Despacho Altamirano y Asociados',
     firmId: 'a1000000-0000-4000-8000-000000000001',
-    firmName: 'Despacho Demo, S.C.',
+    firmName: 'Despacho Altamirano y Asociados, S.C.',
     useCount: 1,
     maxUses: 500,
     expiresAt: null,

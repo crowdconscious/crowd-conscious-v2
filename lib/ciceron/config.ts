@@ -14,7 +14,9 @@ export const CICERON_DEMO_INVITE_CODE = 'DESPACHO-DEMO'
  */
 export const CICERON_DEMO_COOKIE = 'ciceron_demo_session'
 
-export const CICERON_FIRM_NAME = 'Despacho Demo, S.C.'
+import { FIRM_DISPLAY_NAME } from '@/lib/ciceron/demo/display-names'
+
+export const CICERON_FIRM_NAME = FIRM_DISPLAY_NAME
 
 export const CICERON_DEMO_LABEL = 'Datos de demostración'
 

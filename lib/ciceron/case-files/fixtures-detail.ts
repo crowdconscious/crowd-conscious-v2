@@ -34,6 +34,8 @@ export type CaseDetailView = {
   matterTitle: string
   court: string
   fileNumber: string
+  juicio: string
+  secretaria: string | null
   status: string
   lawyerName: string
   events: CaseEventView[]
@@ -48,10 +50,12 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
     clientId: 'nexora',
     matterId: 'nexora-cnbv',
     matterTitle: 'Licencia CNBV y prevención de lavado',
-    court: 'TFJA Sala Regional Metropolitana',
-    fileNumber: 'DEMO-TFJA-1001/2026',
+    court: 'Trigésimo Primero Civil de Proceso Oral',
+    fileNumber: '1001/2026',
+    juicio: 'Oral Merc.',
+    secretaria: null,
     status: 'activo',
-    lawyerName: 'Asociado Demo Herrera',
+    lawyerName: 'Asociado Martín Herrera',
     isSample: true,
     events: [
       {
@@ -61,7 +65,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         occurredLabel: '15 de octubre de 2026',
         summary: 'Se tiene por presentado el escrito de demanda y se ordena emplazamiento.',
         aiSummary:
-          'El tribunal admitió la demanda y ordenó el emplazamiento. No abre por sí el término de contestación en este ejemplo.',
+          'El juzgado admitió la demanda y ordenó el emplazamiento. No abre por sí el término de contestación en este ejemplo.',
         text: `${CICERON_DEMO_LABEL}. Se tiene por presentado el escrito de demanda y se ordena emplazamiento.`,
         originalLabel: 'Acuerdo (captura de demostración)',
         hasOriginal: true,
@@ -87,7 +91,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         occurredLabel: '3 de noviembre de 2026',
         summary: 'Requerimiento para exhibir poder notarial.',
         aiSummary:
-          'El tribunal requiere exhibir el poder del representante legal. El plazo propuesto usa la regla de requerimiento de demostración.',
+          'El juzgado requiere exhibir el poder del representante legal. El plazo propuesto usa la regla de requerimiento de demostración.',
         text: `${CICERON_DEMO_LABEL}. Requerimiento para exhibir poder notarial actualizado en cinco días hábiles.`,
         originalLabel: 'Acuerdo de requerimiento',
         hasOriginal: true,
@@ -101,9 +105,9 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         dueAt: '2026-11-14T23:59:00-06:00',
         status: 'propuesto',
         basisText:
-          'Ejemplo de demostración — CFPC art. 332 (término genérico ilustrativo; no sustituye asesoría).',
+          'Código Federal de Procedimientos Civiles, art. 332 — término de quince días hábiles para contestar la demanda (cómputo ilustrativo).',
         computationText:
-          'Regla: notificacion_demanda · 15 días hábiles. Cómputo desde el día hábil siguiente a 2026-10-22 → vence 2026-11-14.',
+          'Regla: notificación de demanda · 15 días hábiles. Cómputo desde el día hábil siguiente al 22 de octubre de 2026 → vence el 14 de noviembre de 2026.',
         confirmedBy: null,
         confirmedAt: null,
         urgency: 'soon',
@@ -114,9 +118,9 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         dueLabel: '12 de noviembre de 2026',
         dueAt: '2026-11-12T23:59:00-06:00',
         status: 'propuesto',
-        basisText: 'Ejemplo de demostración — 5 días hábiles por requerimiento.',
+        basisText: 'Término de cinco días hábiles para desahogar el requerimiento (cómputo ilustrativo).',
         computationText:
-          'Regla: acuerdo_requerimiento · 5 días hábiles. Día 1 = primer día hábil posterior al acuerdo.',
+          'Regla: acuerdo de requerimiento · 5 días hábiles. Día 1 = primer día hábil posterior al acuerdo.',
         confirmedBy: null,
         confirmedAt: null,
         urgency: 'urgent',
@@ -130,10 +134,12 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
     clientId: 'viento',
     matterId: 'viento-cre',
     matterTitle: 'Permisos CRE y evaluación de impacto ambiental',
-    court: 'Juzgado Primero de Distrito en Materia de Amparo',
-    fileNumber: 'DEMO-AMP-404/2026',
+    court: 'Juzgado Primero Civil de Proceso Oral del Estado de México',
+    fileNumber: '404/2026',
+    juicio: 'Ejec. Merc.',
+    secretaria: null,
     status: 'activo',
-    lawyerName: 'Socia Demo Rivera',
+    lawyerName: 'Socia Valeria Rivera',
     isSample: true,
     events: [
       {
@@ -143,7 +149,7 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         occurredLabel: '18 de octubre de 2026',
         summary: 'Se tiene por presentado el escrito de demanda.',
         aiSummary:
-          'El juzgado tuvo por presentada la demanda de amparo. No genera plazo de contestación en este ejemplo.',
+          'El juzgado tuvo por presentada la demanda. No genera plazo de contestación en este ejemplo.',
         text: `${CICERON_DEMO_LABEL}. Se tiene por presentado el escrito de demanda.`,
         originalLabel: 'Acuerdo de admisión',
         hasOriginal: true,
@@ -156,8 +162,9 @@ export const fixtureCaseDetails: Record<string, CaseDetailView> = {
         dueLabel: '20 de noviembre de 2026',
         dueAt: '2026-11-20T23:59:00-06:00',
         status: 'propuesto',
-        basisText: 'Ejemplo de demostración — término ilustrativo de ampliación.',
-        computationText: 'Regla ejemplo de demostración · cómputo ilustrativo → 2026-11-20.',
+        basisText: 'Término ilustrativo de ampliación de demanda (cómputo de demostración).',
+        computationText:
+          'Regla ejemplo de demostración · cómputo ilustrativo → 20 de noviembre de 2026.',
         confirmedBy: null,
         confirmedAt: null,
         urgency: 'normal',
