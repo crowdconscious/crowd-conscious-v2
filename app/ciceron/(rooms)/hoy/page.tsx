@@ -8,11 +8,16 @@ import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { SuMananaHero } from '../../_components/SuMananaHero'
 import { WeekDeadlineStrip } from '../../_components/WeekDeadlineStrip'
 import { DeadlineCountdown } from '../../_components/DeadlineCountdown'
+import { PersonaStartPanel } from '../../_components/PersonaStartPanel'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 import { loadDeadlines } from '@/lib/ciceron/demo/data'
 import { loadHoyBriefing } from '@/lib/ciceron/demo/monitor-data'
+import {
+  personaHomeKind,
+  unavailableActionIdsFor,
+} from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import {
   buildSuMananaSummary,
@@ -48,7 +53,11 @@ export default async function HoyPage() {
   })
 
   const upcomingDeadlines = deadlines.slice(0, 12)
-  const deadlinesThisWeek = deadlines.filter((d) => d.urgency === 'soon').length
+  const deadlinesThisWeek = deadlines.filter(
+    (d) => d.urgency === 'soon' || d.urgency === 'urgent'
+  ).length
+  const homeKind = personaHomeKind(persona.role, persona.id)
+  const unavailableIds = unavailableActionIdsFor(homeKind)
 
   const actions: SuMananaAction[] = []
 
@@ -136,7 +145,37 @@ export default async function HoyPage() {
   return (
     <div className="cic-hoy-layout">
       <div className="cic-hoy-primary">
-        <SuMananaHero metrics={morning.metrics} actions={morning.actions} />
+        <PersonaStartPanel kind={homeKind} unavailableIds={unavailableIds} />
+
+        {(homeKind === 'socio' ||
+          homeKind === 'asociado' ||
+          homeKind === 'admin' ||
+          homeKind === 'pasante') && (
+          <SuMananaHero metrics={morning.metrics} actions={morning.actions} />
+        )}
+
+        {homeKind === 'pasante' && bulletins.manuals.length > 0 ? (
+          <section className="cic-section" aria-labelledby="pasante-manuals">
+            <h2 id="pasante-manuals" className="cic-h2">
+              {copy.hoy.bulletinsManual}
+            </h2>
+            <ul className="cic-stack cic-match-list">
+              {bulletins.manuals.map((m) => (
+                <li key={m.id} className="cic-card" style={{ margin: 0 }}>
+                  <strong>{m.stateName}</strong>
+                  <p className="cic-muted" style={{ margin: '6px 0 0', fontSize: '0.9rem' }}>
+                    {m.sourceName}
+                  </p>
+                  <p style={{ margin: '8px 0 0' }}>
+                    <Link href="/ciceron/boletines" className="cic-btn cic-btn-compact">
+                      {copy.boletines.revisarManualmente}
+                    </Link>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <WeekDeadlineStrip
           dueAts={upcomingDeadlines.map((d) => d.dueAt).filter((v): v is string => Boolean(v))}
@@ -148,6 +187,10 @@ export default async function HoyPage() {
             <>
               {' · '}
               <Link href="/ciceron/hoy/resumen-semanal">{copy.engagement.openWeekly}</Link>
+              {' · '}
+              <Link href="/ciceron/boletines/coordinador">
+                {copy.personaHome.socio.primaryLabel}
+              </Link>
             </>
           )}
         </p>

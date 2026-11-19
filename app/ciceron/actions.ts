@@ -9,6 +9,7 @@ import { advanceGuidedStory } from '@/lib/ciceron/demo/guided-story'
 import type { GuidedStoryStep } from '@/lib/ciceron/demo/guided-story-pure'
 import { getCiceronDemoSessionFull } from '@/lib/ciceron/demo/session'
 import { tryAccessDemo } from '@/lib/ciceron/demo/access'
+import { personaHomeTarget } from '@/lib/ciceron/demo/persona-home-pure'
 import { resetDemoFirm } from '@/lib/ciceron/demo/sales'
 import { revalidatePath } from 'next/cache'
 
@@ -43,7 +44,11 @@ export async function redeemCiceronInvite(
     },
   })
 
-  redirect('/ciceron/hoy')
+  const home = personaHomeTarget(
+    result.session.persona.role,
+    result.session.persona.id
+  )
+  redirect(home.href)
 }
 
 export async function switchCiceronPersona(formData: FormData): Promise<void> {
@@ -59,6 +64,8 @@ export async function switchCiceronPersona(formData: FormData): Promise<void> {
         is_demo: true,
       },
     })
+    revalidatePath('/ciceron', 'layout')
+    redirect(personaHomeTarget(result.persona.role, result.persona.id).href)
   }
   revalidatePath('/ciceron', 'layout')
   redirect('/ciceron/hoy')

@@ -32,6 +32,68 @@ export const copy = {
     hint: 'Al cambiar de persona cambian la visibilidad y las acciones permitidas.',
   },
 
+  personaHome: {
+    kicker: 'Inicio según su rol',
+    unavailableTitle: 'Por qué no puede hacer esto',
+    socio: {
+      title: 'Su mañana y el resumen para socios',
+      lead: 'Empiece por las cifras del día y revise el resumen matutino cuando el coordinador lo tenga listo.',
+      primaryHref: '/ciceron/boletines/coordinador',
+      primaryLabel: 'Ver resumen para socios',
+    },
+    coordinador: {
+      title: 'Tablero de coordinación',
+      lead: 'Su punto de partida es el mapa de entidades, las revisiones manuales y el resumen para socios.',
+      primaryHref: '/ciceron/boletines/coordinador',
+      primaryLabel: 'Abrir tablero',
+    },
+    pasante: {
+      title: 'Sus revisiones manuales',
+      lead: 'Hoy se centra en las entidades asignadas para revisión manual. Capture el resultado; no confirme plazos ni apruebe salidas al cliente.',
+      primaryHref: '/ciceron/boletines',
+      primaryLabel: 'Ver revisiones manuales',
+    },
+    asociado: {
+      title: 'Su mañana de trabajo',
+      lead: 'Revise coincidencias, plazos y la cola de revisión de sus asuntos.',
+      primaryHref: '/ciceron/revision',
+      primaryLabel: 'Abrir Revisión',
+    },
+    admin: {
+      title: 'Administración del despacho',
+      lead: 'Supervise el acceso, las métricas y la configuración de la demostración.',
+      primaryHref: '/ciceron/admin/metricas',
+      primaryLabel: 'Abrir métricas',
+    },
+    unavailable: {
+      'confirm-deadline': {
+        title: 'Confirmar plazos',
+        reason:
+          'Solo una socia o un asociado puede confirmar un plazo. Su rol de pasante puede capturar y preparar, no confirmar.',
+      },
+      'assign-manual': {
+        title: 'Asignar revisiones manuales',
+        reason:
+          'La asignación de revisiones manuales corresponde al coordinador del tablero de boletines.',
+      },
+      'partner-report': {
+        title: 'Exportar resumen para socios',
+        reason:
+          'El resumen matutino para socios lo prepara el coordinador; el pasante no lo exporta.',
+      },
+      'approve-as-socio': {
+        title: 'Aprobar como socia',
+        reason:
+          'La aprobación final de salidas al cliente permanece en el rol de socia. El coordinador asigna y prepara el tablero.',
+      },
+      'manual-queue-own': {
+        title: 'Ejecutar revisión manual de fuente',
+        reason:
+          'Las revisiones manuales de fuentes las realizan pasantes asignados; usted revisa el resultado y las salidas al cliente.',
+      },
+    },
+  },
+
   guidedStory: {
     title: 'Recorrido guiado',
     start: 'Recorrido guiado',
