@@ -2098,6 +2098,27 @@ textarea.cic-input {
 }
 
 /* —— Su mañana landing —— */
+.cic-hoy-daily-line {
+  margin: 0 0 calc(var(--cic-space) * 2.5);
+  padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
+  border-left: 3px solid var(--cic-accent-mint);
+  background: var(--cic-surface);
+  font-family: var(--cic-serif);
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: var(--cic-ink);
+}
+
+.cic-hoy-daily-line-text {
+  margin-right: 8px;
+}
+
+.cic-hoy-daily-line-tag {
+  font-family: var(--cic-sans, inherit);
+  font-size: 0.7rem;
+  vertical-align: middle;
+}
+
 .cic-su-manana {
   margin-bottom: calc(var(--cic-space) * 3);
 }

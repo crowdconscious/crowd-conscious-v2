@@ -23,11 +23,14 @@ export function SuMananaHero({
   metrics,
   actions,
   deniedNotes = [],
+  dailyLine,
 }: {
   metrics: SuMananaMetric[]
   actions: SuMananaAction[]
   /** RBAC/ABAC notes shown next to the related action, not as a home hero. */
   deniedNotes?: DeniedActionNote[]
+  /** Deterministic one-liner from the same sources as the metric cards. */
+  dailyLine?: string | null
 }) {
   function noteFor(action: SuMananaAction): DeniedActionNote | undefined {
     return deniedNotes.find(
@@ -52,6 +55,13 @@ export function SuMananaHero({
         {copy.hoy.title}
       </h1>
       <p className="cic-lead">{copy.hoy.lead}</p>
+
+      {dailyLine ? (
+        <p className="cic-hoy-daily-line" role="status" aria-label={copy.hoy.dailyLineLabel}>
+          <span className="cic-hoy-daily-line-text">{dailyLine}</span>
+          <span className="cic-demo-inline cic-hoy-daily-line-tag">{copy.hoy.dailyLineDemoNote}</span>
+        </p>
+      ) : null}
 
       <ul className="cic-su-manana-metrics" aria-label={copy.hoy.title}>
         {metrics.map((m) => (
