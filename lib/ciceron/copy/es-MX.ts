@@ -370,9 +370,13 @@ export const copy = {
     bulletinDateLabel: 'Fecha del boletín',
     dofEditionLabel: 'Edición del Diario Oficial',
     metrics: {
-      asuntosConNovedad: 'Asuntos con novedad hoy',
+      asuntosVigilados: 'Asuntos vigilados',
+      novedadesHoy: 'Novedades hoy',
       plazosEstaSemana: 'Plazos esta semana',
+      estadosCubiertos: 'Estados cubiertos',
+      /** Kept for daily-line copy that still mentions review queue. */
       pendientesRevision: 'Pendientes de revisión',
+      asuntosConNovedad: 'Asuntos con novedad hoy',
     },
     partnerCoverage: {
       title: 'Cobertura por entidad',

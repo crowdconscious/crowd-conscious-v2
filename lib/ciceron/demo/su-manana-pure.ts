@@ -4,9 +4,10 @@
  */
 
 export type SuMananaMetricId =
-  | 'asuntosConNovedad'
+  | 'asuntosVigilados'
+  | 'novedadesHoy'
   | 'plazosEstaSemana'
-  | 'pendientesRevision'
+  | 'estadosCubiertos'
 
 export type SuMananaMetric = {
   id: SuMananaMetricId
@@ -35,8 +36,11 @@ export type SuMananaSummaryInput = {
   bulletinNoveltyKeys: string[]
   /** Distinct client names with DOF matches today. */
   dofNoveltyKeys: string[]
+  /** Matters (or clients) under watch for the firm. */
+  asuntosVigilados: number
+  /** States with an active bulletin source (not sin_publicacion). */
+  estadosCubiertos: number
   deadlinesThisWeek: number
-  reviewsPending: number
   actions: SuMananaAction[]
 }
 
@@ -76,20 +80,24 @@ export function orderSuMananaActions(actions: SuMananaAction[]): SuMananaAction[
 }
 
 export function buildSuMananaSummary(input: SuMananaSummaryInput): SuMananaSummary {
-  const asuntosConNovedad = uniqueNoveltyCount(
+  const novedadesHoy = uniqueNoveltyCount(
     input.bulletinNoveltyKeys,
     input.dofNoveltyKeys
   )
   return {
     metrics: [
-      { id: 'asuntosConNovedad', value: asuntosConNovedad },
+      {
+        id: 'asuntosVigilados',
+        value: Math.max(0, Math.floor(input.asuntosVigilados)),
+      },
+      { id: 'novedadesHoy', value: novedadesHoy },
       {
         id: 'plazosEstaSemana',
         value: Math.max(0, Math.floor(input.deadlinesThisWeek)),
       },
       {
-        id: 'pendientesRevision',
-        value: Math.max(0, Math.floor(input.reviewsPending)),
+        id: 'estadosCubiertos',
+        value: Math.max(0, Math.floor(input.estadosCubiertos)),
       },
     ],
     actions: orderSuMananaActions(input.actions),

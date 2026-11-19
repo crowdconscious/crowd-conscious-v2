@@ -183,28 +183,27 @@ export default async function HoyPage() {
     }
   }
 
+  const boardWithHits = applyHitCountsToBoard(bulletins.board, bulletins.hits)
+
   const morning = buildSuMananaSummary({
     bulletinNoveltyKeys: bulletins.hits.map((h) => h.clientName ?? h.matterId ?? h.id),
     dofNoveltyKeys: briefing.emptyToday ? [] : [...briefing.byClient.keys()],
+    asuntosVigilados: clients.reduce((n, c) => n + (c.matters?.length ?? 0), 0) || clients.length,
+    estadosCubiertos: boardWithHits.filter((b) => b.status !== 'sin_publicacion').length,
     deadlinesThisWeek,
-    reviewsPending: briefing.reviews.length,
     actions,
   })
 
-  const boardWithHits = applyHitCountsToBoard(bulletins.board, bulletins.hits)
-
-  const asuntosMetric =
-    morning.metrics.find((m) => m.id === 'asuntosConNovedad')?.value ?? 0
+  const novedadesMetric =
+    morning.metrics.find((m) => m.id === 'novedadesHoy')?.value ?? 0
   const plazosMetric =
     morning.metrics.find((m) => m.id === 'plazosEstaSemana')?.value ?? 0
-  const reviewsMetric =
-    morning.metrics.find((m) => m.id === 'pendientesRevision')?.value ?? 0
   const nextDue = soonestDueIso(dueAts)
   const dailyLine = buildHoyDailyLine({
-    asuntosMoved: asuntosMetric,
+    asuntosMoved: novedadesMetric,
     plazosThisWeek: plazosMetric,
     nextPlazoWeekday: nextDue ? weekdayNameEsFromIso(nextDue) : null,
-    reviewsPending: reviewsMetric,
+    reviewsPending: briefing.reviews.length,
   })
 
   const showPartnerMap = homeKind === 'socio' || homeKind === 'admin'

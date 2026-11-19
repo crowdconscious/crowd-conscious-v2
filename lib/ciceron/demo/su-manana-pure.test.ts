@@ -61,12 +61,13 @@ describe('orderSuMananaActions', () => {
 })
 
 describe('buildSuMananaSummary', () => {
-  it('builds three metrics and ordered actions', () => {
+  it('builds four partner KPI metrics and ordered actions', () => {
     const summary = buildSuMananaSummary({
       bulletinNoveltyKeys: ['Nexora', 'Farma'],
       dofNoveltyKeys: ['Nexora', 'Viento'],
+      asuntosVigilados: 12,
+      estadosCubiertos: 6,
       deadlinesThisWeek: 2,
-      reviewsPending: 2,
       actions: [
         {
           id: 'hit-1',
@@ -87,9 +88,10 @@ describe('buildSuMananaSummary', () => {
     assert.deepEqual(
       summary.metrics.map((m) => [m.id, m.value]),
       [
-        ['asuntosConNovedad', 3],
+        ['asuntosVigilados', 12],
+        ['novedadesHoy', 3],
         ['plazosEstaSemana', 2],
-        ['pendientesRevision', 2],
+        ['estadosCubiertos', 6],
       ]
     )
     assert.equal(summary.actions[0]?.kind, 'bulletin_manual')
@@ -100,13 +102,14 @@ describe('buildSuMananaSummary', () => {
     const summary = buildSuMananaSummary({
       bulletinNoveltyKeys: [],
       dofNoveltyKeys: [],
+      asuntosVigilados: -2,
+      estadosCubiertos: -4,
       deadlinesThisWeek: -3,
-      reviewsPending: -1,
       actions: [],
     })
     assert.deepEqual(
       summary.metrics.map((m) => m.value),
-      [0, 0, 0]
+      [0, 0, 0, 0]
     )
   })
 })
