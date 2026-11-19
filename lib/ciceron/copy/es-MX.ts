@@ -739,6 +739,24 @@ export const copy = {
     },
   },
 
+  pro: {
+    badge: 'Pro · demostración',
+    open: 'Asistente Pro',
+    title: 'Asistente Pro',
+    lead:
+      'Escriba en lenguaje sencillo. Prepara un borrador en Outlook simulado para que usted lo revise. Nunca envía solo.',
+    inputLabel: '¿Qué necesita?',
+    placeholder: 'Ej. escríbele a Nexora sobre el auto de hoy',
+    suggestionsLabel: 'Sugerencias',
+    draftLabel: 'Borrador para su revisión',
+    toLabel: 'Para',
+    subjectLabel: 'Asunto',
+    neverSends: 'No se envía ningún correo. Usted decide si aprueba el borrador.',
+    openCompose: 'Abrir en Outlook simulado',
+    unknown:
+      'No entendí la petición. Pruebe con un cliente de la demostración (Nexora, Farma Sierra) y una acción (escribir, recordar plazo).',
+  },
+
   digest: {
     title: 'Correo semanal (vista previa)',
     lead:

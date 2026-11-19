@@ -47,6 +47,7 @@ export default async function CiceronAdminLayout({
         switchablePersonas: switchable,
         guidedStory,
         isProspectSession,
+        proRole: 'admin',
       }}
     >
       {children}

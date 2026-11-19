@@ -10,6 +10,8 @@ import {
   switchablePersonasForFirm,
 } from '@/lib/ciceron/demo/session'
 import { loadGuidedStory } from '@/lib/ciceron/demo/guided-story'
+import { personaHomeKind } from '@/lib/ciceron/demo/persona-home-pure'
+import type { ProPersonaRole } from '@/lib/ciceron/demo/pro-assistant-pure'
 import { loadReviewBadgeCount } from '@/lib/ciceron/review/data'
 
 export default async function CiceronRoomsLayout({
@@ -53,6 +55,7 @@ export default async function CiceronRoomsLayout({
         switchablePersonas: switchable,
         guidedStory,
         isProspectSession,
+        proRole: personaHomeKind(persona.role, persona.id) as ProPersonaRole,
       }}
     >
       {children}
