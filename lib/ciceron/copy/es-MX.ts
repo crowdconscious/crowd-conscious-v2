@@ -290,6 +290,8 @@ export const copy = {
   hoy: {
     title: 'Su mañana',
     lead: 'Tres cifras para empezar el día, luego la lista ordenada de lo que requiere su atención.',
+    dailyLineLabel: 'Resumen del día',
+    dailyLineDemoNote: 'Datos de demostración',
     matches: 'Clientes afectados (DOF)',
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',

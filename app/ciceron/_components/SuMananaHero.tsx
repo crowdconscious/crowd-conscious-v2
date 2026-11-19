@@ -23,11 +23,14 @@ export function SuMananaHero({
   metrics,
   actions,
   deniedNotes = [],
+  dailyLine,
 }: {
   metrics: SuMananaMetric[]
   actions: SuMananaAction[]
   /** RBAC/ABAC notes shown next to the related action, not as a home hero. */
   deniedNotes?: DeniedActionNote[]
+  /** Deterministic one-liner from the same sources as the metric cards. */
+  dailyLine?: string | null
 }) {
   function noteFor(action: SuMananaAction): DeniedActionNote | undefined {
     return deniedNotes.find(
@@ -46,12 +49,25 @@ export function SuMananaHero({
       )
   )
 
+  // Show each ABAC/RBAC reason once (first matching row), not on every denied item.
+  const denialTextShown = new Set<string>()
+  function denialKey(n: DeniedActionNote): string {
+    return `${n.kind ?? ''}|${n.actionIdPrefix ?? ''}|${n.reason}`
+  }
+
   return (
     <section className="cic-su-manana" aria-labelledby="su-manana-heading">
       <h1 id="su-manana-heading" className="cic-h1">
         {copy.hoy.title}
       </h1>
       <p className="cic-lead">{copy.hoy.lead}</p>
+
+      {dailyLine ? (
+        <p className="cic-hoy-daily-line" role="status" aria-label={copy.hoy.dailyLineLabel}>
+          <span className="cic-hoy-daily-line-text">{dailyLine}</span>
+          <span className="cic-demo-inline cic-hoy-daily-line-tag">{copy.hoy.dailyLineDemoNote}</span>
+        </p>
+      ) : null}
 
       <ul className="cic-su-manana-metrics" aria-label={copy.hoy.title}>
         {metrics.map((m) => (
@@ -80,6 +96,14 @@ export function SuMananaHero({
           <ol className="cic-su-manana-action-list">
             {actions.map((a, index) => {
               const denied = noteFor(a)
+              let showDenialText = false
+              if (denied) {
+                const key = denialKey(denied)
+                if (!denialTextShown.has(key)) {
+                  denialTextShown.add(key)
+                  showDenialText = true
+                }
+              }
               return (
                 <li
                   key={a.id}
@@ -101,9 +125,11 @@ export function SuMananaHero({
                         >
                           {a.title}
                         </span>
-                        <span className="cic-muted cic-inline-denied" role="note">
-                          {denied.title}: {denied.reason}
-                        </span>
+                        {showDenialText ? (
+                          <span className="cic-muted cic-inline-denied" role="note">
+                            {denied.title}: {denied.reason}
+                          </span>
+                        ) : null}
                       </>
                     ) : (
                       <Link href={a.href} className="cic-su-manana-action-title">

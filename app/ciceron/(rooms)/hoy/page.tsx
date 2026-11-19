@@ -22,6 +22,11 @@ import {
 } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import {
+  buildHoyDailyLine,
+  soonestDueIso,
+  weekdayNameEsFromIso,
+} from '@/lib/ciceron/demo/hoy-daily-line-pure'
+import {
   buildSuMananaSummary,
   type SuMananaAction,
 } from '@/lib/ciceron/demo/su-manana-pure'
@@ -171,6 +176,20 @@ export default async function HoyPage() {
     actions,
   })
 
+  const asuntosMetric =
+    morning.metrics.find((m) => m.id === 'asuntosConNovedad')?.value ?? 0
+  const plazosMetric =
+    morning.metrics.find((m) => m.id === 'plazosEstaSemana')?.value ?? 0
+  const reviewsMetric =
+    morning.metrics.find((m) => m.id === 'pendientesRevision')?.value ?? 0
+  const nextDue = soonestDueIso(dueAts)
+  const dailyLine = buildHoyDailyLine({
+    asuntosMoved: asuntosMetric,
+    plazosThisWeek: plazosMetric,
+    nextPlazoWeekday: nextDue ? weekdayNameEsFromIso(nextDue) : null,
+    reviewsPending: reviewsMetric,
+  })
+
   return (
     <div className="cic-hoy-layout">
       <div className="cic-hoy-primary">
@@ -178,6 +197,7 @@ export default async function HoyPage() {
           metrics={morning.metrics}
           actions={morning.actions}
           deniedNotes={deniedNotes}
+          dailyLine={dailyLine}
         />
 
         <WeekDeadlineStrip dueAts={dueAts} />
