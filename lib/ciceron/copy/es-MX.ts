@@ -1024,6 +1024,10 @@ export const copy = {
     sendPreview: 'Enviarme una vista previa ahora',
     sendPreviewNote:
       'Usa Resend. Guarde primero un correo válido. En demostración solo se envía a esa dirección.',
+    sendDemoTest: 'Enviar resumen de prueba ahora',
+    sendDemoTestNote:
+      'Envía el resumen real del despacho demo (datos ficticios, etiquetados) al correo configurado en CICERON_DEMO_RECIPIENT_EMAIL. Solo socio o administrador. Requiere CICERON_MORNING_EMAIL_ENABLED.',
+    sendDemoTestForbidden: 'Solo socio o administrador del despacho demo puede enviar la prueba.',
     openPrefs: 'Preferencias de correo',
   },
 

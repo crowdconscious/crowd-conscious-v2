@@ -4,9 +4,15 @@ import { copy } from '@/lib/ciceron/copy/es-MX'
 import { loadMorningEmailPrefs } from '@/lib/ciceron/engagement/morning-email-data'
 import {
   saveMorningEmailPrefsAction,
+  sendDemoMorningTestAction,
   sendMorningPreviewAction,
 } from '@/lib/ciceron/engagement/morning-email-actions'
 import { isMorningEmailEnabled } from '@/lib/ciceron/engagement/morning-email-gate'
+import {
+  canSendDemoLiveTest,
+  readDemoRecipientEmail,
+} from '@/lib/ciceron/engagement/demo-recipient'
+import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
 export default async function MorningEmailPrefsPage() {
@@ -15,6 +21,9 @@ export default async function MorningEmailPrefsPage() {
 
   const prefs = await loadMorningEmailPrefs(persona)
   const cronOn = isMorningEmailEnabled()
+  const showDemoTest =
+    persona.firmId === CICERON_SEED.firmDemo && canSendDemoLiveTest(persona.role)
+  const demoRecipientConfigured = Boolean(readDemoRecipientEmail())
 
   return (
     <div>
@@ -91,6 +100,21 @@ export default async function MorningEmailPrefsPage() {
           {copy.morningEmail.sendPreviewNote}
         </p>
       </form>
+
+      {showDemoTest ? (
+        <form action={sendDemoMorningTestAction} style={{ marginTop: 24 }}>
+          <button
+            type="submit"
+            className="cic-btn"
+            disabled={!cronOn || !demoRecipientConfigured}
+          >
+            {copy.morningEmail.sendDemoTest}
+          </button>
+          <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
+            {copy.morningEmail.sendDemoTestNote}
+          </p>
+        </form>
+      ) : null}
     </div>
   )
 }
