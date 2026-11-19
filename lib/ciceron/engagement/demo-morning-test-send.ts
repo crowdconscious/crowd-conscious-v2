@@ -4,7 +4,10 @@ import { sendEmail } from '@/lib/resend'
 import { CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
-import { recordAuditEvent } from '@/lib/ciceron/audit/write'
+import {
+  recordAuditEvent,
+  type AuditInsertClient,
+} from '@/lib/ciceron/audit/write'
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
 import { buildMorningEmailForPersona } from './morning-email-data'
 import { isMorningEmailEnabled } from './morning-email-gate'
@@ -57,7 +60,8 @@ export async function sendDemoMorningSummaryTest(opts: {
 
   const db = tryCreateCiceronAdminClient()
   if (db) {
-    await recordAuditEvent(db, {
+    // Admin schema client is thenable; AuditInsertClient expects Promise.
+    await recordAuditEvent(db as unknown as AuditInsertClient, {
       firmId: opts.persona.firmId,
       userId: opts.persona.id,
       action: 'morning_email_demo_test',
