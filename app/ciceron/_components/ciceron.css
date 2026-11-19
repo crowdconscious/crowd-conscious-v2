@@ -3499,3 +3499,109 @@ textarea.cic-input {
     gap: 8px;
   }
 }
+
+/* Coordinator board: cards default + table toggle */
+.cic-coord-board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--cic-space) * 1.5);
+  margin-bottom: calc(var(--cic-space) * 1);
+}
+
+.cic-coord-board-head .cic-h2 {
+  margin: 0;
+}
+
+.cic-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  overflow: hidden;
+}
+
+.cic-view-toggle-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--cic-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+
+.cic-view-toggle-btn.is-active {
+  background: var(--cic-surface);
+  color: var(--cic-ink);
+}
+
+.cic-view-toggle-btn:focus-visible {
+  outline: 2px solid var(--cic-focus);
+  outline-offset: -2px;
+}
+
+.cic-coord-status-grid {
+  list-style: none;
+  margin: calc(var(--cic-space) * 2) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: calc(var(--cic-space) * 1.75);
+}
+
+.cic-coord-status-card {
+  margin: 0;
+  padding: calc(var(--cic-space) * 2);
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+}
+
+.cic-coord-status-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cic-coord-status-card-title {
+  margin: 0;
+  font-family: var(--cic-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cic-ink);
+}
+
+.cic-coord-status-card-courts {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.cic-coord-status-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.cic-coord-status-card-stats dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cic-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cic-coord-status-card-stats dd {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cic-ink);
+  font-variant-numeric: tabular-nums;
+}

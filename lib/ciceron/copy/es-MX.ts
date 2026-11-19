@@ -379,6 +379,9 @@ export const copy = {
     lead:
       'Tablero del día por entidad: estado de cada fuente, coincidencias y revisiones manuales. Datos de demostración.',
     boardTitle: 'Estado por entidad',
+    boardViewCards: 'Tarjetas',
+    boardViewTable: 'Tabla',
+    boardViewToggleAria: 'Cambiar vista del tablero',
     hitsTitle: 'Coincidencias y posibles coincidencias',
     manualTitle: 'Revisiones manuales',
     informative:
