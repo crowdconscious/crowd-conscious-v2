@@ -221,12 +221,117 @@
   -webkit-text-fill-color: #fff;
 }
 
+.cic-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cic-rail-brand-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(var(--cic-space) * 0.5);
+  margin-bottom: calc(var(--cic-space) * 1);
+}
+
 .cic-rail-brand {
   display: flex;
   align-items: center;
   padding: calc(var(--cic-space) * 1) calc(var(--cic-space) * 1.5)
-    calc(var(--cic-space) * 2.5);
-  margin-bottom: calc(var(--cic-space) * 1);
+    calc(var(--cic-space) * 1);
+  min-width: 0;
+}
+
+.cic-rail-collapse {
+  appearance: none;
+  border: 1px solid var(--cic-rule);
+  background: var(--cic-surface);
+  color: var(--cic-muted);
+  border-radius: var(--cic-radius);
+  width: 2rem;
+  height: 2rem;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.cic-rail-collapse:hover {
+  color: var(--cic-ink);
+  border-color: var(--cic-rule-strong);
+}
+
+.cic-rail-groups {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cic-space) * 1.5);
+  flex: 1;
+  min-height: 0;
+}
+
+.cic-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cic-space) * 0.35);
+}
+
+.cic-rail-group-label {
+  margin: 0 0 calc(var(--cic-space) * 0.5);
+  padding: 0 calc(var(--cic-space) * 1.5);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+}
+
+.ciceron-root.is-rail-collapsed {
+  --cic-rail: 72px;
+}
+
+.cic-rail-link-short {
+  display: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.ciceron-root.is-rail-collapsed .cic-rail-brand .cic-logo-word,
+.ciceron-root.is-rail-collapsed .cic-rail-group-label,
+.ciceron-root.is-rail-collapsed .cic-rail-link-label,
+.ciceron-root.is-rail-collapsed .is-hidden-when-collapsed {
+  display: none;
+}
+
+.ciceron-root.is-rail-collapsed .cic-rail-link-short {
+  display: inline;
+}
+
+.ciceron-root.is-rail-collapsed .cic-rail a:not(.cic-rail-brand) {
+  justify-content: center;
+  padding-left: calc(var(--cic-space) * 0.75);
+  padding-right: calc(var(--cic-space) * 0.75);
+}
+
+.ciceron-root.is-rail-collapsed .cic-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 0.95rem;
+  height: 0.95rem;
+  font-size: 0.6rem;
+}
+
+.ciceron-root.is-rail-collapsed .cic-rail a:not(.cic-rail-brand) {
+  position: relative;
 }
 
 .cic-serif {
@@ -1848,5 +1953,131 @@ textarea.cic-input {
 @media (max-width: 720px) {
   .cic-clock-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* —— Su mañana landing —— */
+.cic-su-manana {
+  margin-bottom: calc(var(--cic-space) * 3);
+}
+
+.cic-su-manana-metrics {
+  list-style: none;
+  margin: calc(var(--cic-space) * 3) 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--cic-space) * 2);
+}
+
+.cic-su-manana-metric {
+  background: var(--cic-surface);
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  padding: calc(var(--cic-space) * 2.5) calc(var(--cic-space) * 2);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cic-space) * 1);
+  min-height: 7.5rem;
+}
+
+.cic-su-manana-metric-value {
+  font-family: var(--cic-serif);
+  font-size: clamp(2.25rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--cic-accent-mint);
+  letter-spacing: -0.02em;
+}
+
+.cic-su-manana-metric-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cic-ink);
+  line-height: 1.35;
+}
+
+.cic-su-manana-actions {
+  margin-top: calc(var(--cic-space) * 2);
+}
+
+.cic-su-manana-actions-lead {
+  margin: calc(var(--cic-space) * 0.75) 0 calc(var(--cic-space) * 1.5);
+  font-size: 0.9rem;
+}
+
+.cic-su-manana-action-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cic-space) * 1);
+}
+
+.cic-su-manana-action {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: calc(var(--cic-space) * 1.25);
+  align-items: start;
+  padding: calc(var(--cic-space) * 1.5) calc(var(--cic-space) * 1.75);
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+}
+
+.cic-su-manana-action-index {
+  font-family: var(--cic-serif);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--cic-accent-mint);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.cic-su-manana-action-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cic-su-manana-action-kind {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+}
+
+.cic-su-manana-action-title {
+  color: var(--cic-accent-mint);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.cic-su-manana-action-title:hover {
+  text-decoration: underline;
+}
+
+.cic-su-manana-action-detail {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .cic-su-manana-metrics {
+    grid-template-columns: 1fr;
+  }
+  .cic-su-manana-metric {
+    min-height: 0;
+    flex-direction: row;
+    align-items: baseline;
+    gap: calc(var(--cic-space) * 1.5);
+  }
+  .cic-su-manana-metric-value {
+    font-size: 2rem;
+    min-width: 2.5rem;
   }
 }

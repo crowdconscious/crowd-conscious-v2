@@ -222,8 +222,8 @@ export const copy = {
   },
 
   hoy: {
-    title: 'Hoy',
-    lead: 'Boletines estatales del día, luego el Diario Oficial, revisiones y plazos.',
+    title: 'Su mañana',
+    lead: 'Tres cifras para empezar el día, luego la lista ordenada de lo que requiere su atención.',
     matches: 'Clientes afectados (DOF)',
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',
@@ -243,6 +243,31 @@ export const copy = {
     bulletinsEmpty: 'Sin coincidencias de boletín en la demostración de hoy.',
     bulletinDateLabel: 'Fecha del boletín',
     dofEditionLabel: 'Edición del Diario Oficial',
+    metrics: {
+      asuntosConNovedad: 'Asuntos con novedad hoy',
+      plazosEstaSemana: 'Plazos esta semana',
+      pendientesRevision: 'Pendientes de revisión',
+    },
+    actionsTitle: 'Qué atender primero',
+    actionsLead: 'Ordenadas por urgencia: revisiones manuales, cola de revisión, plazos y coincidencias.',
+    actionsEmpty: 'No hay acciones pendientes en la demostración de esta mañana.',
+    actionKinds: {
+      bulletin_manual: 'Revisión manual de boletín',
+      review: 'Pendiente de revisión',
+      deadline: 'Plazo',
+      bulletin_hit: 'Coincidencia de boletín',
+      dof_match: 'Coincidencia del Diario Oficial',
+    },
+  },
+
+  rail: {
+    collapse: 'Contraer menú',
+    expand: 'Ampliar menú',
+    groups: {
+      trabajo: 'Su trabajo',
+      consulta: 'Consulta',
+      mas: 'Más',
+    },
   },
 
   boletines: {
