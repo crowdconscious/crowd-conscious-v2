@@ -979,6 +979,40 @@ export const copy = {
     openWeekly: 'Ver resumen semanal',
     openDigest: 'Ver correo semanal (vista previa)',
   },
+
+  collab: {
+    panelLabel: 'Asignación y comentarios',
+    assignTitle: 'Asignar',
+    assign: 'Asignar',
+    assignee: 'Responsable',
+    matter: 'Asunto',
+    dueAt: 'Vence (opcional)',
+    duePrefix: 'vence',
+    noMatters:
+      'No hay asuntos visibles para esta coincidencia (o su rol no tiene acceso).',
+    status: {
+      pendiente: 'Pendiente',
+      en_curso: 'En curso',
+      hecho: 'Hecho',
+    },
+    markInProgress: 'En curso',
+    markDone: 'Hecho',
+    commentsTitle: 'Comentarios',
+    noComments: 'Aún no hay comentarios en esta coincidencia.',
+    commentBody: 'Comentario',
+    mentionHint: 'Escriba @ para mencionar a alguien del despacho',
+    mentionList: 'Sugerencias de mención',
+    postComment: 'Publicar',
+    deleteComment: 'Eliminar',
+    edited: 'editado',
+    openThread: 'Ver hilo completo',
+    myAssignmentsTitle: 'Mis asignaciones',
+    myAssignmentsLead:
+      'Coincidencias del Diario Oficial asignadas a usted, con estado y plazo.',
+    myAssignmentsEmpty: 'No tiene asignaciones abiertas.',
+    matchDetailTitle: 'Detalle de la coincidencia',
+    backToMonitor: 'Volver al Monitor DOF',
+  },
 } as const
 
 export type CiceronCopy = typeof copy

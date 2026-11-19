@@ -930,6 +930,68 @@ export type CiceronDatabase = {
           CiceronDatabase['ciceron']['Tables']['bulletin_manual_checks']['Insert']
         >
       }
+      match_assignments: {
+        Row: {
+          id: string
+          firm_id: string
+          match_id: string
+          matter_id: string
+          assignee_actor: string
+          assigned_by_actor: string
+          due_at: string | null
+          status: 'pendiente' | 'en_curso' | 'hecho'
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          match_id: string
+          matter_id: string
+          assignee_actor: string
+          assigned_by_actor: string
+          due_at?: string | null
+          status?: 'pendiente' | 'en_curso' | 'hecho'
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['match_assignments']['Insert']
+        >
+      }
+      match_comments: {
+        Row: {
+          id: string
+          firm_id: string
+          match_id: string
+          matter_id: string
+          author_actor: string
+          body: string
+          mentions: string[]
+          created_at: string
+          edited_at: string | null
+          deleted_at: string | null
+          is_demo: boolean
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          match_id: string
+          matter_id: string
+          author_actor: string
+          body: string
+          mentions?: string[]
+          created_at?: string
+          edited_at?: string | null
+          deleted_at?: string | null
+          is_demo?: boolean
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['match_comments']['Insert']
+        >
+      }
     }
     Functions: {
       decide_review: {
@@ -1098,6 +1160,55 @@ export type CiceronDatabase = {
           match_status: string
           backfill_claim_until: string | null
         }[]
+      }
+      assign_match: {
+        Args: {
+          p_firm_id: string
+          p_match_id: string
+          p_actor: string
+          p_assignee: string
+          p_matter_id: string
+          p_due_at?: string | null
+        }
+        Returns: Record<string, unknown>
+      }
+      update_match_assignment_status: {
+        Args: {
+          p_firm_id: string
+          p_assignment_id: string
+          p_actor: string
+          p_status: string
+        }
+        Returns: Record<string, unknown>
+      }
+      add_match_comment: {
+        Args: {
+          p_firm_id: string
+          p_match_id: string
+          p_actor: string
+          p_matter_id: string
+          p_body: string
+          p_mentions?: string[]
+        }
+        Returns: Record<string, unknown>
+      }
+      edit_match_comment: {
+        Args: {
+          p_firm_id: string
+          p_comment_id: string
+          p_actor: string
+          p_body: string
+          p_mentions?: string[]
+        }
+        Returns: Record<string, unknown>
+      }
+      soft_delete_match_comment: {
+        Args: {
+          p_firm_id: string
+          p_comment_id: string
+          p_actor: string
+        }
+        Returns: Record<string, unknown>
       }
     }
   }
