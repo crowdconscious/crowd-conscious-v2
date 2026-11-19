@@ -8,7 +8,9 @@ DECLARE
   pasante uuid := 'b1000000-0000-4000-8000-000000000003'::uuid;
   matter_ok uuid := 'd1000000-0000-4000-8000-000000000001'::uuid; -- nexora CNBV (pasante member)
   matter_blocked uuid := 'd1000000-0000-4000-8000-000000000002'::uuid; -- nexora PLD (pasante blocked)
-  match_id uuid;
+  -- Prefer v_match_id: a bare match_id PL/pgSQL var is ambiguous with the
+  -- column name if this verify ever inserts with ON CONFLICT (match_id, …).
+  v_match_id uuid;
   res jsonb;
   n int;
 BEGIN
@@ -41,25 +43,25 @@ BEGIN
   END IF;
 
   -- Pick any demo match for nexora client via watch_profiles
-  SELECT mt.id INTO match_id
+  SELECT mt.id INTO v_match_id
   FROM ciceron.matches mt
   JOIN ciceron.watch_profiles wp ON wp.id = mt.watch_profile_id
   WHERE wp.client_id = 'c1000000-0000-4000-8000-000000000001'::uuid
   LIMIT 1;
 
-  IF match_id IS NULL THEN
+  IF v_match_id IS NULL THEN
     RAISE NOTICE 'SKIP: no nexora matches seeded — structure checks only';
     RETURN;
   END IF;
 
   -- Socio can assign on accessible matter
-  res := ciceron.assign_match(firm, match_id, socio, socio, matter_ok, NULL);
+  res := ciceron.assign_match(firm, v_match_id, socio, socio, matter_ok, NULL);
   IF coalesce((res->>'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'FAIL: socio assign should succeed: %', res;
   END IF;
 
   -- Pasante denied on blocked matter
-  res := ciceron.assign_match(firm, match_id, pasante, pasante, matter_blocked, NULL);
+  res := ciceron.assign_match(firm, v_match_id, pasante, pasante, matter_blocked, NULL);
   IF coalesce((res->>'ok')::boolean, true) IS NOT FALSE THEN
     RAISE EXCEPTION 'FAIL: pasante assign on blocked matter should deny: %', res;
   END IF;
@@ -80,7 +82,7 @@ BEGIN
 
   -- Pasante can comment on allowed matter
   res := ciceron.add_match_comment(
-    firm, match_id, pasante, matter_ok, 'Revisión de pasante @Socio', ARRAY[socio]
+    firm, v_match_id, pasante, matter_ok, 'Revisión de pasante @Socio', ARRAY[socio]
   );
   IF coalesce((res->>'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'FAIL: pasante comment on allowed matter should succeed: %', res;
@@ -88,7 +90,7 @@ BEGIN
 
   -- Pasante denied commenting on blocked matter
   res := ciceron.add_match_comment(
-    firm, match_id, pasante, matter_blocked, 'No debería verse', '{}'::uuid[]
+    firm, v_match_id, pasante, matter_blocked, 'No debería verse', '{}'::uuid[]
   );
   IF coalesce((res->>'ok')::boolean, true) IS NOT FALSE
      OR res->>'policy_id' <> 'matter_member' THEN
