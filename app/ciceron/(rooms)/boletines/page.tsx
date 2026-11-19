@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { BulletinClockStrip } from './BulletinClockStrip'
 import { BulletinMatchCard } from '../../_components/BulletinMatchCard'
 import { EmptyState } from '../../_components/EmptyState'
+import { ExportViewButton } from '../../_components/ExportViewButton'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { copy } from '@/lib/ciceron/copy/es-MX'
@@ -187,9 +188,34 @@ export default async function BoletinesPage({
       </section>
 
       <section className="cic-section" aria-labelledby="bol-hits">
-        <h2 id="bol-hits" className="cic-h2">
-          {copy.boletines.hitsTitle}
-        </h2>
+        <div className="cic-section-head-row">
+          <h2 id="bol-hits" className="cic-h2">
+            {copy.boletines.hitsTitle}
+          </h2>
+          <ExportViewButton
+            title={copy.exportView.matchesTitle}
+            filenameBase="ciceron-coincidencias"
+            columns={[
+              { key: 'state', header: copy.boletines.colEntidad },
+              { key: 'client', header: copy.boletines.partnerColActor },
+              { key: 'court', header: copy.boletines.partnerColJuicio },
+              { key: 'exp', header: copy.boletines.partnerColExp },
+              { key: 'kind', header: copy.boletines.colEstado },
+              { key: 'summary', header: copy.boletines.queCambioTitle },
+            ]}
+            rows={filteredHits.map((h) => ({
+              state: h.stateName,
+              client: h.clientName ?? '',
+              court: h.courtName ?? '',
+              exp: h.expedienteNumber ?? '',
+              kind:
+                h.matchKind === 'exact'
+                  ? copy.boletines.matchExact
+                  : copy.boletines.matchPossible,
+              summary: h.summary ?? '',
+            }))}
+          />
+        </div>
         {filterStateName ? (
           <p className="cic-hoy-links" role="status">
             {copy.hoy.partnerCoverage.filterActive(filterStateName)}

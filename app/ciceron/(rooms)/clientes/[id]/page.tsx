@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ClientTag } from '../../../_components/ClientTag'
+import { ExportViewButton } from '../../../_components/ExportViewButton'
 import { PrintReportButton } from '../../../_components/PrintReportButton'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
@@ -86,7 +87,21 @@ export default async function ClienteTimelinePage({
             {client.industry} · {formatDateLongEs(todayInMexicoCity())}
           </p>
         </div>
-        <div className="no-print">
+        <div className="no-print cic-client-timeline-actions">
+          <ExportViewButton
+            title={copy.exportView.timelineTitle}
+            filenameBase={`ciceron-timeline-${client.name}`}
+            columns={[
+              { key: 'when', header: 'Fecha' },
+              { key: 'kind', header: 'Tipo' },
+              { key: 'title', header: 'Detalle' },
+            ]}
+            rows={events.map((e) => ({
+              when: e.dateLabel,
+              kind: KIND_LABEL[e.kind] ?? e.kind,
+              title: e.title,
+            }))}
+          />
           <PrintReportButton />
         </div>
       </header>

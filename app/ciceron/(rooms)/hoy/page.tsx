@@ -7,7 +7,11 @@ import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { SuMananaHero, type DeniedActionNote } from '../../_components/SuMananaHero'
 import { PartnerCoverageMap } from './PartnerCoverageMap'
+<<<<<<< HEAD
 import { applyHitCountsToBoard } from '@/lib/ciceron/boletines/board-hit-counts-pure'
+=======
+import { ExportViewButton } from '../../_components/ExportViewButton'
+>>>>>>> e8c0252e (feat(ciceron): one-click PDF/Excel/CSV export of current views)
 import { WeekDeadlineStrip } from '../../_components/WeekDeadlineStrip'
 import { DeadlineCountdown } from '../../_components/DeadlineCountdown'
 import { PersonaStartPanel } from '../../_components/PersonaStartPanel'
@@ -451,9 +455,27 @@ export default async function HoyPage() {
         </section>
 
         <section className="cic-section" aria-labelledby="hoy-deadlines">
-          <h2 id="hoy-deadlines" className="cic-h2">
-            {copy.hoy.deadlines}
-          </h2>
+          <div className="cic-section-head-row">
+            <h2 id="hoy-deadlines" className="cic-h2">
+              {copy.hoy.deadlines}
+            </h2>
+            <ExportViewButton
+              title={copy.exportView.deadlinesTitle}
+              filenameBase="ciceron-plazos"
+              columns={[
+                { key: 'label', header: 'Plazo' },
+                { key: 'client', header: 'Cliente' },
+                { key: 'due', header: 'Vence' },
+                { key: 'urgency', header: 'Urgencia' },
+              ]}
+              rows={upcomingDeadlines.map((d) => ({
+                label: d.label,
+                client: d.clientName,
+                due: d.due,
+                urgency: d.urgency,
+              }))}
+            />
+          </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} className="cic-stack">
             {upcomingDeadlines.map((d) => (
               <li key={d.id} className="cic-hoy-deadline-row">

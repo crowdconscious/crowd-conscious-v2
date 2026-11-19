@@ -3500,6 +3500,40 @@ textarea.cic-input {
   }
 }
 
+.cic-section-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--cic-space) * 1.5);
+  margin-bottom: calc(var(--cic-space) * 1);
+}
+
+.cic-section-head-row .cic-h2 {
+  margin: 0;
+}
+
+.cic-export-view {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.cic-export-view-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cic-muted);
+  margin-right: 2px;
+}
+
+.cic-client-timeline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 /* Coordinator board: cards default + table toggle */
 .cic-coord-board-head {
   display: flex;
