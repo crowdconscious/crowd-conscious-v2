@@ -111,6 +111,30 @@ export function formatDateTimeEs(isoOrDate: string | Date | null | undefined): s
   return `${p.day} de ${MONTHS_LONG[p.month - 1]} de ${p.year}, ${hh}:${mm}`
 }
 
+/**
+ * Inclusive range in Spanish: «16 al 22 de noviembre de 2026»
+ * or «28 de noviembre al 4 de diciembre de 2026» when months differ.
+ */
+export function formatDateRangeEs(
+  startIso: string | Date | null | undefined,
+  endIso: string | Date | null | undefined
+): string {
+  if (!startIso || !endIso) return '—'
+  const a = toDate(startIso)
+  const b = toDate(endIso)
+  if (!a || !b) return '—'
+  const pa = partsInCdmx(a)
+  const pb = partsInCdmx(b)
+  if (!pa || !pb) return '—'
+  if (pa.year === pb.year && pa.month === pb.month) {
+    return `${pa.day} al ${pb.day} de ${MONTHS_LONG[pa.month - 1]} de ${pa.year}`
+  }
+  if (pa.year === pb.year) {
+    return `${pa.day} de ${MONTHS_LONG[pa.month - 1]} al ${pb.day} de ${MONTHS_LONG[pb.month - 1]} de ${pa.year}`
+  }
+  return `${pa.day} de ${MONTHS_LONG[pa.month - 1]} de ${pa.year} al ${pb.day} de ${MONTHS_LONG[pb.month - 1]} de ${pb.year}`
+}
+
 /** Filter display / placeholder: dd/mm/aaaa */
 export function formatDateFilterEs(isoOrDate: string | Date | null | undefined): string {
   if (!isoOrDate) return ''

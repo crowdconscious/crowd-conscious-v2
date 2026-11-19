@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ClientTag } from '../../_components/ClientTag'
 import { CICERON_BASE } from '@/lib/ciceron/config'
@@ -59,6 +60,11 @@ export default async function ClientesPage() {
                 {c.watch}
               </p>
             </div>
+            <p style={{ marginTop: 16 }}>
+              <Link className="cic-btn cic-btn-compact" href={`/ciceron/clientes/${c.id}`}>
+                {copy.clientes.openTimeline}
+              </Link>
+            </p>
           </article>
         ))}
       </section>

@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import {
   formatDateFilterEs,
   formatDateLongEs,
+  formatDateRangeEs,
   formatDateShortEs,
   formatDateTimeEs,
   parseDateFilterEs,
@@ -22,6 +23,19 @@ describe('formatDateLongEs / short / time (B1)', () => {
     const out = formatDateTimeEs('2026-11-14T15:30:00.000Z') // 09:30 CDMX
     assert.match(out, /09:30/)
     assert.doesNotMatch(out, /a\.\s*m\.|p\.\s*m\.|AM|PM/i)
+  })
+})
+
+describe('formatDateRangeEs', () => {
+  it('formats same-month range without ISO', () => {
+    assert.equal(
+      formatDateRangeEs('2026-11-16', '2026-11-22'),
+      '16 al 22 de noviembre de 2026'
+    )
+    assert.doesNotMatch(
+      formatDateRangeEs('2026-11-16', '2026-11-22'),
+      /\d{4}-\d{2}-\d{2}/
+    )
   })
 })
 

@@ -29,14 +29,14 @@ export function CommandPalette({
     const clientItems: Item[] = fixtureClients.map((c) => ({
       id: `client-${c.id}`,
       label: c.name,
-      href: '/ciceron/clientes',
+      href: `/ciceron/clientes/${c.id}`,
       group: copy.command.groups.clients,
     }))
     const matterItems: Item[] = fixtureClients.flatMap((c) =>
       c.matters.map((m) => ({
         id: `matter-${m.id}`,
         label: `${c.name} — ${m.title}`,
-        href: '/ciceron/clientes',
+        href: `/ciceron/clientes/${c.id}`,
         group: copy.command.groups.matters,
       }))
     )
