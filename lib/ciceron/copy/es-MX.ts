@@ -986,6 +986,26 @@ export const copy = {
       'Abre WhatsApp con un mensaje listo. Usted confirma el envío; Cicerón no envía automáticamente.',
   },
 
+  integrations: {
+    title: 'Integraciones de correo y calendario',
+    lead:
+      'Elija Microsoft 365 o Google Workspace. Cicerón solo crea borradores; nunca envía correo automáticamente.',
+    draftsOnly: 'Regla: borradores únicamente. El envío lo confirma un abogado.',
+    picker: 'Proveedor preferido',
+    saveProvider: 'Guardar preferencia',
+    connected: 'conectado',
+    disconnected: 'desconectado',
+    openM365: 'Abrir conexión Microsoft 365',
+    connectGoogle: 'Conectar Google Workspace (demostración)',
+    disconnectGoogle: 'Desconectar Google',
+    googleDisabled: 'desactivado',
+    googleDisabledHint:
+      'Active CICERON_GOOGLE_ENABLED y configure OAuth en Google Cloud para habilitarlo.',
+    googleScopes:
+      'Alcances mínimos: Gmail compose (borradores), Calendar events, Drive readonly.',
+    openPrefs: 'Integraciones',
+  },
+
   morningEmail: {
     title: 'Correo de la mañana',
     lead:

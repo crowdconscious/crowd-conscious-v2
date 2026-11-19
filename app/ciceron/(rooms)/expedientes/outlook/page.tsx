@@ -26,6 +26,11 @@ export default async function OutlookConnectPage() {
       <h1 className="cic-h1">{copy.m365.consentTitle}</h1>
       <p className="cic-lead">{copy.m365.consentLead}</p>
       <p className="cic-demo-inline">{copy.demoLabel}</p>
+      <p style={{ fontSize: '0.9rem', marginTop: 8 }}>
+        <Link href="/ciceron/preferencias/integraciones">
+          {copy.integrations.openPrefs}
+        </Link>
+      </p>
 
       <div className="cic-m365-consent cic-card">
         <div className="cic-m365-consent-brand">

@@ -1029,6 +1029,54 @@ export type CiceronDatabase = {
           CiceronDatabase['ciceron']['Tables']['morning_email_preferences']['Insert']
         >
       }
+      workspace_provider_settings: {
+        Row: {
+          firm_id: string
+          preferred_provider: 'microsoft365' | 'google_workspace'
+          updated_by_actor: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          preferred_provider?: 'microsoft365' | 'google_workspace'
+          updated_by_actor?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['workspace_provider_settings']['Insert']
+        >
+      }
+      google_workspace_connections: {
+        Row: {
+          firm_id: string
+          status: 'disconnected' | 'connected'
+          connected_at: string | null
+          connected_by_actor: string | null
+          disconnected_at: string | null
+          metadata: Record<string, unknown>
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          status?: 'disconnected' | 'connected'
+          connected_at?: string | null
+          connected_by_actor?: string | null
+          disconnected_at?: string | null
+          metadata?: Record<string, unknown>
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<
+          CiceronDatabase['ciceron']['Tables']['google_workspace_connections']['Insert']
+        >
+      }
     }
     Functions: {
       decide_review: {
