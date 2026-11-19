@@ -10,6 +10,8 @@ import { CoordinatorMexicoMap } from '../CoordinatorMexicoMap'
 import { PartnerMorningReport } from '../PartnerMorningReport'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
+import { formatConsultHm } from '@/lib/ciceron/boletines/map-state-panel-pure'
+import type { MapStatePanelDetail } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import { buildPartnerReport } from '@/lib/ciceron/boletines/partner-report'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
@@ -43,6 +45,30 @@ export default async function CoordinadorBoletinesPage() {
     (b) => b.status === 'manual' || b.status === 'fallo'
   )
 
+  const mapDetails: MapStatePanelDetail[] = data.board.map((row) => {
+    const manual = data.manuals.find((m) => m.stateCode === row.stateCode)
+    const matters = data.hits
+      .filter((h) => h.stateCode === row.stateCode)
+      .slice(0, 8)
+      .map((h) => ({
+        id: h.id,
+        label: h.clientName ?? h.expedienteNumber ?? h.courtName ?? h.id,
+        matchKind: h.matchKind,
+      }))
+    return {
+      stateCode: row.stateCode,
+      stateName: row.stateName,
+      statusLabel: row.statusLabel,
+      status: row.status,
+      sourceName: row.sourceName,
+      lastConsultHm: formatConsultHm(row.runFinishedAt),
+      reviewerName: manual?.assignedToName ?? null,
+      matters,
+      hitsExact: row.hitsExact,
+      hitsPossible: row.hitsPossible,
+    }
+  })
+
   return (
     <div>
       <h1 className="cic-h1">Coordinación de boletines</h1>
@@ -56,7 +82,7 @@ export default async function CoordinadorBoletinesPage() {
 
       <BulletinClockStrip board={data.board} />
 
-      <CoordinatorMexicoMap board={data.board} />
+      <CoordinatorMexicoMap board={data.board} details={mapDetails} />
 
       <section className="cic-section" aria-labelledby="coord-board">
         <h2 id="coord-board" className="cic-h2">
