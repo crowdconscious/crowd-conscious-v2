@@ -4,6 +4,7 @@ import {
   isMorningEmailEnabled,
 } from '@/lib/ciceron/engagement/morning-email-gate'
 import { runMorningEmailCron } from '@/lib/ciceron/engagement/morning-email-send'
+import { sendMorningSummaryWhatsAppScaffold } from '@/lib/ciceron/whatsapp/cloud-api'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -27,7 +28,12 @@ export async function GET(req: NextRequest) {
     )
   }
   const summary = await runMorningEmailCron()
-  return NextResponse.json({ ok: true, summary })
+  // WhatsApp Cloud API scaffold — never sends (see lib/ciceron/whatsapp/cloud-api.ts).
+  const whatsapp = await sendMorningSummaryWhatsAppScaffold({
+    toE164Digits: '',
+    templateVariables: [],
+  })
+  return NextResponse.json({ ok: true, summary, whatsapp })
 }
 
 export async function POST(req: NextRequest) {
