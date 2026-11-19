@@ -1,5 +1,9 @@
 import 'server-only'
 
+import {
+  currentCdmxBusinessDay,
+  pickDemoBulletinPublicationDate,
+} from '@/lib/ciceron/boletines/demo-freshness'
 import { CICERON_BOLETIN_SOURCES } from '@/lib/ciceron/boletines/seed-ids'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
@@ -97,13 +101,9 @@ type RunRow = {
   metadata: Record<string, unknown> | null
 }
 
+/** Display/as-of day for the board — current CDMX business day. */
 function todayMexico(): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Mexico_City',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
+  return currentCdmxBusinessDay()
 }
 
 function mapStatus(runStatus: string | null | undefined): BulletinBoardStatus {
@@ -520,13 +520,31 @@ export async function loadBulletinBoard(
       )
     }
 
+    // Demo boards must stay on the current CDMX business day without a DB write:
+    // if today's rows are missing (stale seed date), reuse the latest demo day.
+    let runPublicationDate = asOf
+    if (isDemo) {
+      const { data: demoDates } = await db
+        .from('bulletin_runs')
+        .select('publication_date')
+        .eq('firm_id', persona.firmId)
+        .eq('is_demo', true)
+      const picked = pickDemoBulletinPublicationDate(
+        asOf,
+        (Array.isArray(demoDates) ? demoDates : []).map(
+          (r) => (r as { publication_date: string }).publication_date
+        )
+      )
+      if (picked) runPublicationDate = picked
+    }
+
     let runsQuery = db
       .from('bulletin_runs')
       .select(
         'id, source_id, status, failure_message, hits_exact, hits_possible, publication_date, metadata, is_demo'
       )
       .eq('firm_id', persona.firmId)
-      .eq('publication_date', asOf)
+      .eq('publication_date', runPublicationDate)
     if (isDemo) runsQuery = runsQuery.eq('is_demo', true)
 
     const { data: runs, error: runsErr } = await runsQuery
@@ -536,7 +554,7 @@ export async function loadBulletinBoard(
     }
 
     const runList = Array.isArray(runs) ? runs : []
-    // No runs for today: demo firms get the whole fixture (never mix).
+    // No runs for the resolved day: demo firms get the whole fixture (never mix).
     if (runList.length === 0) {
       if (isDemo) {
         return { source: 'fixture', asOf, ...fixtureBulletinBoard() }
@@ -701,7 +719,7 @@ export async function loadBulletinBoard(
         'id, source_id, status, source_url, assigned_to, notes, check_date'
       )
       .eq('firm_id', persona.firmId)
-      .eq('check_date', asOf)
+      .eq('check_date', isDemo ? runPublicationDate : asOf)
     if (isDemo) manualsQuery = manualsQuery.eq('is_demo', true)
     const { data: manualsRaw } = await manualsQuery
 
