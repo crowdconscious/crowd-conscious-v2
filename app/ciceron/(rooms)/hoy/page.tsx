@@ -283,6 +283,8 @@ export default async function HoyPage() {
           <Link href="/ciceron/hoy/briefing">{copy.engagement.openBriefing}</Link>
           {' · '}
           <Link href="/ciceron/mis-asignaciones">{copy.collab.myAssignmentsTitle}</Link>
+          {' · '}
+          <Link href="/ciceron/preferencias/correo">{copy.morningEmail.openPrefs}</Link>
           {(persona.role === 'socio' || persona.role === 'admin') && (
             <>
               {' · '}
