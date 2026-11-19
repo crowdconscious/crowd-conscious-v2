@@ -9,6 +9,7 @@ import { BulletinClockStrip } from '../BulletinClockStrip'
 import { CoordinatorMexicoMap } from '../CoordinatorMexicoMap'
 import { PartnerMorningReport } from '../PartnerMorningReport'
 import { CICERON_BASE } from '@/lib/ciceron/config'
+import { applyHitCountsToBoard } from '@/lib/ciceron/boletines/board-hit-counts-pure'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
 import { formatConsultHm } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import type { MapStatePanelDetail } from '@/lib/ciceron/boletines/map-state-panel-pure'
@@ -33,6 +34,7 @@ export default async function CoordinadorBoletinesPage() {
   if (!persona) redirect(CICERON_BASE)
 
   const data = await loadBulletinBoard(persona)
+  const board = applyHitCountsToBoard(data.board, data.hits)
 
   await recordCiceronEvent({
     name: 'room_opened',
@@ -41,11 +43,11 @@ export default async function CoordinadorBoletinesPage() {
     properties: { room: 'boletines-coordinador', is_demo: true },
   })
 
-  const manualPending = data.board.filter(
+  const manualPending = board.filter(
     (b) => b.status === 'manual' || b.status === 'fallo'
   )
 
-  const mapDetails: MapStatePanelDetail[] = data.board.map((row) => {
+  const mapDetails: MapStatePanelDetail[] = board.map((row) => {
     const manual = data.manuals.find((m) => m.stateCode === row.stateCode)
     const matters = data.hits
       .filter((h) => h.stateCode === row.stateCode)
@@ -80,10 +82,10 @@ export default async function CoordinadorBoletinesPage() {
         <Link href="/ciceron/boletines">{copy.boletines.title}</Link>
       </p>
 
-      <BulletinClockStrip board={data.board} />
+      <BulletinClockStrip board={board} />
 
       <CoordinatorMexicoMap
-        board={data.board.map((r) => ({
+        board={board.map((r) => ({
           stateCode: r.stateCode,
           stateName: r.stateName,
           status: r.status,
@@ -141,7 +143,7 @@ export default async function CoordinadorBoletinesPage() {
               </tr>
             </thead>
             <tbody>
-              {data.board.map((row) => (
+              {board.map((row) => (
                 <tr key={row.sourceId}>
                   <td>{row.stateName}</td>
                   <td>

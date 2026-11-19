@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import type {
   SuMananaAction,
@@ -24,6 +25,7 @@ export function SuMananaHero({
   actions,
   deniedNotes = [],
   dailyLine,
+  coverageHero = null,
 }: {
   metrics: SuMananaMetric[]
   actions: SuMananaAction[]
@@ -31,6 +33,8 @@ export function SuMananaHero({
   deniedNotes?: DeniedActionNote[]
   /** Deterministic one-liner from the same sources as the metric cards. */
   dailyLine?: string | null
+  /** Socio: partner coverage map sits with the KPI strip above the fold. */
+  coverageHero?: ReactNode
 }) {
   function noteFor(action: SuMananaAction): DeniedActionNote | undefined {
     return deniedNotes.find(
@@ -69,19 +73,26 @@ export function SuMananaHero({
         </p>
       ) : null}
 
-      <ul className="cic-su-manana-metrics" aria-label={copy.hoy.title}>
-        {metrics.map((m) => (
-          <li key={m.id} className="cic-su-manana-metric">
-            <span className="cic-su-manana-metric-value" aria-hidden="true">
-              {m.value}
-            </span>
-            <span className="cic-su-manana-metric-label">
-              <span className="cic-sr-only">{`${m.value} `}</span>
-              {METRIC_LABEL[m.id]}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div
+        className={
+          coverageHero ? 'cic-hoy-partner-hero-band' : 'cic-hoy-partner-hero-band is-metrics-only'
+        }
+      >
+        <ul className="cic-su-manana-metrics" aria-label={copy.hoy.title}>
+          {metrics.map((m) => (
+            <li key={m.id} className="cic-su-manana-metric">
+              <span className="cic-su-manana-metric-value" aria-hidden="true">
+                {m.value}
+              </span>
+              <span className="cic-su-manana-metric-label">
+                <span className="cic-sr-only">{`${m.value} `}</span>
+                {METRIC_LABEL[m.id]}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {coverageHero}
+      </div>
 
       <div className="cic-su-manana-actions" aria-labelledby="su-manana-actions">
         <h2 id="su-manana-actions" className="cic-h2">

@@ -331,6 +331,27 @@ export const copy = {
       plazosEstaSemana: 'Plazos esta semana',
       pendientesRevision: 'Pendientes de revisión',
     },
+    partnerCoverage: {
+      title: 'Cobertura por entidad',
+      lead:
+        'Solo se colorean los estados que vigila el despacho. El color indica si ya están al día, si hay novedades, o si falta verificar; el resto queda en gris.',
+      legendAria: 'Leyenda de cobertura',
+      mapAria: 'Mapa de México con el estado de cobertura por entidad',
+      prompt: 'Seleccione una entidad para ver sus coincidencias.',
+      openMatches: 'Ver coincidencias del estado',
+      noCoverage: (stateName: string) =>
+        `El despacho no vigila ${stateName} en esta demostración.`,
+      hitsLine: (exact: number, possible: number) =>
+        `${exact} coincidencia${exact === 1 ? '' : 's'} exacta${exact === 1 ? '' : 's'} · ${possible} posible${possible === 1 ? '' : 's'}`,
+      legend: {
+        al_dia: 'Al día',
+        con_novedades: 'Con novedades',
+        por_verificar: 'Por verificar',
+        sin_cobertura: 'Sin cobertura',
+      },
+      filterActive: (stateName: string) => `Mostrando coincidencias de ${stateName}`,
+      clearFilter: 'Ver todas las entidades',
+    },
     actionsTitle: 'Qué atender primero',
     actionsLead: 'Ordenadas por urgencia: revisiones manuales, cola de revisión, plazos y coincidencias.',
     actionsEmpty: 'No hay acciones pendientes en la demostración de esta mañana.',
@@ -441,7 +462,7 @@ export const copy = {
     colAccion: 'Acción',
     colEstado: 'Estado',
     statusRevisado: 'Revisado',
-    statusFallo: 'Falló',
+    statusFallo: 'No se pudo leer el boletín · revisar manualmente',
     statusPendiente: 'Revisión pendiente',
     statusSinPublicacion: 'Sin publicación prevista',
     revisarManualmente: 'Revisar manualmente',
@@ -467,7 +488,7 @@ export const copy = {
     mapLegend: {
       revisado: 'Revisado',
       revision_pendiente: 'Revisión pendiente',
-      fallo: 'Falló',
+      fallo: 'No se pudo leer el boletín · revisar manualmente',
       sin_publicacion: 'Sin publicación prevista',
     },
     mapAria: 'Mapa de México con el estado de revisión por entidad',

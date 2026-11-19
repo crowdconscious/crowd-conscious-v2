@@ -2351,6 +2351,110 @@ textarea.cic-input {
   stroke: #2a3a52;
 }
 
+/* Partner coverage hero (socio Hoy) — al día / con novedades / por verificar */
+.cic-coord-map-legend-item.is-partner-al_dia .cic-coord-map-swatch,
+.cic-bol-status.is-partner-al_dia {
+  background: #0f3d2e;
+  border-color: #6ee7b7;
+  color: #6ee7b7;
+}
+.cic-coord-map-state.is-partner-al_dia {
+  fill: #0f3d2e;
+  stroke: #6ee7b7;
+}
+
+.cic-coord-map-legend-item.is-partner-con_novedades .cic-coord-map-swatch,
+.cic-bol-status.is-partner-con_novedades {
+  background: #1a2438;
+  border-color: #a8c0e8;
+  color: #a8c0e8;
+}
+.cic-coord-map-state.is-partner-con_novedades {
+  fill: #1a3048;
+  stroke: #a8c0e8;
+}
+
+.cic-coord-map-legend-item.is-partner-por_verificar .cic-coord-map-swatch,
+.cic-bol-status.is-partner-por_verificar {
+  background: #3a2e12;
+  border-color: #e0b86a;
+  color: #e0b86a;
+}
+.cic-coord-map-state.is-partner-por_verificar {
+  fill: #3a2e12;
+  stroke: #e0b86a;
+}
+
+.cic-coord-map-legend-item.is-partner-sin_cobertura .cic-coord-map-swatch,
+.cic-bol-status.is-partner-sin_cobertura {
+  background: #152033;
+  border-color: #2a3a52;
+  color: #a8b6c9;
+}
+.cic-coord-map-state.is-partner-sin_cobertura {
+  fill: #101826;
+  stroke: #2a3a52;
+}
+
+.cic-hoy-partner-hero-band {
+  display: grid;
+  gap: calc(var(--cic-space) * 1.25);
+  margin: calc(var(--cic-space) * 1.25) 0 calc(var(--cic-space) * 1.5);
+}
+
+.cic-hoy-partner-hero-band > .cic-su-manana-metrics {
+  margin: 0;
+}
+
+.cic-hoy-partner-hero-band > .cic-partner-coverage {
+  margin: 0;
+}
+
+.cic-hoy-partner-hero-band .cic-partner-coverage-svg {
+  max-height: 360px;
+}
+
+@media (min-width: 1100px) {
+  .cic-hoy-partner-hero-band:not(.is-metrics-only) {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cic-hoy-partner-hero-band:not(.is-metrics-only) > .cic-su-manana-metrics {
+    grid-template-columns: 1fr;
+    gap: calc(var(--cic-space) * 0.85);
+  }
+}
+
+.cic-partner-coverage {
+  margin-top: 0;
+}
+
+/* Socio Hoy: keep the map full-width; state panel stacks below (not a side column). */
+.cic-partner-coverage .cic-coord-map-layout,
+.cic-partner-coverage .cic-coord-map-layout.has-panel {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cic-partner-coverage .cic-coord-map-frame {
+  min-width: 0;
+}
+
+.cic-partner-coverage .cic-partner-coverage-svg {
+  width: 100%;
+  max-height: 360px;
+}
+
+@media (min-width: 960px) {
+  .cic-partner-coverage .cic-coord-state-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border-radius: var(--cic-radius);
+    border: 1px solid var(--cic-rule-strong);
+  }
+}
+
 .cic-coord-map-frame {
   border: 1px solid var(--cic-rule);
   border-radius: var(--cic-radius);
