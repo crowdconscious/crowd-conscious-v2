@@ -6,6 +6,7 @@ import {
   PartnerSummaryPreview,
 } from '../CoordinatorControls'
 import { BulletinClockStrip } from '../BulletinClockStrip'
+import { CoordinatorBoardView } from '../CoordinatorBoardView'
 import { CoordinatorMexicoMap } from '../CoordinatorMexicoMap'
 import { PartnerMorningReport } from '../PartnerMorningReport'
 import { CICERON_BASE } from '@/lib/ciceron/config'
@@ -15,19 +16,9 @@ import { formatConsultHm } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import type { MapStatePanelDetail } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import { buildPartnerReport } from '@/lib/ciceron/boletines/partner-report'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import {
-  formatDateLongEs,
-  formatDateTimeEs,
-} from '@/lib/ciceron/copy/format-date'
+import { formatDateLongEs } from '@/lib/ciceron/copy/format-date'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
-
-function statusClass(status: string): string {
-  if (status === 'fallo') return 'cic-bol-status is-critical'
-  if (status === 'manual' || status === 'parcial') return 'cic-bol-status is-warning'
-  if (status === 'sin_publicacion') return 'cic-bol-status is-neutral'
-  return 'cic-bol-status is-good'
-}
 
 export default async function CoordinadorBoletinesPage() {
   const persona = await getCiceronDemoSession()
@@ -96,109 +87,43 @@ export default async function CoordinadorBoletinesPage() {
         details={mapDetails}
       />
 
-      <section className="cic-section" aria-labelledby="coord-board">
-        <h2 id="coord-board" className="cic-h2">
-          {copy.boletines.boardTitle}
-        </h2>
-        <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
-          {formatDateLongEs(data.asOf)}
-          {' · '}
-          <span
-            role="status"
-            style={{
-              fontWeight: 600,
-              color:
-                data.source === 'error'
-                  ? 'var(--cic-danger, #b42318)'
-                  : data.source === 'fixture'
-                    ? 'var(--cic-warn, #8a5a00)'
-                    : 'inherit',
-            }}
-          >
-            {data.source === 'schema'
-              ? copy.boletines.dataSourceDb
-              : data.source === 'fixture'
-                ? copy.boletines.dataSourceFixture
-                : copy.boletines.dataSourceError}
-          </span>
-        </p>
-        {data.source === 'error' && data.error ? (
-          <p className="cic-policy-box is-denied" role="alert">
-            {data.error}
-          </p>
-        ) : null}
-        <div className="cic-table-wrap">
-          <table className="cic-table">
-            <thead>
-              <tr>
-                <th scope="col">{copy.boletines.colEntidad}</th>
-                <th scope="col">{copy.boletines.colPublicacion}</th>
-                <th scope="col">{copy.boletines.colNivel}</th>
-                <th scope="col">{copy.boletines.colBuscados}</th>
-                <th scope="col">{copy.boletines.colExactas}</th>
-                <th scope="col">{copy.boletines.colPosibles}</th>
-                <th scope="col">{copy.boletines.colHoraCorrida}</th>
-                <th scope="col">{copy.boletines.colEstado}</th>
-                <th scope="col">{copy.boletines.colAccion}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {board.map((row) => (
-                <tr key={row.sourceId}>
-                  <td>{row.stateName}</td>
-                  <td>
-                    {row.publicationDate
-                      ? formatDateLongEs(row.publicationDate)
-                      : '—'}
-                    {row.bulletinNumber ? (
-                      <span
-                        className="cic-muted"
-                        style={{
-                          display: 'inline-flex',
-                          gap: 6,
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          fontSize: '0.8rem',
-                        }}
-                      >
-                        {row.bulletinNumber}
-                        <span className="cic-demo-inline" style={{ fontSize: '0.7rem' }}>
-                          {copy.demoLabel}
-                        </span>
-                      </span>
-                    ) : null}
-                  </td>
-                  <td>{row.tierLabel}</td>
-                  <td>{row.mattersSearched}</td>
-                  <td>{row.hitsExact}</td>
-                  <td>{row.hitsPossible}</td>
-                  <td>
-                    {row.runFinishedAt ? formatDateTimeEs(row.runFinishedAt) : '—'}
-                  </td>
-                  <td>
-                    <span className={statusClass(row.status)}>{row.statusLabel}</span>
-                    {row.status === 'fallo' ? (
-                      <p className="cic-muted" style={{ margin: '4px 0 0', fontSize: '0.8rem' }}>
-                        {copy.boletines.revisarManualmente}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td>
-                    <a
-                      className="cic-btn cic-btn-secondary cic-btn-compact"
-                      href={row.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {copy.boletines.openSource}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <CoordinatorBoardView
+        asOfLabel={formatDateLongEs(data.asOf)}
+        sourceBadge={
+          data.source === 'schema'
+            ? copy.boletines.dataSourceDb
+            : data.source === 'fixture'
+              ? copy.boletines.dataSourceFixture
+              : copy.boletines.dataSourceError
+        }
+        sourceError={data.source === 'error' && data.error ? data.error : null}
+        board={board.map((row) => {
+          const courts = [
+            ...new Set(
+              data.hits
+                .filter((h) => h.stateCode === row.stateCode && h.courtName)
+                .map((h) => h.courtName as string)
+            ),
+          ]
+          return {
+            sourceId: row.sourceId,
+            stateCode: row.stateCode,
+            stateName: row.stateName,
+            status: row.status,
+            statusLabel: row.statusLabel,
+            tierLabel: row.tierLabel,
+            sourceUrl: row.sourceUrl,
+            publicationDate: row.publicationDate,
+            bulletinNumber: row.bulletinNumber,
+            mattersSearched: row.mattersSearched,
+            hitsExact: row.hitsExact,
+            hitsPossible: row.hitsPossible,
+            runFinishedAt: row.runFinishedAt,
+            failureMessage: row.failureMessage,
+            courtNames: courts,
+          }
+        })}
+      />
 
       <section className="cic-section" aria-labelledby="coord-manual">
         <h2 id="coord-manual" className="cic-h2">
