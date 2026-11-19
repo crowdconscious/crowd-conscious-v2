@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { DataTable } from '../../_components/DataTable'
 import { DisclosureCard } from '../../_components/DisclosureCard'
 import { MatchActions } from '../../_components/MatchActions'
+import { MatchCollaborationPanel } from '../../_components/MatchCollaborationPanel'
 import { ReviewBadge } from '../../_components/ReviewBadge'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
@@ -14,16 +15,19 @@ import {
   loadMonitorMatches,
   type MonitorItem,
 } from '@/lib/ciceron/demo/monitor-data'
+import type { DemoPersona } from '@/lib/ciceron/demo/personas'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { CICERON_SUBJECT_AREAS } from '@/lib/ciceron/taxonomy'
 import { CICERON_DOCUMENT_TYPES } from '@/lib/ciceron/taxonomy'
 
-function MatchDetailList({
+async function MatchDetailList({
   items,
   source,
+  persona,
 }: {
   items: MonitorItem[]
   source: 'schema' | 'fixture'
+  persona: DemoPersona
 }) {
   return (
     <>
@@ -44,6 +48,13 @@ function MatchDetailList({
             showReviewBadge={n.hasReviewTask}
           />
           {source === 'schema' ? <MatchActions matchId={n.matchId} /> : null}
+          {source === 'schema' ? (
+            <MatchCollaborationPanel
+              persona={persona}
+              matchId={n.matchId}
+              compact
+            />
+          ) : null}
         </div>
       ))}
     </>
@@ -85,6 +96,10 @@ export default async function MonitorDofPage({
       <p className="cic-lead">{copy.monitor.lead}</p>
       <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
         {source === 'schema' ? copy.monitor.sourceSchema : copy.monitor.sourceFixture}
+        {' · '}
+        <Link href={`${CICERON_BASE}/mis-asignaciones`}>
+          {copy.collab.myAssignmentsTitle}
+        </Link>
       </p>
 
       <section className="cic-section" aria-label={copy.monitor.filters}>
@@ -193,7 +208,11 @@ export default async function MonitorDofPage({
                   ]}
                   rows={regulatory}
                 />
-                <MatchDetailList items={regulatory} source={source} />
+                <MatchDetailList
+                  items={regulatory}
+                  source={source}
+                  persona={persona}
+                />
               </>
             )}
           </section>
@@ -229,7 +248,11 @@ export default async function MonitorDofPage({
                 ]}
                 rows={procurement}
               />
-              <MatchDetailList items={procurement} source={source} />
+              <MatchDetailList
+                items={procurement}
+                source={source}
+                persona={persona}
+              />
             </section>
           ) : null}
         </>
