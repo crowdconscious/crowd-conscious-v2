@@ -3,6 +3,10 @@
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
+  decideCardPrimaryAction,
+  type CardPersonaRole,
+} from '@/lib/ciceron/boletines/card-action-pure'
+import {
   buildMatchSentenceParts,
   pickMatchPrimaryAction,
 } from '@/lib/ciceron/boletines/match-sentence-pure'
@@ -22,6 +26,8 @@ export type BulletinMatchCardProps = {
   caseFileId: string | null
   sourceUrl: string | null
   reason: string
+  personaRole?: CardPersonaRole
+  needsManual?: boolean
 }
 
 const ACTION_LABEL: Record<'open' | 'capture' | 'review' | 'source', string> = {
@@ -29,6 +35,17 @@ const ACTION_LABEL: Record<'open' | 'capture' | 'review' | 'source', string> = {
   capture: copy.boletines.captureAcuerdoBtn,
   review: copy.boletines.sendReviewBtn,
   source: copy.boletines.openSource,
+}
+
+const PRIMARY_LABEL: Record<
+  'notify-client' | 'assign-pasante' | 'mark-reviewed' | 'open' | 'capture',
+  string
+> = {
+  'notify-client': copy.boletines.notifyClientBtn,
+  'assign-pasante': copy.boletines.assignPasanteBtn,
+  'mark-reviewed': copy.boletines.markReviewedBtn,
+  open: copy.boletines.openExpedienteBtn,
+  capture: copy.boletines.captureAcuerdoBtn,
 }
 
 export function BulletinMatchCard(props: BulletinMatchCardProps) {
@@ -62,9 +79,16 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
     expedienteNumber: props.expedienteNumber,
   })
 
-  const { primary, secondary } = pickMatchPrimaryAction({
+  const { secondary } = pickMatchPrimaryAction({
     caseFileId: props.caseFileId,
     sourceUrl: props.sourceUrl,
+  })
+  const primaryDecision = decideCardPrimaryAction({
+    role: props.personaRole ?? 'asociado',
+    caseFileId: props.caseFileId,
+    sourceUrl: props.sourceUrl,
+    matchKind: props.matchKind,
+    needsManual: Boolean(props.needsManual),
   })
 
   useEffect(() => {
@@ -129,18 +153,26 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
 
       <p className="cic-muted cic-match-card-reason">{props.reason}</p>
       <div className="cic-match-card-actions" ref={rootRef}>
-        {primary.external ? (
-          <a
-            className="cic-btn cic-btn-compact"
-            href={primary.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {ACTION_LABEL[primary.id]}
-          </a>
+        {primaryDecision.denied ? (
+          <div className="cic-match-primary-denied">
+            <button
+              type="button"
+              className="cic-btn cic-btn-compact"
+              disabled
+              title={primaryDecision.denyReason ?? undefined}
+              aria-disabled="true"
+            >
+              {PRIMARY_LABEL[primaryDecision.id]}
+            </button>
+            {primaryDecision.denyReason ? (
+              <p className="cic-muted cic-inline-denied" role="note">
+                {primaryDecision.denyReason}
+              </p>
+            ) : null}
+          </div>
         ) : (
-          <Link className="cic-btn cic-btn-compact" href={primary.href}>
-            {ACTION_LABEL[primary.id]}
+          <Link className="cic-btn cic-btn-compact" href={primaryDecision.href}>
+            {PRIMARY_LABEL[primaryDecision.id]}
           </Link>
         )}
         {secondary.length > 0 ? (

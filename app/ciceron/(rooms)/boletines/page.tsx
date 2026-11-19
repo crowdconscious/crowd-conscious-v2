@@ -10,6 +10,8 @@ import {
   formatDateLongEs,
   formatDateTimeEs,
 } from '@/lib/ciceron/copy/format-date'
+import type { CardPersonaRole } from '@/lib/ciceron/boletines/card-action-pure'
+import { personaHomeKind } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
 
@@ -25,6 +27,13 @@ export default async function BoletinesPage() {
   if (!persona) redirect(CICERON_BASE)
 
   const data = await loadBulletinBoard(persona)
+  const homeKind = personaHomeKind(persona.role, persona.id)
+  const personaRole = homeKind as CardPersonaRole
+  const manualStates = new Set(
+    data.manuals.map((m) => m.stateCode).concat(
+      data.board.filter((b) => b.status === 'fallo' || b.status === 'manual').map((b) => b.stateCode)
+    )
+  )
 
   await recordCiceronEvent({
     name: 'room_opened',
@@ -186,6 +195,8 @@ export default async function BoletinesPage() {
                   caseFileId={h.caseFileId}
                   sourceUrl={h.sourceUrl}
                   reason={h.reason}
+                  personaRole={personaRole}
+                  needsManual={manualStates.has(h.stateCode)}
                 />
               </li>
             ))}
