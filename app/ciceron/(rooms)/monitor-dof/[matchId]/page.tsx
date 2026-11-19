@@ -49,7 +49,16 @@ export default async function MatchDetailPage({
       />
 
       {source === 'schema' ? <MatchActions matchId={item.matchId} /> : null}
-      <MatchCollaborationPanel persona={persona} matchId={item.matchId} />
+      <MatchCollaborationPanel
+        persona={persona}
+        matchId={item.matchId}
+        whatsapp={{
+          clientName: item.clientName,
+          headline: item.title,
+          detail: item.reason,
+          officialUrl: item.officialUrl,
+        }}
+      />
     </div>
   )
 }

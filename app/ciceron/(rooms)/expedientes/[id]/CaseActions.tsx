@@ -8,6 +8,7 @@ import {
   discardDeadlineAction,
   draftClientNotifyEmail,
 } from '@/lib/ciceron/case-files/actions'
+import { WhatsAppShareButton } from '../../../_components/WhatsAppShareButton'
 
 export function DeadlineConfirm({
   caseId,
@@ -142,31 +143,40 @@ export function ClientActions({
             </div>
             <pre className="cic-outlook-body">{compose.body}</pre>
           </div>
-          {compose.status !== 'enviado_simulado' ? (
-            <button
-              type="button"
-              className="cic-btn"
-              style={{ marginTop: 10 }}
-              disabled={pending}
-              onClick={() => {
-                start(async () => {
-                  const fd = new FormData()
-                  fd.set('draftId', compose.draftId)
-                  const r = await approveClientNotifySim(fd)
-                  if (r.ok) {
-                    setCompose({ ...compose, status: 'enviado_simulado' })
-                  }
-                  setMsg(r.message ?? null)
-                })
-              }}
-            >
-              {copy.m365.notifyApprove}
-            </button>
-          ) : (
-            <p className="cic-muted" style={{ marginTop: 8 }}>
-              {copy.m365.notifySent}
-            </p>
-          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+            {compose.status !== 'enviado_simulado' ? (
+              <button
+                type="button"
+                className="cic-btn"
+                disabled={pending}
+                onClick={() => {
+                  start(async () => {
+                    const fd = new FormData()
+                    fd.set('draftId', compose.draftId)
+                    const r = await approveClientNotifySim(fd)
+                    if (r.ok) {
+                      setCompose({ ...compose, status: 'enviado_simulado' })
+                    }
+                    setMsg(r.message ?? null)
+                  })
+                }}
+              >
+                {copy.m365.notifyApprove}
+              </button>
+            ) : (
+              <p className="cic-muted" style={{ margin: 0 }}>
+                {copy.m365.notifySent}
+              </p>
+            )}
+            <WhatsAppShareButton
+              clientName={clientName}
+              headline={compose.subject}
+              detail={compose.body.slice(0, 500)}
+            />
+          </div>
+          <p className="cic-muted" style={{ fontSize: '0.75rem', marginTop: 6 }}>
+            {copy.whatsapp.sendNote}
+          </p>
         </div>
       ) : null}
 

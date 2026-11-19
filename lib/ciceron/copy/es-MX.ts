@@ -980,6 +980,12 @@ export const copy = {
     openDigest: 'Ver correo semanal (vista previa)',
   },
 
+  whatsapp: {
+    send: 'Enviar por WhatsApp',
+    sendNote:
+      'Abre WhatsApp con un mensaje listo. Usted confirma el envío; Cicerón no envía automáticamente.',
+  },
+
   morningEmail: {
     title: 'Correo de la mañana',
     lead:

@@ -10,16 +10,24 @@ import {
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
 import { MatchAssignControl } from './MatchAssignControl'
 import { MatchCommentThread } from './MatchCommentThread'
+import { WhatsAppShareButton } from './WhatsAppShareButton'
 
 /** Server composition panel — keeps monitor-dof page edits minimal. */
 export async function MatchCollaborationPanel({
   persona,
   matchId,
   compact = false,
+  whatsapp,
 }: {
   persona: DemoPersona
   matchId: string
   compact?: boolean
+  whatsapp?: {
+    clientName: string
+    headline: string
+    detail?: string
+    officialUrl?: string
+  }
 }) {
   const [members, matters, assignments, comments] = await Promise.all([
     loadFirmMembers(persona),
@@ -38,6 +46,20 @@ export async function MatchCollaborationPanel({
         borderTop: '1px solid color-mix(in srgb, currentColor 10%, transparent)',
       }}
     >
+      {whatsapp ? (
+        <div style={{ marginBottom: 12 }}>
+          <WhatsAppShareButton
+            clientName={whatsapp.clientName}
+            headline={whatsapp.headline}
+            detail={whatsapp.detail}
+            sourceLabel="Diario Oficial de la Federación"
+            officialUrl={whatsapp.officialUrl}
+          />
+          <p className="cic-muted" style={{ fontSize: '0.75rem', marginTop: 6 }}>
+            {copy.whatsapp.sendNote}
+          </p>
+        </div>
+      ) : null}
       <MatchAssignControl
         matchId={matchId}
         members={members}

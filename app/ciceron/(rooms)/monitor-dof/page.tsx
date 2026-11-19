@@ -53,6 +53,12 @@ async function MatchDetailList({
               persona={persona}
               matchId={n.matchId}
               compact
+              whatsapp={{
+                clientName: n.clientName,
+                headline: n.title,
+                detail: n.reason,
+                officialUrl: n.officialUrl,
+              }}
             />
           ) : null}
         </div>
