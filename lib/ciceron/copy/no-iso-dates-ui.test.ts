@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { buildClientTimeline } from '@/lib/ciceron/demo/client-timeline-pure'
+import { buildWeeklyDigestPreview } from '@/lib/ciceron/demo/weekly-digest-pure'
 import { formatDateLongEs, formatDateRangeEs } from '@/lib/ciceron/copy/format-date'
 
 const ISO_DATE = /\d{4}-\d{2}-\d{2}/
@@ -20,6 +21,20 @@ describe('Cicerón UI dates — no ISO in rendered labels', () => {
   it('formatDateLongEs / formatDateRangeEs stay Spanish', () => {
     assertNoIsoInUi('long', formatDateLongEs('2026-11-18'))
     assertNoIsoInUi('range', formatDateRangeEs('2026-11-16', '2026-11-22'))
+  })
+
+  it('weekly digest subject and weekLabel stay Spanish', () => {
+    const d = buildWeeklyDigestPreview({
+      partnerName: 'Socia',
+      weekStartIso: '2026-11-16',
+      weekEndIso: '2026-11-22',
+      movements: [],
+      deadlines: [],
+      reviews: [],
+    })
+    assertNoIsoInUi('digest.subject', d.subject)
+    assertNoIsoInUi('digest.weekLabel', d.weekLabel)
+    assertNoIsoInUi('digest.headline', d.headline)
   })
 
   it('client timeline dateLabel is Spanish', () => {

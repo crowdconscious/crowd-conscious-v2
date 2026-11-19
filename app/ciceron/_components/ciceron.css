@@ -2595,6 +2595,67 @@ textarea.cic-input {
   }
 }
 
+.cic-digest-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.cic-digest-mail {
+  margin-top: calc(var(--cic-space) * 2);
+  padding: calc(var(--cic-space) * 2.5);
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  background: var(--cic-surface);
+  max-width: 40rem;
+}
+
+.cic-digest-sim-badge {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--cic-rule-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+}
+
+.cic-digest-meta {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.cic-digest-headline {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.cic-digest-section-title {
+  margin: 18px 0 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.cic-digest-bullets {
+  margin: 12px 0 0;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
+.ciceron-root.is-light .cic-digest-mail,
+.ciceron-root[data-theme='light'] .cic-digest-mail {
+  background: #fff;
+  border-color: #d6d3cd;
+  color: #1a1a1a;
+}
+
 .cic-print-letterhead {
   display: none;
 }

@@ -239,6 +239,8 @@ export default async function HoyPage() {
               {' · '}
               <Link href="/ciceron/hoy/resumen-semanal">{copy.engagement.openWeekly}</Link>
               {' · '}
+              <Link href="/ciceron/hoy/digest-semanal">{copy.engagement.openDigest}</Link>
+              {' · '}
               <Link href="/ciceron/boletines/coordinador">
                 {copy.personaHome.socio.primaryLabel}
               </Link>

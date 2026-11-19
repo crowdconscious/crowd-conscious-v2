@@ -738,6 +738,21 @@ export const copy = {
     },
   },
 
+  digest: {
+    title: 'Correo semanal (vista previa)',
+    lead:
+      'Así se vería el resumen del lunes para socios. Es solo una vista previa: no se envía ningún correo.',
+    previewLabel: 'Vista previa del correo',
+    simulatedBadge: 'Simulado · no enviado',
+    subjectLabel: 'Asunto',
+    intro:
+      'Resumen breve de lo que movió la semana en sus asuntos (datos de demostración):',
+    movementsTitle: 'Qué cambió por cliente',
+    deadlinesTitle: 'Plazos de esta semana',
+    reviewsTitle: 'Revisiones pendientes',
+    quietNote: 'Nada urgente en esta sección.',
+  },
+
   clientes: {
     title: 'Clientes y asuntos',
     lead: 'Clientes ficticios del despacho de demostración y sus perfiles de vigilancia.',
@@ -861,6 +876,7 @@ export const copy = {
       'Se alcanzó el presupuesto mensual de IA. El monitoreo del Diario Oficial continúa.',
     openBriefing: 'Ver resumen de la mañana',
     openWeekly: 'Ver resumen semanal',
+    openDigest: 'Ver correo semanal (vista previa)',
   },
 } as const
 
