@@ -6,6 +6,7 @@ import {
   PartnerSummaryPreview,
 } from '../CoordinatorControls'
 import { BulletinClockStrip } from '../BulletinClockStrip'
+import { CoordinatorMexicoMap } from '../CoordinatorMexicoMap'
 import { PartnerMorningReport } from '../PartnerMorningReport'
 import { CICERON_BASE, CICERON_DEMO_LABEL } from '@/lib/ciceron/config'
 import { loadBulletinBoard } from '@/lib/ciceron/boletines/demo-data'
@@ -57,6 +58,8 @@ export default async function CoordinadorBoletinesPage() {
       </p>
 
       <BulletinClockStrip board={data.board} />
+
+      <CoordinatorMexicoMap board={data.board} />
 
       <section className="cic-section" aria-labelledby="coord-board">
         <h2 id="coord-board" className="cic-h2">

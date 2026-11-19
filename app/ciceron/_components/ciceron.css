@@ -2081,3 +2081,123 @@ textarea.cic-input {
     min-width: 2.5rem;
   }
 }
+
+/* —— Coordinator Mexico map —— */
+.cic-coord-map-lead {
+  font-size: 0.9rem;
+  margin: calc(var(--cic-space) * 0.75) 0 calc(var(--cic-space) * 1.5);
+}
+
+.cic-coord-progress {
+  margin-bottom: calc(var(--cic-space) * 1.5);
+}
+
+.cic-coord-progress-track {
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--cic-surface);
+  border: 1px solid var(--cic-rule);
+  overflow: hidden;
+}
+
+.cic-coord-progress-fill {
+  height: 100%;
+  background: var(--cic-accent-gradient);
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+
+.cic-coord-progress-label {
+  margin: calc(var(--cic-space) * 0.75) 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--cic-ink);
+}
+
+.cic-coord-map-legend {
+  list-style: none;
+  margin: 0 0 calc(var(--cic-space) * 1.5);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 2);
+}
+
+.cic-coord-map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--cic-ink);
+}
+
+.cic-coord-map-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 2px;
+  border: 1px solid var(--cic-rule-strong);
+  flex-shrink: 0;
+}
+
+.cic-coord-map-legend-item.is-revisado .cic-coord-map-swatch {
+  background: #0f3d2e;
+  border-color: #6ee7b7;
+}
+.cic-coord-map-state.is-revisado {
+  fill: #0f3d2e;
+  stroke: #6ee7b7;
+}
+
+.cic-coord-map-legend-item.is-revision_pendiente .cic-coord-map-swatch {
+  background: #3a2e12;
+  border-color: #e0b86a;
+}
+.cic-coord-map-state.is-revision_pendiente {
+  fill: #3a2e12;
+  stroke: #e0b86a;
+}
+
+.cic-coord-map-legend-item.is-fallo .cic-coord-map-swatch {
+  background: #3a1518;
+  border-color: #f0a0a0;
+}
+.cic-coord-map-state.is-fallo {
+  fill: #3a1518;
+  stroke: #f0a0a0;
+}
+
+.cic-coord-map-legend-item.is-sin_publicacion .cic-coord-map-swatch {
+  background: #152033;
+  border-color: #2a3a52;
+}
+.cic-coord-map-state.is-sin_publicacion {
+  fill: #152033;
+  stroke: #2a3a52;
+}
+
+.cic-coord-map-frame {
+  border: 1px solid var(--cic-rule);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+  padding: calc(var(--cic-space) * 1.5);
+  overflow: hidden;
+}
+
+.cic-coord-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+}
+
+.cic-coord-map-state {
+  stroke-width: 1;
+  cursor: default;
+  outline: none;
+}
+
+.cic-coord-map-state:focus-visible {
+  stroke: var(--cic-accent-mint);
+  stroke-width: 2.5;
+}
