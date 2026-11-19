@@ -331,6 +331,24 @@ export const copy = {
       plazosEstaSemana: 'Plazos esta semana',
       pendientesRevision: 'Pendientes de revisión',
     },
+    partnerCoverage: {
+      title: 'Cobertura por entidad',
+      lead:
+        'Mapa de los estados que vigila el despacho. El color indica si ya están al día, si hay novedades, o si falta verificar.',
+      legendAria: 'Leyenda de cobertura',
+      mapAria: 'Mapa de México con el estado de cobertura por entidad',
+      prompt: 'Seleccione una entidad para ver sus coincidencias.',
+      openMatches: 'Ver coincidencias del estado',
+      hitsLine: (exact: number, possible: number) =>
+        `${exact} coincidencia${exact === 1 ? '' : 's'} exacta${exact === 1 ? '' : 's'} · ${possible} posible${possible === 1 ? '' : 's'}`,
+      legend: {
+        al_dia: 'Al día',
+        con_novedades: 'Con novedades',
+        por_verificar: 'Por verificar',
+      },
+      filterActive: (stateName: string) => `Mostrando coincidencias de ${stateName}`,
+      clearFilter: 'Ver todas las entidades',
+    },
     actionsTitle: 'Qué atender primero',
     actionsLead: 'Ordenadas por urgencia: revisiones manuales, cola de revisión, plazos y coincidencias.',
     actionsEmpty: 'No hay acciones pendientes en la demostración de esta mañana.',

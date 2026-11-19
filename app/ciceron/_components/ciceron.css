@@ -2351,6 +2351,44 @@ textarea.cic-input {
   stroke: #2a3a52;
 }
 
+/* Partner coverage hero (socio Hoy) — al día / con novedades / por verificar */
+.cic-coord-map-legend-item.is-partner-al_dia .cic-coord-map-swatch,
+.cic-bol-status.is-partner-al_dia {
+  background: #0f3d2e;
+  border-color: #6ee7b7;
+  color: #6ee7b7;
+}
+.cic-coord-map-state.is-partner-al_dia {
+  fill: #0f3d2e;
+  stroke: #6ee7b7;
+}
+
+.cic-coord-map-legend-item.is-partner-con_novedades .cic-coord-map-swatch,
+.cic-bol-status.is-partner-con_novedades {
+  background: #1a2438;
+  border-color: #a8c0e8;
+  color: #a8c0e8;
+}
+.cic-coord-map-state.is-partner-con_novedades {
+  fill: #1a3048;
+  stroke: #a8c0e8;
+}
+
+.cic-coord-map-legend-item.is-partner-por_verificar .cic-coord-map-swatch,
+.cic-bol-status.is-partner-por_verificar {
+  background: #3a2e12;
+  border-color: #e0b86a;
+  color: #e0b86a;
+}
+.cic-coord-map-state.is-partner-por_verificar {
+  fill: #3a2e12;
+  stroke: #e0b86a;
+}
+
+.cic-partner-coverage {
+  margin-top: calc(var(--cic-space) * 1);
+}
+
 .cic-coord-map-frame {
   border: 1px solid var(--cic-rule);
   border-radius: var(--cic-radius);

@@ -28,13 +28,28 @@ function statusClass(status: string): string {
   return 'cic-bol-status is-good'
 }
 
-export default async function BoletinesPage() {
+export default async function BoletinesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ estado?: string }>
+}) {
   const persona = await getCiceronDemoSession()
   if (!persona) redirect(CICERON_BASE)
+
+  const params = searchParams ? await searchParams : {}
+  const estadoFilter = params.estado?.trim().toUpperCase() || null
 
   const data = await loadBulletinBoard(persona)
   const homeKind = personaHomeKind(persona.role, persona.id)
   const personaRole = homeKind as CardPersonaRole
+  const filteredHits = estadoFilter
+    ? data.hits.filter((h) => h.stateCode.toUpperCase() === estadoFilter)
+    : data.hits
+  const filterStateName =
+    estadoFilter == null
+      ? null
+      : data.board.find((b) => b.stateCode.toUpperCase() === estadoFilter)?.stateName ??
+        estadoFilter
   const manualStates = new Set(
     data.manuals.map((m) => m.stateCode).concat(
       data.board.filter((b) => b.status === 'fallo' || b.status === 'manual').map((b) => b.stateCode)
@@ -175,10 +190,17 @@ export default async function BoletinesPage() {
         <h2 id="bol-hits" className="cic-h2">
           {copy.boletines.hitsTitle}
         </h2>
+        {filterStateName ? (
+          <p className="cic-hoy-links" role="status">
+            {copy.hoy.partnerCoverage.filterActive(filterStateName)}
+            {' · '}
+            <Link href="/ciceron/boletines">{copy.hoy.partnerCoverage.clearFilter}</Link>
+          </p>
+        ) : null}
         <p className="cic-bol-notice" role="note">
           {copy.boletines.informative}
         </p>
-        {data.hits.length === 0 ? (
+        {filteredHits.length === 0 ? (
           <EmptyState
             title={copy.empty.calmTitle}
             href="/ciceron/hoy"
@@ -196,7 +218,7 @@ export default async function BoletinesPage() {
         ) : (
           (() => {
             let pageDenialReason: string | null = null
-            const cards = data.hits.map((h) => {
+            const cards = filteredHits.map((h) => {
               const needsManual = manualStates.has(h.stateCode)
               const primary = decideCardPrimaryAction({
                 role: personaRole,
