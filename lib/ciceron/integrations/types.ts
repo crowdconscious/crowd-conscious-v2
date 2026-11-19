@@ -48,8 +48,10 @@ export const WORKSPACE_PROVIDER_LABELS: Record<WorkspaceProviderId, string> = {
   google_workspace: 'Google Workspace',
 }
 
-/** Minimal Google OAuth scopes — drafts + calendar events + drive read. */
+/** Minimal Google OAuth scopes — drafts + calendar events + drive read + identity. */
 export const GOOGLE_OAUTH_SCOPES = [
+  'openid',
+  'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/drive.readonly',

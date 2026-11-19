@@ -999,13 +999,22 @@ export const copy = {
     connected: 'conectado',
     disconnected: 'desconectado',
     openM365: 'Abrir conexión Microsoft 365',
-    connectGoogle: 'Conectar Google Workspace (demostración)',
+    connectGoogle: 'Conectar Google Workspace',
+    connectGoogleSim: 'Simular conexión (sin OAuth)',
     disconnectGoogle: 'Desconectar Google',
     googleDisabled: 'desactivado',
     googleDisabledHint:
       'Active CICERON_GOOGLE_ENABLED y configure OAuth en Google Cloud para habilitarlo.',
     googleScopes:
-      'Alcances mínimos: Gmail compose (borradores), Calendar events, Drive readonly.',
+      'Alcances mínimos: Gmail compose (borradores), Calendar events, Drive readonly. Los tokens se guardan cifrados solo en el servidor.',
+    createGmailDraft: 'Crear borrador Gmail de notificación al cliente',
+    listCalendar: 'Listar eventos próximos de Calendar',
+    liveActionsNote:
+      'Borradores únicamente — Cicerón nunca envía el correo. Requiere OAuth real y CICERON_TOKEN_ENCRYPTION_KEY.',
+    oauthReadyHint:
+      'Se abrirá el consentimiento de Google (app Internal del dominio Workspace).',
+    oauthMissingHint:
+      'Faltan GOOGLE_OAUTH_CLIENT_ID / SECRET / REDIRECT_URI o CICERON_TOKEN_ENCRYPTION_KEY. Puede simular la conexión para capturas.',
     openPrefs: 'Integraciones',
   },
 

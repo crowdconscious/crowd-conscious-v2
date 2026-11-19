@@ -1,13 +1,23 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
-import { isGoogleWorkspaceEnabled } from './google-gate'
+import { isGoogleWorkspaceEnabled, readGoogleOAuthEnv } from './google-gate'
 import {
   writeGoogleCookieStatus,
   buildGoogleOAuthAuthorizeUrl,
 } from './google-provider'
+import {
+  clearGoogleOAuthTokens,
+  hasStoredGoogleOAuth,
+} from './google-oauth'
+import {
+  buildDemoClientNotificationDraft,
+  createGmailDraft,
+  listUpcomingGoogleCalendarEvents,
+} from './google-api'
 import {
   savePreferredWorkspaceProvider,
 } from './registry'
@@ -26,6 +36,22 @@ export async function setWorkspaceProviderAction(
   revalidatePath('/ciceron/expedientes/outlook')
 }
 
+/** Starts real Google OAuth when client env is configured; otherwise no-op. */
+export async function startGoogleOAuthAction(): Promise<void> {
+  const persona = await getCiceronDemoSession()
+  if (!persona) return
+  if (!isGoogleWorkspaceEnabled()) return
+  const env = readGoogleOAuthEnv()
+  if (!env.clientId || !env.clientSecret || !env.redirectUri) return
+
+  const url = buildGoogleOAuthAuthorizeUrl(
+    `firm:${persona.firmId}:actor:${persona.id}`
+  )
+  if (!url) return
+  redirect(url)
+}
+
+/** Demo-only cookie/status without tokens — kept for offline screenshots. */
 export async function connectGoogleSimAction(): Promise<void> {
   const persona = await getCiceronDemoSession()
   if (!persona) return
@@ -50,10 +76,14 @@ export async function connectGoogleSimAction(): Promise<void> {
   revalidatePath('/ciceron/preferencias/integraciones')
 }
 
-export async function disconnectGoogleSimAction(): Promise<void> {
+export async function disconnectGoogleAction(): Promise<void> {
   const persona = await getCiceronDemoSession()
   if (!persona) return
   await writeGoogleCookieStatus('disconnected')
+  await clearGoogleOAuthTokens({
+    firmId: persona.firmId,
+    actorId: persona.id,
+  })
   const db = tryCreateCiceronAdminClient()
   if (db) {
     await db
@@ -67,9 +97,79 @@ export async function disconnectGoogleSimAction(): Promise<void> {
   revalidatePath('/ciceron/preferencias/integraciones')
 }
 
-/** Returns authorize URL when OAuth env is configured; otherwise null (use sim). */
+/** @deprecated alias */
+export async function disconnectGoogleSimAction(): Promise<void> {
+  return disconnectGoogleAction()
+}
+
 export async function getGoogleAuthorizeUrlAction(): Promise<string | null> {
   const persona = await getCiceronDemoSession()
   if (!persona) return null
   return buildGoogleOAuthAuthorizeUrl(`firm:${persona.firmId}:actor:${persona.id}`)
+}
+
+export async function createGoogleClientDraftAction(): Promise<{
+  ok: boolean
+  message: string
+  draftId?: string
+}> {
+  const persona = await getCiceronDemoSession()
+  if (!persona) return { ok: false, message: 'Sin sesión' }
+  if (!isGoogleWorkspaceEnabled()) {
+    return { ok: false, message: 'CICERON_GOOGLE_ENABLED off' }
+  }
+  const connected = await hasStoredGoogleOAuth({
+    firmId: persona.firmId,
+    actorId: persona.id,
+  })
+  if (!connected) {
+    return { ok: false, message: 'Conecte Google Workspace primero' }
+  }
+
+  const result = await createGmailDraft({
+    firmId: persona.firmId,
+    actorId: persona.id,
+    input: buildDemoClientNotificationDraft(),
+  })
+  revalidatePath('/ciceron/preferencias/integraciones')
+  if (!result.ok) {
+    return { ok: false, message: result.reason }
+  }
+  return {
+    ok: true,
+    message: `Borrador Gmail creado (${result.draftId}). No se envió.`,
+    draftId: result.draftId,
+  }
+}
+
+export async function listGoogleCalendarAction(): Promise<{
+  ok: boolean
+  message: string
+  events: Array<{ id: string; summary: string; start: string }>
+}> {
+  const persona = await getCiceronDemoSession()
+  if (!persona) return { ok: false, message: 'Sin sesión', events: [] }
+  if (!isGoogleWorkspaceEnabled()) {
+    return { ok: false, message: 'CICERON_GOOGLE_ENABLED off', events: [] }
+  }
+
+  const result = await listUpcomingGoogleCalendarEvents({
+    firmId: persona.firmId,
+    actorId: persona.id,
+  })
+  if (!result.ok) {
+    return { ok: false, message: result.reason, events: [] }
+  }
+  return {
+    ok: true,
+    message:
+      result.events.length === 0
+        ? 'Sin eventos próximos en el calendario principal.'
+        : `${result.events.length} evento(s) próximos.`,
+    events: result.events.map((e) => ({
+      id: e.id,
+      summary: e.summary,
+      start: e.start,
+    })),
+  }
 }

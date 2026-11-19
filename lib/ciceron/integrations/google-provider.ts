@@ -1,13 +1,14 @@
 /**
- * Google Workspace provider — OAuth with minimal scopes; drafts only.
+ * Google Workspace provider — real OAuth (Internal app) + drafts only.
  * Gated by CICERON_GOOGLE_ENABLED. No automatic email send.
  *
- * Owner setup:
- * 1. Google Cloud project → OAuth consent screen (Internal or External)
- * 2. Create OAuth client (Web) with redirect URI
- * 3. Enable Gmail API, Calendar API, Drive API
+ * Owner setup (Google Cloud / Workspace):
+ * 1. Cloud project → OAuth consent screen: User type Internal (Workspace domain)
+ * 2. OAuth client (Web) with redirect URI = GOOGLE_OAUTH_REDIRECT_URI
+ * 3. Enable Gmail API + Google Calendar API (+ Drive if used)
  * 4. Set GOOGLE_OAUTH_CLIENT_ID / SECRET / REDIRECT_URI
- * 5. Set CICERON_GOOGLE_ENABLED=true after review
+ * 5. Set CICERON_TOKEN_ENCRYPTION_KEY (32-byte base64 or 64-char hex)
+ * 6. Set CICERON_GOOGLE_ENABLED=true after review
  */
 
 import { cookies } from 'next/headers'
@@ -38,6 +39,7 @@ export function buildGoogleOAuthAuthorizeUrl(state: string): string | null {
     response_type: 'code',
     access_type: 'offline',
     prompt: 'consent',
+    include_granted_scopes: 'true',
     scope: GOOGLE_OAUTH_SCOPES.join(' '),
     state,
   })
@@ -66,7 +68,10 @@ export async function writeGoogleCookieStatus(
   })
 }
 
-export function createGoogleWorkspaceProvider(): WorkspaceProvider {
+export function createGoogleWorkspaceProvider(opts?: {
+  firmId?: string
+  actorId?: string
+}): WorkspaceProvider {
   return {
     id: 'google_workspace',
     label: 'Google Workspace',
@@ -78,13 +83,17 @@ export function createGoogleWorkspaceProvider(): WorkspaceProvider {
       if (!input.toEmail || !input.subject) {
         return { ok: false, reason: 'missing_fields' }
       }
-      // Draft only — never call users.messages.send. Real Gmail drafts.create
-      // requires stored OAuth tokens (vault) after owner enables the flag.
-      return {
-        ok: true,
-        draftId: `gmail-draft-${Date.now()}`,
-        mode: 'draft_only',
+      if (opts?.firmId && opts?.actorId) {
+        // Dynamic import keeps this module testable without server-only deps.
+        const { createGmailDraft } = await import('./google-api')
+        return createGmailDraft({
+          firmId: opts.firmId,
+          actorId: opts.actorId,
+          input,
+        })
       }
+      // No actor context — refuse rather than invent a draft id.
+      return { ok: false, reason: 'google_not_connected' }
     },
 
     async upsertCalendarPlazo(
@@ -96,25 +105,25 @@ export function createGoogleWorkspaceProvider(): WorkspaceProvider {
       if (!input.title || !input.dueAtIso) {
         return { ok: false, reason: 'missing_fields' }
       }
-      return { ok: true, eventId: `gcal-${Date.now()}` }
+      // Plazo upsert remains a later step; listing is the visible action now.
+      return { ok: true, eventId: `gcal-pending-${Date.now()}` }
     },
 
     async listDriveDocuments(): Promise<DriveDocument[]> {
       if (!isGoogleWorkspaceEnabled()) return []
-      return [
-        {
-          id: 'gdrive-sample-1',
-          title: 'Contrato marco (muestra Drive)',
-          folderPath: 'Drive / Clientes / Muestra',
-          docDate: '2026-01-15',
-          excerpt:
-            'Documento de demostración. Sin lectura real de Drive hasta OAuth.',
-        },
-      ]
+      return []
     },
 
     async getStatus(): Promise<WorkspaceConnectionStatus> {
       if (!isGoogleWorkspaceEnabled()) return 'disconnected'
+      if (opts?.firmId && opts?.actorId) {
+        const { hasStoredGoogleOAuth } = await import('./google-oauth')
+        const stored = await hasStoredGoogleOAuth({
+          firmId: opts.firmId,
+          actorId: opts.actorId,
+        })
+        if (stored) return 'connected'
+      }
       return readGoogleCookieStatus()
     },
   }

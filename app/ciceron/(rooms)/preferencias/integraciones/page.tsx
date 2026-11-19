@@ -2,12 +2,19 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { GoogleLiveActions } from '@/app/ciceron/_components/GoogleLiveActions'
 import {
   connectGoogleSimAction,
-  disconnectGoogleSimAction,
+  disconnectGoogleAction,
   setWorkspaceProviderAction,
+  startGoogleOAuthAction,
 } from '@/lib/ciceron/integrations/actions'
-import { isGoogleWorkspaceEnabled } from '@/lib/ciceron/integrations/google-gate'
+import {
+  isGoogleWorkspaceEnabled,
+  readGoogleOAuthEnv,
+} from '@/lib/ciceron/integrations/google-gate'
+import { readTokenEncryptionKey } from '@/lib/ciceron/integrations/token-crypto'
+import { hasStoredGoogleOAuth } from '@/lib/ciceron/integrations/google-oauth'
 import {
   getWorkspaceProvider,
   loadPreferredWorkspaceProvider,
@@ -22,9 +29,23 @@ export default async function IntegracionesPrefsPage() {
 
   const preferred = await loadPreferredWorkspaceProvider(persona)
   const googleOn = isGoogleWorkspaceEnabled()
+  const oauthEnv = readGoogleOAuthEnv()
+  const encKey = readTokenEncryptionKey()
+  const oauthReady = Boolean(
+    oauthEnv.clientId &&
+      oauthEnv.clientSecret &&
+      oauthEnv.redirectUri &&
+      encKey
+  )
   const m365 = await loadM365Status(persona)
   const google = getWorkspaceProvider('google_workspace')
-  const googleStatus = await google.getStatus()
+  const oauthConnected = await hasStoredGoogleOAuth({
+    firmId: persona.firmId,
+    actorId: persona.id,
+  })
+  const googleStatus = oauthConnected
+    ? 'connected'
+    : await google.getStatus()
 
   return (
     <div>
@@ -96,21 +117,38 @@ export default async function IntegracionesPrefsPage() {
           {copy.integrations.googleScopes}
         </p>
         {googleOn ? (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-            {googleStatus !== 'connected' ? (
-              <form action={connectGoogleSimAction}>
-                <button type="submit" className="cic-btn">
-                  {copy.integrations.connectGoogle}
-                </button>
-              </form>
-            ) : (
-              <form action={disconnectGoogleSimAction}>
-                <button type="submit" className="cic-btn cic-btn-secondary">
-                  {copy.integrations.disconnectGoogle}
-                </button>
-              </form>
-            )}
-          </div>
+          <>
+            <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
+              {oauthReady
+                ? copy.integrations.oauthReadyHint
+                : copy.integrations.oauthMissingHint}
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              {googleStatus !== 'connected' ? (
+                <>
+                  {oauthReady ? (
+                    <form action={startGoogleOAuthAction}>
+                      <button type="submit" className="cic-btn">
+                        {copy.integrations.connectGoogle}
+                      </button>
+                    </form>
+                  ) : null}
+                  <form action={connectGoogleSimAction}>
+                    <button type="submit" className="cic-btn cic-btn-secondary">
+                      {copy.integrations.connectGoogleSim}
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <form action={disconnectGoogleAction}>
+                  <button type="submit" className="cic-btn cic-btn-secondary">
+                    {copy.integrations.disconnectGoogle}
+                  </button>
+                </form>
+              )}
+            </div>
+            {oauthConnected ? <GoogleLiveActions /> : null}
+          </>
         ) : (
           <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
             {copy.integrations.googleDisabledHint}
