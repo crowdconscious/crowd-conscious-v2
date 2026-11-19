@@ -15,9 +15,14 @@ import {
   GuidedStoryResumeBar,
   GuidedStoryStartButton,
 } from './GuidedStory'
+import { ProAssistant, ProAssistantButton } from './ProAssistant'
 import { ThemeToggle } from './ThemeToggle'
 import { MatterChromeProvider, useMatterChrome } from './MatterChrome'
 import { PersonaSwitcher, type SwitchablePersona } from './PersonaSwitcher'
+import type {
+  ProClientRef,
+  ProPersonaRole,
+} from '@/lib/ciceron/demo/pro-assistant-pure'
 import './ciceron.css'
 
 export type ShellMeta = {
@@ -33,6 +38,10 @@ export type ShellMeta = {
   guidedStory?: GuidedStoryState | null
   /** True when this session came from a prospect (non-admin) invite. */
   isProspectSession?: boolean
+  proRole?: ProPersonaRole
+  proClients?: ProClientRef[]
+  proPlazosSoonCount?: number
+  proClientsMovedCount?: number
 }
 
 const RAIL_COLLAPSE_KEY = 'ciceron-rail-collapsed'
@@ -65,15 +74,21 @@ function ShellInner({
 }) {
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [proOpen, setProOpen] = useState(false)
   const [railCollapsed, setRailCollapsed] = useState(false)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        setPaletteOpen((v) => !v)
+        // Partners: Cmd/Ctrl+K opens the Pro assistant (demo). Room search stays on Buscar.
+        setProOpen((v) => !v)
+        setPaletteOpen(false)
       }
-      if (e.key === 'Escape') setPaletteOpen(false)
+      if (e.key === 'Escape') {
+        setPaletteOpen(false)
+        setProOpen(false)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -221,11 +236,10 @@ function ShellInner({
               type="button"
               className="cic-cmd-btn"
               onClick={() => setPaletteOpen(true)}
-              aria-keyshortcuts="Meta+K Control+K"
             >
               {copy.topbar.commandHint}
-              <kbd>{copy.topbar.commandShortcut}</kbd>
             </button>
+            <ProAssistantButton onOpen={() => setProOpen(true)} />
             {meta.guidedStory?.dismissed || meta.guidedStory?.completed ? (
               <GuidedStoryStartButton />
             ) : null}
@@ -260,6 +274,14 @@ function ShellInner({
         })}
       </nav>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <ProAssistant
+        open={proOpen}
+        onClose={() => setProOpen(false)}
+        role={meta.proRole ?? 'socio'}
+        clients={meta.proClients}
+        plazosSoonCount={meta.proPlazosSoonCount}
+        clientsMovedCount={meta.proClientsMovedCount}
+      />
     </div>
   )
 }
