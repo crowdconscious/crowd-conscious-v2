@@ -1,11 +1,16 @@
 /**
  * Partner-facing coverage labels for the socio home map.
  * Maps board rows + hit counts → al día / con novedades / por verificar.
+ * States the firm does not cover stay sin_cobertura (neutral), never por_verificar.
  */
 
 import type { MapBoardStatus } from './map-progress-pure'
 
-export type PartnerCoverageStatus = 'al_dia' | 'con_novedades' | 'por_verificar'
+export type PartnerCoverageStatus =
+  | 'al_dia'
+  | 'con_novedades'
+  | 'por_verificar'
+  | 'sin_cobertura'
 
 export type PartnerCoverageRow = {
   stateCode: string
@@ -30,6 +35,14 @@ export function partnerCoverageStatus(row: PartnerCoverageRow): PartnerCoverageS
     return 'al_dia'
   }
   return 'por_verificar'
+}
+
+/** Status for a map state: board row if covered, else neutral sin cobertura. */
+export function partnerCoverageStatusForState(
+  row: PartnerCoverageRow | undefined
+): PartnerCoverageStatus {
+  if (!row) return 'sin_cobertura'
+  return partnerCoverageStatus(row)
 }
 
 export function partnerCoverageByState(

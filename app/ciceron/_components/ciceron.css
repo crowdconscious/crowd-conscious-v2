@@ -2385,8 +2385,49 @@ textarea.cic-input {
   stroke: #e0b86a;
 }
 
+.cic-coord-map-legend-item.is-partner-sin_cobertura .cic-coord-map-swatch,
+.cic-bol-status.is-partner-sin_cobertura {
+  background: #152033;
+  border-color: #2a3a52;
+  color: #a8b6c9;
+}
+.cic-coord-map-state.is-partner-sin_cobertura {
+  fill: #101826;
+  stroke: #2a3a52;
+}
+
+.cic-hoy-partner-hero-band {
+  display: grid;
+  gap: calc(var(--cic-space) * 1.25);
+  margin: calc(var(--cic-space) * 1.25) 0 calc(var(--cic-space) * 1.5);
+}
+
+.cic-hoy-partner-hero-band > .cic-su-manana-metrics {
+  margin: 0;
+}
+
+.cic-hoy-partner-hero-band > .cic-partner-coverage {
+  margin: 0;
+}
+
+.cic-hoy-partner-hero-band .cic-partner-coverage-svg {
+  max-height: 360px;
+}
+
+@media (min-width: 1100px) {
+  .cic-hoy-partner-hero-band:not(.is-metrics-only) {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cic-hoy-partner-hero-band:not(.is-metrics-only) > .cic-su-manana-metrics {
+    grid-template-columns: 1fr;
+    gap: calc(var(--cic-space) * 0.85);
+  }
+}
+
 .cic-partner-coverage {
-  margin-top: calc(var(--cic-space) * 1);
+  margin-top: 0;
 }
 
 .cic-coord-map-frame {

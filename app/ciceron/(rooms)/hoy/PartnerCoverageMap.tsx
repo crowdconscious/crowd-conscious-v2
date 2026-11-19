@@ -9,7 +9,7 @@ import {
 } from '@/lib/ciceron/boletines/mexico-state-paths'
 import {
   partnerCoverageByState,
-  partnerCoverageStatus,
+  partnerCoverageStatusForState,
   partnerStateMatchesHref,
   type PartnerCoverageStatus,
 } from '@/lib/ciceron/boletines/partner-coverage-status-pure'
@@ -17,7 +17,12 @@ import { pickDefaultStateCode } from '@/lib/ciceron/boletines/map-state-panel-pu
 import type { CoordinatorMapRow } from '../boletines/CoordinatorMexicoMap'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 
-const LEGEND: PartnerCoverageStatus[] = ['al_dia', 'con_novedades', 'por_verificar']
+const LEGEND: PartnerCoverageStatus[] = [
+  'al_dia',
+  'con_novedades',
+  'por_verificar',
+  'sin_cobertura',
+]
 
 const FULL_NAME_BY_BOARD = (() => {
   const map = new Map<string, string>()
@@ -34,8 +39,8 @@ function fullStateName(boardCode: string, fallback?: string | null): string {
 
 /**
  * Socio home hero: reuses the Mexico SVG paths from the coordinator map
- * with partner-facing status (al día / con novedades / por verificar)
- * and a click-through to that state's matches.
+ * with partner-facing status (al día / con novedades / por verificar).
+ * Only firm-covered states are colored; the rest stay neutral sin cobertura.
  */
 export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
   const titleId = useId()
@@ -62,7 +67,7 @@ export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
   const selected = useMemo(() => {
     if (!selectedCode) return null
     const row = board.find((r) => r.stateCode === selectedCode)
-    const status = coverage.get(selectedCode) ?? 'por_verificar'
+    const status = partnerCoverageStatusForState(row)
     return {
       stateCode: selectedCode,
       stateName: fullStateName(selectedCode, row?.stateName),
@@ -70,6 +75,7 @@ export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
       statusLabel: copy.hoy.partnerCoverage.legend[status],
       hitsExact: row?.hitsExact ?? 0,
       hitsPossible: row?.hitsPossible ?? 0,
+      covered: Boolean(row),
       href: partnerStateMatchesHref(selectedCode),
     }
   }, [selectedCode, board, coverage])
@@ -112,7 +118,7 @@ export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
       <div className={`cic-coord-map-layout${selected ? ' has-panel' : ''}`}>
         <div className="cic-coord-map-frame">
           <svg
-            className="cic-coord-map-svg"
+            className="cic-coord-map-svg cic-partner-coverage-svg"
             viewBox={MEXICO_MAP_VIEWBOX}
             role="list"
             aria-label={copy.hoy.partnerCoverage.mapAria}
@@ -121,9 +127,7 @@ export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
             {MEXICO_STATE_PATHS.map((state) => {
               const boardCode = MEXICO_ISO_TO_BOARD[state.id] ?? state.id
               const row = board.find((r) => r.stateCode === boardCode)
-              const status = row
-                ? partnerCoverageStatus(row)
-                : coverage.get(boardCode) ?? 'por_verificar'
+              const status = partnerCoverageStatusForState(row)
               const label = fullStateName(boardCode, state.name)
               const statusWord = copy.hoy.partnerCoverage.legend[status]
               const isSelected = selectedCode === boardCode
@@ -134,7 +138,11 @@ export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
                   className={`cic-coord-map-state is-partner-${status}${isSelected ? ' is-selected' : ''}`}
                   tabIndex={0}
                   role="listitem"
-                  aria-label={`${label}: ${statusWord}. ${copy.hoy.partnerCoverage.openMatches}`}
+                  aria-label={`${label}: ${statusWord}. ${
+                    row
+                      ? copy.hoy.partnerCoverage.openMatches
+                      : copy.hoy.partnerCoverage.noCoverage(label)
+                  }`}
                   aria-pressed={isSelected}
                   onClick={() => selectState(boardCode)}
                   onKeyDown={(e) => {
@@ -173,19 +181,30 @@ export function PartnerCoverageMap({ board }: { board: CoordinatorMapRow[] }) {
             <p className="cic-demo-inline" style={{ margin: '4px 0 10px' }}>
               {copy.demoLabel}
             </p>
-            <p style={{ margin: '0 0 12px' }}>
-              <span className={`cic-bol-status is-partner-${selected.status}`}>
-                {selected.statusLabel}
-              </span>
-            </p>
-            <p className="cic-muted" style={{ margin: '0 0 12px', fontSize: '0.95rem' }}>
-              {copy.hoy.partnerCoverage.hitsLine(selected.hitsExact, selected.hitsPossible)}
-            </p>
-            <p style={{ margin: 0 }}>
-              <Link href={selected.href} className="cic-btn cic-btn-compact">
-                {copy.hoy.partnerCoverage.openMatches}
-              </Link>
-            </p>
+            {selected.covered ? (
+              <>
+                <p style={{ margin: '0 0 12px' }}>
+                  <span className={`cic-bol-status is-partner-${selected.status}`}>
+                    {selected.statusLabel}
+                  </span>
+                </p>
+                <p className="cic-muted" style={{ margin: '0 0 12px', fontSize: '0.95rem' }}>
+                  {copy.hoy.partnerCoverage.hitsLine(
+                    selected.hitsExact,
+                    selected.hitsPossible
+                  )}
+                </p>
+                <p style={{ margin: 0 }}>
+                  <Link href={selected.href} className="cic-btn cic-btn-compact">
+                    {copy.hoy.partnerCoverage.openMatches}
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <p className="cic-coord-state-empty" role="status">
+                {copy.hoy.partnerCoverage.noCoverage(selected.stateName)}
+              </p>
+            )}
           </aside>
         ) : (
           <aside className="cic-coord-state-panel cic-coord-state-prompt" role="status">

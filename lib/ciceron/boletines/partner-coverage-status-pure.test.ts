@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import {
   partnerCoverageByState,
   partnerCoverageStatus,
+  partnerCoverageStatusForState,
   partnerStateMatchesHref,
 } from './partner-coverage-status-pure'
 
@@ -35,6 +36,14 @@ describe('partner-coverage-status-pure', () => {
     }
   })
 
+  it('marks states without a board row as sin cobertura', () => {
+    assert.equal(partnerCoverageStatusForState(undefined), 'sin_cobertura')
+    assert.equal(
+      partnerCoverageStatusForState({ stateCode: 'QRO', status: 'revisado', hitsExact: 1 }),
+      'con_novedades'
+    )
+  })
+
   it('builds a state map and matches href', () => {
     const by = partnerCoverageByState([
       { stateCode: 'CDMX', status: 'revisado', hitsExact: 0 },
@@ -42,6 +51,7 @@ describe('partner-coverage-status-pure', () => {
     ])
     assert.equal(by.get('CDMX'), 'al_dia')
     assert.equal(by.get('MEX'), 'con_novedades')
+    assert.equal(by.has('OAX'), false)
     assert.equal(partnerStateMatchesHref('cdmx'), '/ciceron/boletines?estado=CDMX')
   })
 })

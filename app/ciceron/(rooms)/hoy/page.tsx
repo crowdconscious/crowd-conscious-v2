@@ -7,6 +7,7 @@ import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
 import { SuMananaHero, type DeniedActionNote } from '../../_components/SuMananaHero'
 import { PartnerCoverageMap } from './PartnerCoverageMap'
+import { applyHitCountsToBoard } from '@/lib/ciceron/boletines/board-hit-counts-pure'
 import { WeekDeadlineStrip } from '../../_components/WeekDeadlineStrip'
 import { DeadlineCountdown } from '../../_components/DeadlineCountdown'
 import { PersonaStartPanel } from '../../_components/PersonaStartPanel'
@@ -179,6 +180,8 @@ export default async function HoyPage() {
     actions,
   })
 
+  const boardWithHits = applyHitCountsToBoard(bulletins.board, bulletins.hits)
+
   const asuntosMetric =
     morning.metrics.find((m) => m.id === 'asuntosConNovedad')?.value ?? 0
   const plazosMetric =
@@ -193,6 +196,20 @@ export default async function HoyPage() {
     reviewsPending: reviewsMetric,
   })
 
+  const showPartnerMap = homeKind === 'socio' || homeKind === 'admin'
+  const partnerMap = showPartnerMap ? (
+    <PartnerCoverageMap
+      board={boardWithHits.map((r) => ({
+        stateCode: r.stateCode,
+        stateName: r.stateName,
+        status: r.status,
+        statusLabel: r.statusLabel,
+        hitsExact: r.hitsExact,
+        hitsPossible: r.hitsPossible,
+      }))}
+    />
+  ) : null
+
   return (
     <div className="cic-hoy-layout">
       <div className="cic-hoy-primary">
@@ -201,20 +218,8 @@ export default async function HoyPage() {
           actions={morning.actions}
           deniedNotes={deniedNotes}
           dailyLine={dailyLine}
+          coverageHero={partnerMap}
         />
-
-        {homeKind === 'socio' || homeKind === 'admin' ? (
-          <PartnerCoverageMap
-            board={bulletins.board.map((r) => ({
-              stateCode: r.stateCode,
-              stateName: r.stateName,
-              status: r.status,
-              statusLabel: r.statusLabel,
-              hitsExact: r.hitsExact,
-              hitsPossible: r.hitsPossible,
-            }))}
-          />
-        ) : null}
 
         <WeekDeadlineStrip dueAts={dueAts} />
 

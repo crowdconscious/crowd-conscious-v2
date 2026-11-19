@@ -30,7 +30,7 @@ describe('findStatePanelDetail', () => {
         {
           stateCode: 'CDMX',
           stateName: 'Ciudad de México',
-          statusLabel: 'Falló',
+          statusLabel: 'No se pudo leer el boletín · revisar manualmente',
           status: 'fallo',
           sourceName: 'Fuente',
           lastConsultHm: '09:12',

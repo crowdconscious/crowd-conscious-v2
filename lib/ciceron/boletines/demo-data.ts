@@ -107,7 +107,7 @@ export type PartnerSummaryCounts = {
 const STATUS_LABEL: Record<BulletinBoardStatus, string> = {
   revisado: 'Revisado',
   parcial: 'Revisión pendiente',
-  fallo: 'Falló',
+  fallo: 'No se pudo leer el boletín · revisar manualmente',
   manual: 'Revisión pendiente',
   sin_publicacion: 'Sin publicación prevista',
 }
