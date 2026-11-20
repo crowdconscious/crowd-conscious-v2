@@ -24,7 +24,7 @@ export async function sendDemoMorningSummaryTest(opts: {
   persona: DemoPersona
 }): Promise<{ ok: true; to: string } | { ok: false; error: string }> {
   if (!isMorningEmailEnabled()) {
-    return { ok: false, error: 'CICERON_MORNING_EMAIL_ENABLED off' }
+    return { ok: false, error: 'email_disabled' }
   }
   if (opts.persona.firmId !== CICERON_SEED.firmDemo) {
     return { ok: false, error: 'demo_firm_only' }
@@ -35,7 +35,7 @@ export async function sendDemoMorningSummaryTest(opts: {
 
   const to = readDemoRecipientEmail()
   if (!to) {
-    return { ok: false, error: 'CICERON_DEMO_RECIPIENT_EMAIL missing or invalid' }
+    return { ok: false, error: 'recipient_missing' }
   }
 
   const { payload, html } = await buildMorningEmailForPersona(opts.persona, {

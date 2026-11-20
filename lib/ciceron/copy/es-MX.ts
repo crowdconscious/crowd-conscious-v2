@@ -986,7 +986,12 @@ export const copy = {
       'Abre WhatsApp con un mensaje listo. Usted confirma el envío; Cicerón no envía automáticamente.',
     sendDemoTest: 'Enviar resumen de prueba por WhatsApp',
     sendDemoTestNote:
-      'Envía la plantilla aprobada del resumen de la mañana (datos ficticios, etiquetados) al número en CICERON_DEMO_RECIPIENT_WHATSAPP. Solo socio o administrador. Requiere CICERON_WHATSAPP_ENABLED y plantilla Meta aprobada.',
+      'Envía la plantilla aprobada del resumen de la mañana (datos ficticios, etiquetados) al número de prueba configurado. Solo socio o administrador. Requiere WhatsApp activado y plantilla Meta aprobada.',
+    testSendErrorRecipient:
+      'Falta el número de prueba de WhatsApp o no es válido.',
+    testSendErrorWithRecipient: (masked: string) =>
+      `No se pudo enviar a ${masked}. Intente de nuevo más tarde.`,
+    testSendPending: 'Enviando por WhatsApp…',
   },
 
   integrations: {
@@ -1040,6 +1045,14 @@ export const copy = {
     sendDemoTestNote:
       'Envía el resumen real del despacho de demostración (datos ficticios, etiquetados) al correo configurado para la prueba en vivo. Solo socio o administrador. Requiere el envío programado activado.',
     sendDemoTestForbidden: 'Solo socio o administrador del despacho de demostración puede enviar la prueba.',
+    testSendOk: (time: string) => `Enviado a las ${time}`,
+    testSendPending: 'Enviando…',
+    testSendErrorDisabled:
+      'El envío de prueba no está activado en este entorno.',
+    testSendErrorRecipient:
+      'Falta el destinatario de prueba o no es válido.',
+    testSendErrorGeneric:
+      'No se pudo enviar. Intente de nuevo más tarde.',
     openPrefs: 'Preferencias de correo',
   },
 
