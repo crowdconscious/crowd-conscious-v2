@@ -108,7 +108,7 @@ export default async function SponsorReportPage({
 
   const { sponsorship, marketTitles, totalPredictions, uniqueUsers, fundAmount, fundPercentLabel } =
     report
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">

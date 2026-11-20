@@ -43,7 +43,7 @@ export function ResharePacket({
   const L = (es: string, en: string) => (locale === 'es' ? es : en)
 
   const baseUrl =
-    typeof window !== 'undefined' ? window.location.origin : 'https://crowdconscious.app'
+    typeof window !== 'undefined' ? window.location.origin : 'https://www.crowdconscious.app'
   const directLink = token
     ? `${baseUrl}/fund/causes/${slug}?ref=${encodeURIComponent(token)}`
     : `${baseUrl}/fund/causes/${slug}`

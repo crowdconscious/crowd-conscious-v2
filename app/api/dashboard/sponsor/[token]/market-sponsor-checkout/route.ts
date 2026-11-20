@@ -71,7 +71,7 @@ export async function POST(
     const alloc = calculateFundAllocationRounded(priceMXN, MARKET_SPONSOR_TIER)
 
     const stripe = getStripe()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

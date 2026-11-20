@@ -3,7 +3,7 @@ import { fetchLeadingFundCause } from '@/lib/live-fund-leading-cause'
 import { computeLiveEventLeaderboardRanks } from '@/lib/live-event-leaderboard-server'
 import { sendLiveMatchResultsEmail } from '@/lib/live-event-emails'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 type LiveEventRow = {
   id: string

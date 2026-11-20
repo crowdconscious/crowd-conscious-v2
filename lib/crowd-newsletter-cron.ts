@@ -36,7 +36,7 @@ import {
   type NewsletterPrimaryFeature,
 } from '@/lib/agents/newsletter-polish'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 const DIGEST_TYPES = ['newsletter', 'blog_digest'] as const
 

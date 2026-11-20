@@ -15,7 +15,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/resend'
 import { sponsorPulseReportReadyTemplate } from '@/lib/sponsor-pulse-emails'
 
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app').replace(/\/$/, '')
 
 export interface SponsorPulseReportPipelineResult {
   success: boolean

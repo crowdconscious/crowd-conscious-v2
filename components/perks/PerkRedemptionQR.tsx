@@ -3,7 +3,7 @@
 const SITE_URL =
   typeof window !== 'undefined'
     ? window.location.origin
-    : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') || 'https://crowdconscious.app'
+    : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') || 'https://www.crowdconscious.app'
 
 /** QR linking to the public verify URL (no extra npm dep). */
 export default function PerkRedemptionQR({

@@ -51,12 +51,11 @@ export const metadata: Metadata = {
     'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. El 20% de cada contrato de organizaciones va al Fondo Consciente.',
   alternates: {
     canonical: SITE_URL,
-    languages: {
-      'es-MX': SITE_URL,
-      'en-US': SITE_URL,
-    },
   },
   openGraph: {
+    // Include type here — page-level openGraph shallow-merges and would
+    // otherwise drop root layout's type: 'website'.
+    type: 'website',
     title: 'Crowd Conscious — Consultas con confianza ponderada',
     description:
       'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. El 20% de cada contrato de organizaciones va al Fondo Consciente.',

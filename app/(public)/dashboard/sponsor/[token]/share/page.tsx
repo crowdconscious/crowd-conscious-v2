@@ -29,7 +29,7 @@ export default async function SponsorSharePage({
     contact_email: account.contact_email,
   })
 
-  const appOrigin = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
+  const appOrigin = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app').replace(/\/$/, '')
 
   const items = markets.map((m) => ({
     id: m.id,

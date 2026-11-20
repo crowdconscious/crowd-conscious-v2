@@ -18,7 +18,7 @@ import type {
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
-  'https://crowdconscious.app'
+  'https://www.crowdconscious.app'
 
 function ageBand(age: number | null | undefined): string {
   if (age == null || !Number.isFinite(age)) return '—'

@@ -83,7 +83,7 @@ export function LocationCard({
   const valueKeys = parseMetadataValues(location.metadata)
   const [copied, setCopied] = useState(false)
 
-  const shareUrl = `https://crowdconscious.app${linkPrefix}/${location.slug}`
+  const shareUrl = `https://www.crowdconscious.app${linkPrefix}/${location.slug}`
   const shareLine =
     locale === 'es'
       ? `¿Es ${location.name} un Lugar Consciente? Vota aquí: ${shareUrl}`

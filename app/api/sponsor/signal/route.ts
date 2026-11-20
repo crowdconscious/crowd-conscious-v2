@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXT_PUBLIC_SITE_URL ||
-      'https://crowdconscious.app'
+      'https://www.crowdconscious.app'
 
     const badgeMessage =
       input.badge_message?.trim() || `Patrocinado por ${input.sponsor_name}`

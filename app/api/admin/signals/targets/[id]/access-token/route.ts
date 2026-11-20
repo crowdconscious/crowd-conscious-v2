@@ -40,7 +40,7 @@ async function requireAdmin() {
   return { user, admin }
 }
 
-const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
+const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app').replace(/\/$/, '')
 
 const postSchema = z.object({
   ttl_days: z.coerce.number().int().min(1).max(365).optional(),

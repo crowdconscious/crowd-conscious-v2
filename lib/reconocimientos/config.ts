@@ -9,7 +9,7 @@
  */
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+  process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 export type ReconocimientosConfig = {
   enabled: boolean

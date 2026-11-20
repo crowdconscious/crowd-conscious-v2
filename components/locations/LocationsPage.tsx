@@ -1238,7 +1238,7 @@ export default function LocationsPage({
             <PostVoteShare
               target={{ type: 'location', locationId: postVoteShare.locationId }}
               title={postVoteShare.name}
-              url={`https://crowdconscious.app/locations/${postVoteShare.slug}`}
+              url={`https://www.crowdconscious.app/locations/${postVoteShare.slug}`}
               voteCount={postVoteShare.voteCount}
               locale={locale}
               surface="post_vote_location"

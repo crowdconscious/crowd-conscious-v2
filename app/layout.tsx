@@ -4,6 +4,7 @@ import "../src/app/globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SITE_URL } from "@/lib/seo/site";
 import { CivicRootChrome } from "@/components/CivicRootChrome";
+import { SiteJsonLd } from "@/components/SiteJsonLd";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,25 +15,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Crowd Conscious",
-  url: SITE_URL,
-  logo: `${SITE_URL}/images/logo-small.png`,
-  description:
-    "Consultas públicas con confianza ponderada — tu voto y tu certeza importan. El 20% de cada contrato de organizaciones va al Fondo Consciente.",
-  sameAs: [
-    "https://twitter.com/crowdconscious",
-    "https://instagram.com/crowdconscious",
-  ],
-  foundingDate: "2025",
-  foundingLocation: {
-    "@type": "Place",
-    name: "Mexico City, Mexico",
-  },
-};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -112,12 +94,10 @@ export const metadata: Metadata = {
 
   manifest: "/manifest.json",
 
+  // Language is cookie-based, not path-based — do not emit fake hreflang
+  // alternates that point at the same URL.
   alternates: {
     canonical: SITE_URL,
-    languages: {
-      "es-MX": SITE_URL,
-      "en-US": SITE_URL,
-    },
   },
 
   verification: {},
@@ -173,7 +153,8 @@ export default function RootLayout({
       >
         <LanguageProvider>
           {children}
-          <CivicRootChrome organizationJsonLd={organizationJsonLd} />
+          <SiteJsonLd />
+          <CivicRootChrome />
         </LanguageProvider>
       </body>
     </html>

@@ -36,7 +36,7 @@ const ORG_PRODUCT_LIST = [
 const COMMUNITY_DONATION_PRODUCT = 'Patrocinio comunitario (aportación con tarjeta al Fondo Consciente, monto libre)'
 
 
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app').replace(/\/$/, '')
 
 interface CeoDigestPayload {
   week_label: string

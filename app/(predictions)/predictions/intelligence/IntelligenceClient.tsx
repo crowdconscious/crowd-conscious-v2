@@ -373,7 +373,7 @@ export default function IntelligenceClient({
 
   const headlines = useMemo(() => generateHeadlines(data), [data])
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
   const downloadCard = useCallback(async (el: HTMLDivElement | null, name: string) => {
     if (!el) return

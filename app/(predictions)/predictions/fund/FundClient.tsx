@@ -141,7 +141,7 @@ export function FundClient({
     const url =
       typeof window !== 'undefined'
         ? `${window.location.origin}/predictions/fund`
-        : 'https://crowdconscious.app/predictions/fund'
+        : 'https://www.crowdconscious.app/predictions/fund'
     const text =
       'Vota en el Fondo Consciente — dirige apoyos reales a causas comunitarias mexicanas.'
     try {

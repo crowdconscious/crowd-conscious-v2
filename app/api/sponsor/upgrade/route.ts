@@ -98,7 +98,7 @@ export async function POST(
     const description = `Mejora de plan en el panel de patrocinador. ~${fundPctLabel}% estimado al Fondo Consciente.`
 
     const stripe = getStripe()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
     const tokenEnc = encodeURIComponent(token)
 
     const session = await stripe.checkout.sessions.create({
