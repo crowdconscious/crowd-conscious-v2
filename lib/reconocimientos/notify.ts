@@ -28,7 +28,7 @@ export async function notifyAdminsNewRecognition(args: {
     .filter(Boolean)
   if (recipients.length === 0 || !process.env.RESEND_API_KEY) return
 
-  const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app').replace(/\/$/, '')
+  const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app').replace(/\/$/, '')
   const html = `
     <p>Nuevo reconocimiento pendiente de revisión.</p>
     <p><strong>Qué:</strong> ${escapeHtml(args.what)}<br/>

@@ -8,7 +8,7 @@ import { normalizeBlogMarkdownForDisplay, sanitizeBlogEmailHtmlHrefs } from '@/l
 
 marked.setOptions({ gfm: true, breaks: true })
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 const LOGO_URL = `${APP_URL}/images/logo.png`
 
 function esc(s: string): string {

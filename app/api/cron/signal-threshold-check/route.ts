@@ -68,7 +68,7 @@ function readBaseUrl(request: NextRequest): string {
   const host = request.headers.get('host')
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
   if (host) return `${proto}://${host}`
-  return 'https://crowdconscious.app'
+  return 'https://www.crowdconscious.app'
 }
 
 type Stage1EmailHelper = (args: {

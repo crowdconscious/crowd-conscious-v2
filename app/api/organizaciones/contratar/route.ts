@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const stripe = getStripe()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
     const spei = speiEnabled()
     const metadata = { product_type: ORG_PILOT_PRODUCT_TYPE, org_pilot_request_id: row.id }
 

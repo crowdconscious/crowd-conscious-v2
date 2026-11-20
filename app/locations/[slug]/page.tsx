@@ -6,7 +6,7 @@ import LocationDetailClient from '@/components/locations/LocationDetailClient'
 type Props = { params: Promise<{ slug: string }> }
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') || 'https://crowdconscious.app'
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') || 'https://www.crowdconscious.app'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params

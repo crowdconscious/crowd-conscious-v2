@@ -121,7 +121,7 @@ export default function AdminCausesPage() {
   const buildKitUrl = (cause: Cause): string | null => {
     if (!cause.slug) return null
     const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://crowdconscious.app'
+      typeof window !== 'undefined' ? window.location.origin : 'https://www.crowdconscious.app'
     return `${origin}/fund/causes/${cause.slug}/kit?token=kit-${cause.slug}`
   }
 

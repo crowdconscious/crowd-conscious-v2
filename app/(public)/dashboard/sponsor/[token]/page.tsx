@@ -9,7 +9,7 @@ import { getCurrentUser, AuthSessionExpiredError } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import type { FundImpactRow } from '@/components/sponsor/types'
 
-const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
+const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app').replace(/\/$/, '')
 
 export const dynamic = 'force-dynamic'
 

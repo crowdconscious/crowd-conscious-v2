@@ -4,15 +4,21 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import NewsletterForm from '@/components/NewsletterForm'
 import { getBlogCategoryLabel } from '@/lib/blog-categories'
+import { SITE_URL } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
   title: 'Blog',
   description:
     'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX — Crowd Conscious.',
+  alternates: {
+    canonical: `${SITE_URL}/blog`,
+  },
   openGraph: {
+    type: 'website',
     title: 'Blog | Crowd Conscious',
     description:
       'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX.',
+    url: `${SITE_URL}/blog`,
   },
 }
 

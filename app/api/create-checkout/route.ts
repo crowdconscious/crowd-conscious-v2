@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
               description: coverPlatformFee 
                 ? `Support for ${communityName} (+ platform fee covered)` 
                 : `Support for ${communityName}`,
-              images: ['https://crowdconscious.app/images/logo.png']
+              images: ['https://www.crowdconscious.app/images/logo.png']
             },
             unit_amount: totalChargeAmount // Charge the calculated total
           },

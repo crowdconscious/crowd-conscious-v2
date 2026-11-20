@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
                     </div>
                     
                     <div style="text-align: center;">
-                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/admin" class="button">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'}/admin" class="button">
                         Ir al Panel de Administración →
                       </a>
                     </div>

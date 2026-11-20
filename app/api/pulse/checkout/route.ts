@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
     const fundPctLabel = Math.round(alloc.fundPercent * 100)
 
     const stripe = getStripe()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
     const tierLabel = TIER_LABELS[tierId] || tier.name
     const productName = `Conscious Pulse — ${tierLabel}`

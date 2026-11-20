@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
                       </div>
                       
                       <div style="text-align: center;">
-                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/marketplace/${module.slug}" class="button">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'}/marketplace/${module.slug}" class="button">
                           Ver Mi Módulo en el Marketplace →
                         </a>
                       </div>
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
                       </div>
                       
                       <div style="text-align: center;">
-                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/locations" class="button">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'}/locations" class="button">
                           Editar Mi Módulo →
                         </a>
                       </div>

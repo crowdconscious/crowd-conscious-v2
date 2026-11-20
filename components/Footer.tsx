@@ -239,12 +239,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="mailto:comunidad@crowdconscious.app"
-                  className="text-slate-300 transition-colors hover:text-teal-400"
-                >
+                <Link href="/contact" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.contact}
-                </a>
+                </Link>
               </li>
               {/* Reconocimientos Phase 0: config-gated external form. Renders nothing when unset. */}
               <ReconocimientosFooterLink />

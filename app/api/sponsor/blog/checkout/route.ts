@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     const message = tier === 'support' ? supporter_message?.trim() || '' : ''
 
     const stripe = getStripe()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
     const metadata: Record<string, string> = {
       kind: 'sponsorship',

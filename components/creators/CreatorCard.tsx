@@ -51,7 +51,7 @@ export function CreatorCard({
       : null
   const needed = Math.max(0, CREATOR_SCORE_REVEAL_THRESHOLD - votes)
 
-  const shareUrl = `https://crowdconscious.app/creators/${creator.handle}`
+  const shareUrl = `https://www.crowdconscious.app/creators/${creator.handle}`
   const shareLine = t.creatorShareLine(displayName, shareUrl)
   const shareTarget = { type: 'creator' as const, creatorProfileId: creator.profile_id }
 

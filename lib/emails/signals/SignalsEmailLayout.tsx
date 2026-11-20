@@ -32,7 +32,7 @@ export interface SignalsEmailLayoutProps {
 }
 
 const APP_URL = (
-  process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app'
+  process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app'
 ).replace(/\/$/, '')
 
 const COLORS = {

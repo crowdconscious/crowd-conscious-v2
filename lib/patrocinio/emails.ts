@@ -53,7 +53,7 @@ export function buildDonorReceiptEmail(r: DonationEmailRow) {
   <table style="width:100%;border-collapse:collapse;border-top:1px solid #2d3748;border-bottom:1px solid #2d3748;">
     ${row('Aportación · Contribution', money(r.amount_mxn), true)}
   </table>
-  <p style="font-size:12px;color:#9ca3af;margin:14px 0 0;">Ve el fondo y vota causas · See the fund and vote: <a href="https://crowdconscious.app/predictions/fund" style="color:#6ee7b7;">crowdconscious.app/predictions/fund</a></p>`)
+  <p style="font-size:12px;color:#9ca3af;margin:14px 0 0;">Ve el fondo y vota causas · See the fund and vote: <a href="https://www.crowdconscious.app/predictions/fund" style="color:#6ee7b7;">crowdconscious.app/predictions/fund</a></p>`)
   return { subject: `Gracias por tu aportación · Folio ${r.receipt_number} · Crowd Conscious`, html }
 }
 

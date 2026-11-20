@@ -8,7 +8,7 @@ import 'server-only'
 import { sendEmail } from '@/lib/resend'
 import { orgDb } from './repo'
 
-const SITE = () => (process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app').replace(/\/$/, '')
+const SITE = () => (process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app').replace(/\/$/, '')
 
 export function slugify(name: string) {
   const s = name

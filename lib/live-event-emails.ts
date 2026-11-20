@@ -1,6 +1,6 @@
 import { sendEmail } from '@/lib/resend'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 const FROM = 'Crowd Conscious <comunidad@crowdconscious.app>'
 
 export function liveMatchStartingSoonTemplate(opts: {

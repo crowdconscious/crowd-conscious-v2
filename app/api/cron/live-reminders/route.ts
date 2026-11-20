@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 120
 export const dynamic = 'force-dynamic'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 /**
  * Sends "match in ~1 hour" to opted-in users. Idempotent via live_events.reminder_1h_sent_at.

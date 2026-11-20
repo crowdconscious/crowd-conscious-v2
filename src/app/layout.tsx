@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 export const metadata: Metadata = {
   title: 'Crowd Conscious - Where Predictions Meet Purpose',

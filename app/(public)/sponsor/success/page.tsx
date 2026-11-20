@@ -51,7 +51,7 @@ export default async function SponsorSuccessPage({
   const sessionId = params.session_id
   const session = sessionId ? await getSessionDetails(sessionId) : null
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
   const marketUrl = session?.marketId ? `${baseUrl}/predictions/markets/${session.marketId}` : `${baseUrl}/pulse`
   const shareUrl = session?.marketId ? marketUrl : `${baseUrl}/pulse`
   const shareText = encodeURIComponent(

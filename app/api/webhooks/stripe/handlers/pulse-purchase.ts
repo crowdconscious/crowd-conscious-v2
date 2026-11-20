@@ -384,7 +384,7 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
 
     try {
       const baseUrl =
-        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://crowdconscious.app'
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.crowdconscious.app'
       await sendMundialPackFounderAlert({
         companyName,
         contactName: contactNameMeta,

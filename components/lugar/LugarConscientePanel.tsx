@@ -6,7 +6,7 @@ import { ensureSrcSlug, latestPledge, openAward, pledgeIsCurrent, progressFor } 
 import { MIN_TOTAL_VOTERS, MIN_VOTERS_PER_WEEK, MIN_WEEKS, WINDOW_WEEKS, locationCanJoin } from '@/lib/lugar/rules'
 import { sealAssets, sealVerifyPath } from '@/lib/org/sello-badge'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 const T = {
   es: {

@@ -14,7 +14,7 @@ type Props = {
 }
 
 const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://crowdconscious.app'
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://www.crowdconscious.app'
 
 /**
  * Post-create modal that surfaces the location's OG share card so the operator

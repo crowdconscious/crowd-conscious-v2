@@ -38,7 +38,7 @@ export default function ShareBundle({ slug, title, pulseMarketId, coverImageUrl 
 
   const origin = useMemo(() => {
     if (typeof window !== 'undefined') return window.location.origin
-    return process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app'
+    return process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.crowdconscious.app'
   }, [])
 
   const blogUrl = `${origin}/blog/${slug}`

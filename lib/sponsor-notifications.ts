@@ -33,7 +33,7 @@ import {
 
 type Locale = 'es' | 'en'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 type SponsorRowForEmail = {
   id: string

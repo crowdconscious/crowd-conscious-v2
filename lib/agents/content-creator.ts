@@ -45,7 +45,7 @@ const ALLOWED_CATEGORIES = new Set([
   'culture',
 ])
 
-const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
 function slugify(raw: string): string {
   const s = raw

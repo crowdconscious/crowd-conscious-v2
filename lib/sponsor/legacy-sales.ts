@@ -16,7 +16,7 @@ export function legacySponsorSalesClosedResponse() {
       error: {
         code: 'PRODUCT_RETIRED',
         message:
-          'Los planes de patrocinio Pulse ya no están a la venta. Para medir a sus usuarios vea https://crowdconscious.app/organizaciones · Pulse sponsorship plans are no longer sold; see /organizaciones.',
+          'Los planes de patrocinio Pulse ya no están a la venta. Para medir a sus usuarios vea https://www.crowdconscious.app/organizaciones · Pulse sponsorship plans are no longer sold; see /organizaciones.',
       },
     },
     { status: 410 }
