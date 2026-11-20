@@ -4,15 +4,22 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import NewsletterForm from '@/components/NewsletterForm'
 import { getBlogCategoryLabel } from '@/lib/blog-categories'
+import { SITE_URL } from '@/lib/seo/site'
+import { buildBlogCollectionJsonLd } from '@/lib/seo/blog-json-ld'
 
 export const metadata: Metadata = {
   title: 'Blog',
   description:
     'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX — Crowd Conscious.',
+  alternates: {
+    canonical: `${SITE_URL}/blog`,
+  },
   openGraph: {
+    type: 'website',
     title: 'Blog | Crowd Conscious',
     description:
       'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX.',
+    url: `${SITE_URL}/blog`,
   },
 }
 
@@ -51,8 +58,14 @@ export default async function BlogPage() {
   const emptyMsg =
     locale === 'es' ? 'Pronto publicaremos el primer artículo.' : 'First article coming soon.'
 
+  const collectionJsonLd = buildBlogCollectionJsonLd()
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <header className="mb-12 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Blog</h1>
         <p className="mx-auto mt-3 max-w-2xl text-slate-400">

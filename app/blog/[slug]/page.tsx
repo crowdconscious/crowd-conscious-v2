@@ -32,6 +32,10 @@ import BlogPulseStickyCta from '@/components/blog/BlogPulseStickyCta'
 import BlogCoverWithQuestion from '@/components/blog/BlogCoverWithQuestion'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { getBlogCategoryLabel } from '@/lib/blog-categories'
+import {
+  buildBlogArticleJsonLd,
+  buildBlogBreadcrumbJsonLd,
+} from '@/lib/seo/blog-json-ld'
 
 const PULSE_EMBED_ANCHOR_ID = 'pulse-vote'
 
@@ -328,8 +332,41 @@ export default async function BlogPostPage(props: Props) {
   const relatedSectionTitle =
     locale === 'es' ? 'Pulse relacionados' : 'Related Pulse'
 
+  const articleDescription =
+    (post.meta_description as string | null | undefined)?.trim() ||
+    displayTldr
+      ?.split(/\r?\n+/)
+      .map((l: string) => l.replace(/^\s*[-*•·]\s*/, '').trim())
+      .filter((l: string) => l.length > 0)
+      .join(' · ') ||
+    displayExcerpt ||
+    displayTitle
+
+  const articleJsonLd = buildBlogArticleJsonLd({
+    slug,
+    headline: displayTitle,
+    description: articleDescription.slice(0, 300),
+    datePublished: post.published_at,
+    dateModified: post.updated_at ?? post.published_at,
+    category: post.category,
+    inLanguage: locale === 'en' ? 'en' : 'es-MX',
+    authorName: bylineRole === 'creator' ? bylineName : null,
+  })
+  const breadcrumbJsonLd = buildBlogBreadcrumbJsonLd({
+    slug,
+    title: displayTitle,
+  })
+
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       {user && canManageBlogPost(profile, user.id, post) && post.status === 'draft' && (
         <BlogDraftBar postId={post.id} />
       )}
