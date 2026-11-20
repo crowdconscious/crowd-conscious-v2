@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { prefersMarkdown } from '@/lib/agentic/accepts-markdown'
 
 /**
  * CORS allow-list for the Citizen Signals public API. The Crowd Conscious
@@ -15,6 +16,22 @@ const SIGNALS_STATIC_ALLOWED_ORIGINS = new Set([
   'https://crowdconscious.app',
   'https://www.crowdconscious.app',
 ])
+
+/** Paths that already return non-HTML (or must not be negotiated). */
+function skipMarkdownNegotiation(pathname: string): boolean {
+  if (pathname.startsWith('/api/')) return true
+  if (pathname.startsWith('/_next/')) return true
+  if (pathname.startsWith('/md')) return true
+  if (pathname.startsWith('/ciceron')) return true
+  if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true
+  if (pathname === '/llms.txt' || pathname === '/llms-full.txt') return true
+  if (pathname === '/manifest.json' || pathname === '/favicon.ico') return true
+  // Binary / static asset extensions — leave to the static handler.
+  if (/\.(?:png|jpe?g|gif|webp|svg|ico|css|js|map|woff2?|ttf|txt|xml|json)$/i.test(pathname)) {
+    return true
+  }
+  return false
+}
 
 function isSignalsAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false
@@ -38,6 +55,23 @@ function buildSignalsCorsHeaders(request: NextRequest): Record<string, string> {
 export function middleware(request: NextRequest) {
   const startTime = Date.now()
   const { pathname } = request.nextUrl
+
+  // Agent Markdown negotiation: rewrite public GETs that prefer text/markdown
+  // to the internal /md handler. Browsers (Accept: text/html) are unchanged.
+  if (
+    request.method === 'GET' &&
+    prefersMarkdown(request.headers.get('accept')) &&
+    !skipMarkdownNegotiation(pathname)
+  ) {
+    const rewriteUrl = request.nextUrl.clone()
+    rewriteUrl.pathname =
+      pathname === '/' ? '/md' : `/md${pathname.startsWith('/') ? pathname : `/${pathname}`}`
+    const response = NextResponse.rewrite(rewriteUrl)
+    response.headers.set('Vary', 'Accept')
+    response.headers.set('x-request-start', startTime.toString())
+    response.headers.set('x-pathname', pathname)
+    return response
+  }
 
   // CORS for the Citizen Signals API. Browsers need both a preflight
   // (OPTIONS) response and CORS headers on the actual response. Mobile

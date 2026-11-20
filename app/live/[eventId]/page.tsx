@@ -14,6 +14,13 @@ function absoluteOgImage(url: string | null | undefined): string {
   return `${BASE}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
+const STATUS_LABEL: Record<string, { es: string; en: string }> = {
+  scheduled: { es: 'Programado', en: 'Scheduled' },
+  live: { es: 'En vivo', en: 'Live' },
+  completed: { es: 'Finalizado', en: 'Completed' },
+  cancelled: { es: 'Cancelado', en: 'Cancelled' },
+}
+
 type Props = { params: Promise<{ eventId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -62,5 +69,49 @@ export default async function LiveEventMatchPage({ params }: Props) {
   const { eventId } = await params
   const sessionProfile = await getCurrentUser()
   const isAdmin = isAdminUser(sessionProfile)
-  return <LiveMatchClient eventId={eventId} isAdmin={isAdmin} />
+
+  // Short SSR summary so agents / no-JS clients see title + status in raw HTML
+  // (the interactive shell remains LiveMatchClient).
+  const supabase = await createClient()
+  const { data: event } = await supabase
+    .from('live_events')
+    .select(
+      'title, description, translations, status, match_date, event_type, sponsor_name'
+    )
+    .eq('id', eventId)
+    .maybeSingle()
+
+  const title = event ? getLiveEventTitle(event, 'es') : 'Conscious Live'
+  const statusKey = event?.status ?? 'scheduled'
+  const statusLabel = STATUS_LABEL[statusKey]?.es ?? statusKey
+  const description =
+    event?.description?.trim() ||
+    'Evento en vivo de Crowd Conscious — predicciones y consultas en tiempo real.'
+
+  return (
+    <>
+      <section className="border-b border-slate-800 bg-[#0b1017] px-4 py-6 text-slate-100">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-400/90">
+            Conscious Live
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {title}
+          </h1>
+          <p className="mt-2 text-sm text-slate-300">
+            Estado: {statusLabel}
+            {event?.match_date
+              ? ` · ${new Date(event.match_date).toLocaleString('es-MX', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}`
+              : ''}
+            {event?.sponsor_name ? ` · Con el apoyo de ${event.sponsor_name}` : ''}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">{description}</p>
+        </div>
+      </section>
+      <LiveMatchClient eventId={eventId} isAdmin={isAdmin} />
+    </>
+  )
 }
