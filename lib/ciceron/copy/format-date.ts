@@ -111,6 +111,16 @@ export function formatDateTimeEs(isoOrDate: string | Date | null | undefined): s
   return `${p.day} de ${MONTHS_LONG[p.month - 1]} de ${p.year}, ${hh}:${mm}`
 }
 
+/** «09:30» (24 h, Ciudad de México). */
+export function formatTimeEs(isoOrDate: string | Date | null | undefined): string {
+  if (!isoOrDate) return '—'
+  const d = toDate(isoOrDate)
+  if (!d) return '—'
+  const p = partsInCdmx(d)
+  if (!p) return '—'
+  return `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`
+}
+
 /**
  * Inclusive range in Spanish: «16 al 22 de noviembre de 2026»
  * or «28 de noviembre al 4 de diciembre de 2026» when months differ.

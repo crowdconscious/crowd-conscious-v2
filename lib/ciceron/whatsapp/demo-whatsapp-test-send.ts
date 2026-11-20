@@ -18,6 +18,10 @@ import {
 } from '@/lib/ciceron/engagement/demo-recipient'
 import {
   buildWhatsAppTemplateVariableList,
+  buildWhatsAppTemplateVariableListV2,
+  formatNextDeadlineWhatsAppParam,
+  isMorningWhatsAppTemplateV2,
+  pickTopHeadlineWhatsAppParam,
   readWhatsAppCloudConfig,
   sendMorningSummaryWhatsApp,
 } from './cloud-api'
@@ -38,7 +42,7 @@ export async function sendDemoMorningWhatsAppTest(opts: {
 }): Promise<{ ok: true; to: string } | { ok: false; error: string }> {
   const cfg = readWhatsAppCloudConfig()
   if (!cfg.enabled) {
-    return { ok: false, error: 'CICERON_WHATSAPP_ENABLED off' }
+    return { ok: false, error: 'whatsapp_disabled' }
   }
   if (opts.persona.firmId !== CICERON_SEED.firmDemo) {
     return { ok: false, error: 'demo_firm_only' }
@@ -51,7 +55,7 @@ export async function sendDemoMorningWhatsAppTest(opts: {
   if (!to) {
     return {
       ok: false,
-      error: 'CICERON_DEMO_RECIPIENT_WHATSAPP missing or invalid',
+      error: 'recipient_missing',
     }
   }
 
@@ -61,8 +65,12 @@ export async function sendDemoMorningWhatsAppTest(opts: {
   ])
 
   let asuntosConNovedad = 0
+  const headlines: string[] = []
   for (const items of briefing.byClient.values()) {
     asuntosConNovedad += items.length
+    for (const item of items) {
+      if (item.title) headlines.push(item.title)
+    }
   }
   const plazosEstaSemana = countDeadlinesInCurrentWeek(
     deadlines.map((d) => d.dueAt)
@@ -70,12 +78,30 @@ export async function sendDemoMorningWhatsAppTest(opts: {
   const dateLabel = formatDateLongEs(new Date().toISOString())
   const hoyUrl = `${appBaseUrl()}${CICERON_BASE}/hoy`
 
-  const templateVariables = buildWhatsAppTemplateVariableList({
-    dateLabel,
-    asuntosConNovedad,
-    plazosEstaSemana,
-    hoyUrl,
-  })
+  const pendientesPorAprobar = briefing.reviews.length
+  const nextDeadline = deadlines.find((d) => Boolean(d.dueAt)) ?? null
+  const proximoPlazo = formatNextDeadlineWhatsAppParam(
+    nextDeadline
+      ? { label: nextDeadline.label, dueAt: nextDeadline.dueAt }
+      : null
+  )
+  const loMasRelevante = pickTopHeadlineWhatsAppParam(headlines)
+
+  const useV2 = isMorningWhatsAppTemplateV2(cfg.templateName)
+  const templateVariables = useV2
+    ? buildWhatsAppTemplateVariableListV2({
+        dateLabel,
+        asuntosConNovedad,
+        pendientesPorAprobar,
+        proximoPlazo,
+        loMasRelevante,
+      })
+    : buildWhatsAppTemplateVariableList({
+        dateLabel,
+        asuntosConNovedad,
+        plazosEstaSemana,
+        hoyUrl,
+      })
 
   const result = await sendMorningSummaryWhatsApp({
     toE164Digits: to,
@@ -100,8 +126,11 @@ export async function sendDemoMorningWhatsAppTest(opts: {
         channel: 'whatsapp',
         labelled: CICERON_DEMO_LABEL,
         messageId: result.messageId,
+        templateVersion: useV2 ? 'v2' : 'v1',
         asuntosConNovedad,
-        plazosEstaSemana,
+        ...(useV2
+          ? { pendientesPorAprobar, proximoPlazo }
+          : { plazosEstaSemana }),
       },
     })
   }

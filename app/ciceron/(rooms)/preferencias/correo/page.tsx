@@ -4,8 +4,6 @@ import { copy } from '@/lib/ciceron/copy/es-MX'
 import { loadMorningEmailPrefs } from '@/lib/ciceron/engagement/morning-email-data'
 import {
   saveMorningEmailPrefsAction,
-  sendDemoMorningTestAction,
-  sendDemoMorningWhatsAppTestAction,
   sendMorningPreviewAction,
 } from '@/lib/ciceron/engagement/morning-email-actions'
 import { isMorningEmailEnabled } from '@/lib/ciceron/engagement/morning-email-gate'
@@ -17,6 +15,10 @@ import {
 import { readWhatsAppCloudConfig } from '@/lib/ciceron/whatsapp/cloud-api'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
+import {
+  DemoEmailTestForm,
+  DemoWhatsAppTestForm,
+} from './DemoTestSendForms'
 
 export default async function MorningEmailPrefsPage() {
   const persona = await getCiceronDemoSession()
@@ -111,30 +113,10 @@ export default async function MorningEmailPrefsPage() {
       </form>
 
       {showDemoTest ? (
-        <form action={sendDemoMorningTestAction} style={{ marginTop: 24 }}>
-          <button
-            type="submit"
-            className="cic-btn"
-            disabled={!cronOn || !demoRecipientConfigured}
-          >
-            {copy.morningEmail.sendDemoTest}
-          </button>
-          <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
-            {copy.morningEmail.sendDemoTestNote}
-          </p>
-        </form>
+        <DemoEmailTestForm disabled={!cronOn || !demoRecipientConfigured} />
       ) : null}
 
-      {showDemoTest ? (
-        <form action={sendDemoMorningWhatsAppTestAction} style={{ marginTop: 16 }}>
-          <button type="submit" className="cic-btn" disabled={!waReady}>
-            {copy.whatsapp.sendDemoTest}
-          </button>
-          <p className="cic-muted" style={{ fontSize: '0.8rem', marginTop: 8 }}>
-            {copy.whatsapp.sendDemoTestNote}
-          </p>
-        </form>
-      ) : null}
+      {showDemoTest ? <DemoWhatsAppTestForm disabled={!waReady} /> : null}
     </div>
   )
 }
