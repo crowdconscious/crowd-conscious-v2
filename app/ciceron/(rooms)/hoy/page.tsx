@@ -42,10 +42,17 @@ import { loadFeedbackSuggestion } from '@/lib/ciceron/engagement/feedback-loop'
 import { loadHoyEngagement } from '@/lib/ciceron/engagement/resume'
 import { loadFirmBudgetStatus } from '@/lib/ciceron/gateway/budget'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
+import { createGoogleWorkspaceProvider } from '@/lib/ciceron/integrations/google-provider'
+import { loadM365Status } from '@/lib/ciceron/case-files/data'
 
 export default async function HoyPage() {
   const persona = await getCiceronDemoSession()
   if (!persona) redirect(CICERON_BASE)
+
+  const googleProvider = createGoogleWorkspaceProvider({
+    firmId: persona.firmId,
+    actorId: persona.id,
+  })
 
   const [
     briefing,
@@ -56,6 +63,8 @@ export default async function HoyPage() {
     budget,
     bulletins,
     { clients },
+    m365,
+    googleStatus,
   ] = await Promise.all([
     loadHoyBriefing(persona),
     loadDeadlines(persona),
@@ -65,7 +74,11 @@ export default async function HoyPage() {
     loadFirmBudgetStatus(persona.firmId),
     loadBulletinBoard(persona),
     loadClientsRoom(persona),
+    loadM365Status(persona),
+    googleProvider.getStatus(),
   ])
+
+  const googleConnected = googleStatus === 'connected'
 
   await recordCiceronEvent({
     name: 'room_opened',
@@ -565,7 +578,7 @@ export default async function HoyPage() {
           </details>
         ) : null}
 
-        <details className="cic-section cic-secondary-panel">
+        <details className="cic-section cic-secondary-panel" open>
           <summary className="cic-secondary-summary">
             <span className="cic-h2" style={{ fontSize: '1rem', margin: 0 }}>
               {copy.m365.demoPathTitle}
@@ -574,6 +587,29 @@ export default async function HoyPage() {
           <p className="cic-muted" style={{ marginTop: 6 }}>
             {copy.m365.demoPathLead}
           </p>
+          <ul className="cic-demo-steps cic-connect-options">
+            <li>
+              {googleConnected ? (
+                <span>
+                  {copy.m365.demoStepGoogleConnected}
+                  {' · '}
+                  <Link href="/ciceron/preferencias/integraciones">
+                    {copy.integrations.openPrefs}
+                  </Link>
+                </span>
+              ) : (
+                <Link href="/ciceron/preferencias/integraciones">
+                  {copy.m365.demoStepGoogle}
+                </Link>
+              )}
+            </li>
+            <li>
+              <Link href="/ciceron/expedientes/outlook">
+                {copy.m365.demoStepOutlook}
+                {m365.status === 'connected' ? ` · ${copy.integrations.connected}` : ''}
+              </Link>
+            </li>
+          </ul>
           <ol className="cic-demo-steps">
             <li>
               <Link href="/ciceron/expedientes/outlook">{copy.m365.demoStepConnect}</Link>
