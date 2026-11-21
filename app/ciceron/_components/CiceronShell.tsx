@@ -376,7 +376,7 @@ function ShellInner({
         <GuidedStoryPanel state={meta.guidedStory} />
       ) : null}
       <nav className="cic-mobile-nav" aria-label="Salas">
-        {CICERON_ROOMS.map((room) => {
+        {CICERON_ROOMS.filter((room) => room.id !== 'clientes').map((room) => {
           const active = pathname === room.href
           return (
             <Link key={room.id} href={room.href} aria-current={active ? 'page' : undefined}>
@@ -427,6 +427,9 @@ function ShellInner({
               onNavigate={() => setMoreOpen(false)}
             />
             <div className="cic-mobile-more-links">
+              <Link href="/ciceron/clientes" onClick={() => setMoreOpen(false)}>
+                {copy.rooms.clientes}
+              </Link>
               <Link href="/ciceron/acceso" onClick={() => setMoreOpen(false)}>
                 {copy.access.title}
               </Link>

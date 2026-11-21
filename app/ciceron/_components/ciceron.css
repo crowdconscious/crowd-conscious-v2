@@ -1483,6 +1483,13 @@ textarea.cic-input {
     /* Room for fixed tab bar + iOS home indicator — never cover last content. */
     padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
   }
+  /* Guided tour dock is fixed above the tab bar — leave scroll room so last CTAs stay reachable. */
+  .ciceron-root:has(.cic-guided-dock):not(:has(.cic-guided-pill)) .cic-shell {
+    padding-bottom: calc(3.75rem + min(32vh, 14rem) + env(safe-area-inset-bottom, 0px));
+  }
+  .ciceron-root:has(.cic-guided-pill) .cic-shell {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
   .cic-rail {
     display: none;
   }
@@ -1513,6 +1520,15 @@ textarea.cic-input {
     cursor: pointer;
     font-family: inherit;
     appearance: none;
+  }
+  /* Keep Preferencias entry always visible without horizontal scroll. */
+  .cic-mobile-nav button.cic-mobile-nav-more {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--cic-paper-2);
+    box-shadow: -10px 0 12px -8px rgba(0, 0, 0, 0.55);
+    min-width: 3.25rem;
   }
   .cic-mobile-nav a[aria-current='page'],
   .cic-mobile-nav button.cic-mobile-nav-more[aria-current='page'],
@@ -1700,6 +1716,7 @@ textarea.cic-input {
   margin: 10px 0 4px;
   display: grid;
   gap: 8px;
+  scroll-margin-bottom: calc(4rem + min(32vh, 14rem) + env(safe-area-inset-bottom, 0px));
 }
 .cic-connect-options li {
   margin: 0;
@@ -1718,6 +1735,13 @@ textarea.cic-input {
 .cic-connect-options a:hover {
   border-color: var(--cic-accent-mint);
   color: var(--cic-accent-mint);
+}
+
+/* Extra clearance under Hoy secondary column so connect CTAs clear mobile chrome. */
+@media (max-width: 900px) {
+  .cic-hoy-secondary {
+    padding-bottom: calc(var(--cic-space) * 4);
+  }
 }
 .cic-m365-consent-brand {
   display: flex;
