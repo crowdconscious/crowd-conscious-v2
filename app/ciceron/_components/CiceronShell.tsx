@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { CICERON_ROOMS, type CiceronRoomId } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import type { GuidedStoryState } from '@/lib/ciceron/demo/guided-story-pure'
@@ -24,6 +24,9 @@ import type {
   ProPersonaRole,
 } from '@/lib/ciceron/demo/pro-assistant-pure'
 import './ciceron.css'
+
+const PREFS_INTEGRACIONES = '/ciceron/preferencias/integraciones'
+const PREFS_CORREO = '/ciceron/preferencias/correo'
 
 export type ShellMeta = {
   firmName: string
@@ -65,6 +68,81 @@ function roomBadge(
   return staticBadge
 }
 
+function PreferencesLinks({
+  onNavigate,
+  className,
+}: {
+  onNavigate?: () => void
+  className?: string
+}) {
+  return (
+    <div className={className}>
+      <p className="cic-prefs-group-label">{copy.topbar.preferences}</p>
+      <Link href={PREFS_INTEGRACIONES} onClick={onNavigate}>
+        {copy.topbar.preferencesIntegraciones}
+      </Link>
+      <Link href={PREFS_CORREO} onClick={onNavigate}>
+        {copy.topbar.preferencesCorreo}
+      </Link>
+    </div>
+  )
+}
+
+function UserAccountMenu({ userName, role }: { userName: string; role: string }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className="cic-user-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="cic-user cic-user-trigger"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls={menuId}
+        title={copy.topbar.userMenu}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {userName} · {role}
+      </button>
+      {open ? (
+        <div id={menuId} className="cic-user-menu-panel" role="menu">
+          <p className="cic-prefs-group-label" style={{ padding: '4px 8px 2px' }}>
+            {copy.topbar.preferences}
+          </p>
+          <Link
+            href={PREFS_INTEGRACIONES}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {copy.topbar.preferencesIntegraciones}
+          </Link>
+          <Link href={PREFS_CORREO} role="menuitem" onClick={() => setOpen(false)}>
+            {copy.topbar.preferencesCorreo}
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function ShellInner({
   children,
   meta,
@@ -75,7 +153,15 @@ function ShellInner({
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [proOpen, setProOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [railCollapsed, setRailCollapsed] = useState(false)
+  const prefsActive =
+    pathname?.startsWith('/ciceron/preferencias') ||
+    pathname?.startsWith('/ciceron/acceso') ||
+    pathname?.startsWith('/ciceron/proteccion') ||
+    pathname?.startsWith('/ciceron/fuentes-cobertura') ||
+    pathname?.startsWith('/ciceron/admin') ||
+    pathname?.startsWith('/ciceron/expedientes/outlook')
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -84,15 +170,21 @@ function ShellInner({
         // Partners: Cmd/Ctrl+K opens the Pro assistant (demo). Room search stays on Buscar.
         setProOpen((v) => !v)
         setPaletteOpen(false)
+        setMoreOpen(false)
       }
       if (e.key === 'Escape') {
         setPaletteOpen(false)
         setProOpen(false)
+        setMoreOpen(false)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  useEffect(() => {
+    setMoreOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     try {
@@ -191,6 +283,28 @@ function ShellInner({
             >
               <p className="cic-rail-group-label">{copy.rail.groups.mas}</p>
               <div className="cic-rail-footer">
+                <Link
+                  href={PREFS_INTEGRACIONES}
+                  className="cic-rail-secondary"
+                  aria-current={
+                    pathname?.startsWith('/ciceron/preferencias/integraciones')
+                      ? 'page'
+                      : undefined
+                  }
+                >
+                  {copy.topbar.preferences}
+                </Link>
+                <Link
+                  href={PREFS_CORREO}
+                  className="cic-rail-secondary"
+                  aria-current={
+                    pathname?.startsWith('/ciceron/preferencias/correo')
+                      ? 'page'
+                      : undefined
+                  }
+                >
+                  {copy.topbar.preferencesCorreo}
+                </Link>
                 <Link href="/ciceron/acceso" className="cic-rail-secondary">
                   {copy.access.title}
                 </Link>
@@ -244,9 +358,7 @@ function ShellInner({
               <GuidedStoryStartButton />
             ) : null}
             <ThemeToggle />
-            <div className="cic-user" title={copy.topbar.userMenu}>
-              {meta.userName} · {meta.role}
-            </div>
+            <UserAccountMenu userName={meta.userName} role={meta.role} />
           </header>
           <main className="cic-content">
             {meta.guidedStory &&
@@ -272,7 +384,81 @@ function ShellInner({
             </Link>
           )
         })}
+        <button
+          type="button"
+          className="cic-mobile-nav-more"
+          aria-expanded={moreOpen}
+          aria-controls="cic-mobile-more-sheet"
+          aria-current={prefsActive && !moreOpen ? 'page' : undefined}
+          onClick={() => setMoreOpen((v) => !v)}
+        >
+          {copy.topbar.moreNav}
+        </button>
       </nav>
+      {moreOpen ? (
+        <div
+          className="cic-mobile-more-backdrop"
+          role="presentation"
+          onClick={() => setMoreOpen(false)}
+        >
+          <div
+            id="cic-mobile-more-sheet"
+            className="cic-mobile-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label={copy.topbar.moreNavTitle}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="cic-mobile-more-handle" aria-hidden="true" />
+            <div className="cic-mobile-more-head">
+              <h2 className="cic-h2" style={{ margin: 0, fontSize: '1.05rem' }}>
+                {copy.topbar.moreNavTitle}
+              </h2>
+              <button
+                type="button"
+                className="cic-linkish"
+                onClick={() => setMoreOpen(false)}
+              >
+                {copy.topbar.moreNavClose}
+              </button>
+            </div>
+            <PreferencesLinks
+              className="cic-mobile-more-prefs"
+              onNavigate={() => setMoreOpen(false)}
+            />
+            <div className="cic-mobile-more-links">
+              <Link href="/ciceron/acceso" onClick={() => setMoreOpen(false)}>
+                {copy.access.title}
+              </Link>
+              <Link href="/ciceron/proteccion" onClick={() => setMoreOpen(false)}>
+                {copy.proteccion.title}
+              </Link>
+              <Link href="/ciceron/fuentes-cobertura" onClick={() => setMoreOpen(false)}>
+                {copy.fuentesCobertura.title}
+              </Link>
+              <Link
+                href="/ciceron/expedientes/outlook"
+                onClick={() => setMoreOpen(false)}
+              >
+                {copy.m365.settingsStatus}
+              </Link>
+              {showAdminLinks ? (
+                <>
+                  <Link href="/ciceron/admin/metricas" onClick={() => setMoreOpen(false)}>
+                    {copy.adminMetricas.title}
+                  </Link>
+                  <Link href="/ciceron/admin/ventas" onClick={() => setMoreOpen(false)}>
+                    {copy.adminVentas.title}
+                  </Link>
+                  <Link href="/ciceron/admin/fuentes" onClick={() => setMoreOpen(false)}>
+                    {copy.adminFuentes.title}
+                  </Link>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <ProAssistant
         open={proOpen}

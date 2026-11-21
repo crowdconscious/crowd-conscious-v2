@@ -298,6 +298,12 @@ export const copy = {
     commandShortcut: '⌘K',
     matterContext: 'Asunto',
     userMenu: 'Cuenta',
+    preferences: 'Preferencias',
+    preferencesIntegraciones: 'Integraciones',
+    preferencesCorreo: 'Correo de la mañana',
+    moreNav: 'Más',
+    moreNavTitle: 'Más opciones',
+    moreNavClose: 'Cerrar',
   },
 
   command: {
@@ -357,7 +363,7 @@ export const copy = {
     emptyToday:
       'No hay novedades que afecten a sus clientes en la última edición revisada. Se revisaron las notas ya clasificadas de la demostración.',
     reviewedCount: 'Notas clasificadas en la demostración',
-    outlookCard: 'Conecte su Outlook',
+    outlookCard: 'Conecte su correo y calendario',
     lastEdition: 'Última edición procesada',
     secondaryColumn: 'Herramientas y seguimiento',
     bulletinsTitle: 'Boletines judiciales de hoy',
@@ -668,10 +674,13 @@ export const copy = {
     notifyApprove: 'Aprobar y marcar como enviado (simulado)',
     notifySent: 'Enviado (simulado)',
     notifyNote: 'No se envía correo real. Requiere revisión de nivel 2.',
-    demoPathTitle: 'Conecte su Outlook',
+    demoPathTitle: 'Conecte su correo y calendario',
     demoPathLead:
-      'Recorrido guiado: conectar, buscar en el archivo, ver el calendario y notificar al cliente.',
-    demoStepConnect: '1. Conectar',
+      'Conecte Google Workspace (producción) u Outlook / Microsoft 365 (datos de demostración) para borradores y calendario.',
+    demoStepGoogle: 'Conectar Google Workspace',
+    demoStepGoogleConnected: 'Google Workspace conectado',
+    demoStepOutlook: 'Outlook / Microsoft 365 (datos de demostración)',
+    demoStepConnect: '1. Conectar Outlook (demostración)',
     demoStepArchive: '2. Archivo',
     demoStepCalendar: '3. Calendario',
     demoStepNotify: '4. Notificar',

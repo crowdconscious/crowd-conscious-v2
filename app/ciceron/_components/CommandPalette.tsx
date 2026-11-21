@@ -26,6 +26,20 @@ export function CommandPalette({
       href: r.href,
       group: copy.command.groups.rooms,
     }))
+    const prefsItems: Item[] = [
+      {
+        id: 'prefs-integraciones',
+        label: copy.topbar.preferencesIntegraciones,
+        href: '/ciceron/preferencias/integraciones',
+        group: copy.topbar.preferences,
+      },
+      {
+        id: 'prefs-correo',
+        label: copy.topbar.preferencesCorreo,
+        href: '/ciceron/preferencias/correo',
+        group: copy.topbar.preferences,
+      },
+    ]
     const clientItems: Item[] = fixtureClients.map((c) => ({
       id: `client-${c.id}`,
       label: c.name,
@@ -46,7 +60,13 @@ export function CommandPalette({
       href: '/ciceron/monitor-dof',
       group: copy.command.groups.notes,
     }))
-    const all = [...roomItems, ...clientItems, ...matterItems, ...noteItems]
+    const all = [
+      ...roomItems,
+      ...prefsItems,
+      ...clientItems,
+      ...matterItems,
+      ...noteItems,
+    ]
     const needle = q.trim().toLowerCase()
     if (!needle) return all
     return all.filter((i) => i.label.toLowerCase().includes(needle))

@@ -780,6 +780,132 @@ details[open] > .cic-secondary-summary::before {
   white-space: nowrap;
 }
 
+.cic-user-menu {
+  position: relative;
+}
+
+.cic-user-trigger {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--cic-radius);
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--cic-muted);
+}
+
+.cic-user-trigger:hover,
+.cic-user-trigger[aria-expanded='true'] {
+  border-color: var(--cic-rule);
+  color: var(--cic-ink);
+  background: var(--cic-paper-2);
+}
+
+.cic-user-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 12.5rem;
+  z-index: 50;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  background: var(--cic-surface);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.cic-user-menu-panel a {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  color: var(--cic-ink);
+  text-decoration: none;
+}
+
+.cic-user-menu-panel a:hover {
+  background: var(--cic-paper-2);
+}
+
+.cic-prefs-group-label {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+  font-weight: 700;
+}
+
+.cic-mobile-more-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .cic-mobile-more-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .cic-mobile-more-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* Sit above the fixed tab bar so Preferencias stays reachable. */
+    bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+    max-height: min(72vh, 32rem);
+    overflow: auto;
+    padding: 10px 16px 14px;
+    border-radius: 14px 14px 0 0;
+    border: 1px solid var(--cic-rule-strong);
+    border-bottom: 0;
+    background: var(--cic-surface);
+  }
+
+  .cic-mobile-more-handle {
+    width: 36px;
+    height: 3px;
+    margin: 2px auto 10px;
+    border-radius: 2px;
+    background: var(--cic-rule-strong);
+  }
+
+  .cic-mobile-more-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cic-mobile-more-prefs,
+  .cic-mobile-more-links {
+    display: grid;
+    gap: 4px;
+  }
+
+  .cic-mobile-more-prefs {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--cic-rule);
+  }
+
+  .cic-mobile-more-prefs a,
+  .cic-mobile-more-links a {
+    display: block;
+    padding: 0.7rem 0.35rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--cic-ink);
+    text-decoration: none;
+  }
+
+}
+
 .cic-content {
   padding: calc(var(--cic-space) * 5) calc(var(--cic-space) * 4) calc(var(--cic-space) * 8);
   max-width: 1100px;
@@ -1354,7 +1480,8 @@ textarea.cic-input {
 @media (max-width: 900px) {
   .cic-shell {
     grid-template-columns: 1fr;
-    padding-bottom: 64px;
+    /* Room for fixed tab bar + iOS home indicator — never cover last content. */
+    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
   }
   .cic-rail {
     display: none;
@@ -1369,18 +1496,29 @@ textarea.cic-input {
     background: var(--cic-paper-2);
     z-index: 40;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  .cic-mobile-nav a {
+  .cic-mobile-nav a,
+  .cic-mobile-nav button.cic-mobile-nav-more {
     flex: 1 0 auto;
     text-align: center;
     padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1);
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--cic-muted);
+    background: transparent;
+    border: 0;
+    border-top: 2px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    appearance: none;
   }
-  .cic-mobile-nav a[aria-current='page'] {
+  .cic-mobile-nav a[aria-current='page'],
+  .cic-mobile-nav button.cic-mobile-nav-more[aria-current='page'],
+  .cic-mobile-nav button.cic-mobile-nav-more[aria-expanded='true'] {
     color: var(--cic-accent-mint);
-    border-top: 2px solid var(--cic-accent-mint);
+    border-top-color: var(--cic-accent-mint);
   }
   /* Bottom sheet above mobile nav — never covers the tab bar. */
   .cic-guided-dock,
@@ -1547,11 +1685,38 @@ textarea.cic-input {
 .cic-rail-m365:hover {
   color: var(--cic-accent-mint);
 }
-.cic-demo-path .cic-demo-steps {
+.cic-demo-path .cic-demo-steps,
+.cic-demo-steps {
   margin: 12px 0 0;
   padding-left: 18px;
 }
-.cic-demo-path .cic-demo-steps a {
+.cic-demo-path .cic-demo-steps a,
+.cic-demo-steps a {
+  color: var(--cic-accent-mint);
+}
+.cic-connect-options {
+  list-style: none;
+  padding-left: 0;
+  margin: 10px 0 4px;
+  display: grid;
+  gap: 8px;
+}
+.cic-connect-options li {
+  margin: 0;
+}
+.cic-connect-options a,
+.cic-connect-options span {
+  display: block;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--cic-ink);
+}
+.cic-connect-options a:hover {
+  border-color: var(--cic-accent-mint);
   color: var(--cic-accent-mint);
 }
 .cic-m365-consent-brand {
@@ -2581,19 +2746,22 @@ textarea.cic-input {
   line-height: 1.4;
 }
 
+/*
+ * Identity / coordinator state panel stays in document flow on all viewports.
+ * A previous mobile bottom-sheet (position:fixed) covered Hoy secondary actions
+ * and room content above the tab bar — keep the map prominent without overlays.
+ */
 @media (max-width: 959px) {
   .cic-coord-state-panel {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
-    z-index: 36;
-    max-height: 48vh;
-    overflow: auto;
-    border-radius: 12px 12px 0 0;
-    border-left: 0;
-    border-right: 0;
-    border-bottom: 0;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border-radius: var(--cic-radius);
+  }
+  .cic-coord-state-prompt {
+    min-height: 0;
+    padding-top: calc(var(--cic-space) * 1.25);
+    padding-bottom: calc(var(--cic-space) * 1.25);
   }
 }
 
