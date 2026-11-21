@@ -1740,7 +1740,10 @@ textarea.cic-input {
 /* Extra clearance under Hoy secondary column so connect CTAs clear mobile chrome. */
 @media (max-width: 900px) {
   .cic-hoy-secondary {
-    padding-bottom: calc(var(--cic-space) * 4);
+    padding-bottom: calc(var(--cic-space) * 8);
+  }
+  .cic-hoy-secondary .cic-secondary-panel:last-child {
+    margin-bottom: calc(var(--cic-space) * 2);
   }
 }
 .cic-m365-consent-brand {
