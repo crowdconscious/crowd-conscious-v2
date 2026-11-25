@@ -25,6 +25,7 @@ import {
   readWhatsAppCloudConfig,
   sendMorningSummaryWhatsApp,
 } from './cloud-api'
+import { loadTodayBulletinWhatsAppHighlight } from './today-bulletin-hits'
 
 function appBaseUrl(): string {
   return (
@@ -59,9 +60,10 @@ export async function sendDemoMorningWhatsAppTest(opts: {
     }
   }
 
-  const [briefing, { deadlines }] = await Promise.all([
+  const [briefing, { deadlines }, bulletinToday] = await Promise.all([
     loadHoyBriefing(opts.persona),
     loadDeadlines(opts.persona),
+    loadTodayBulletinWhatsAppHighlight(opts.persona.firmId),
   ])
 
   let asuntosConNovedad = 0
@@ -85,7 +87,13 @@ export async function sendDemoMorningWhatsAppTest(opts: {
       ? { label: nextDeadline.label, dueAt: nextDeadline.dueAt }
       : null
   )
-  const loMasRelevante = pickTopHeadlineWhatsAppParam(headlines)
+  // Prefer today's bulletin coincidencias when present; otherwise keep DOF headlines.
+  if (bulletinToday) {
+    asuntosConNovedad = bulletinToday.count
+  }
+  const loMasRelevante = bulletinToday
+    ? bulletinToday.headline
+    : pickTopHeadlineWhatsAppParam(headlines)
 
   const useV2 = isMorningWhatsAppTemplateV2(cfg.templateName)
   const templateVariables = useV2
