@@ -4,10 +4,14 @@
 -- All enabled=false; verified_by empty (rule 9b). Agents do not apply to production.
 
 -- Edomex: firm login required (Francisco); never automate login from this app.
+-- proposed_tier = 'C' is a PROPOSAL only — pending counsel sign-off. It does NOT
+-- enable delegated access (rule 9e). enabled stays false; no credentials, no auto-fetch.
 UPDATE ciceron.bulletin_sources
 SET needs_login = true,
     proposed_tier = 'C',
-    difficulty_note = 'Requires firm-issued account (rule 9e). Manual download + upload only; never log in from Cicerón.',
+    difficulty_note =
+      'PROPOSED tier C pending counsel. Requires firm-issued account (rule 9e). '
+      || 'Does NOT enable delegated access. Manual download + upload only; never log in from Cicerón.',
     updated_at = now()
 WHERE source_key = 'edomex_boletin';
 

@@ -3,6 +3,8 @@ import 'server-only'
 import {
   buildUploadStoragePath,
   isTextProcessable,
+  MAX_BULLETIN_TEXT_CHARS,
+  TEXT_TOO_LONG_ES,
   type AllowedUploadMime,
   type ManualUploadInput,
 } from '@/lib/ciceron/boletines/manual-upload-validation'
@@ -38,6 +40,20 @@ export type ManualUploadResult = {
 
 function canUpload(role: string): boolean {
   return role === 'socio' || role === 'asociado' || role === 'admin'
+}
+
+async function removeStoredUpload(path: string | null): Promise<void> {
+  if (!path) return
+  try {
+    const storage = createCiceronAdminStorage()
+    await storage.remove([path])
+  } catch {
+    // Best-effort cleanup after a failed create_bulletin_upload.
+  }
+}
+
+function textOverLimit(text: string | null | undefined): boolean {
+  return Boolean(text && text.length > MAX_BULLETIN_TEXT_CHARS)
 }
 
 async function loadCatalogue(
@@ -122,16 +138,30 @@ export async function processManualBulletinUpload(opts: {
     return { ok: false, message: 'Seleccione una entidad federativa válida.' }
   }
 
-  const db = tryCreateCiceronAdminClient()
-  if (!db) {
+  const dbClient = tryCreateCiceronAdminClient()
+  if (!dbClient) {
     return { ok: false, message: 'Sin conexión a datos. Intente de nuevo más tarde.' }
   }
+  const db = dbClient
 
+  // Catalogue / run is_demo still follows the seed firm ids for demo board filters.
+  // RPC create_bulletin_upload ignores p_is_demo and copies firms.is_demo.
   const isDemo = isDemoFirm(persona.firmId)
   const uploadId = crypto.randomUUID()
   const mime = opts.fileMime ?? input.mime ?? null
   let storagePath: string | null = null
   let pastedText = input.pastedText?.trim() || null
+
+  // Reject oversized text BEFORE storage.upload or the RPC.
+  if (textOverLimit(pastedText)) {
+    return { ok: false, message: TEXT_TOO_LONG_ES, policyId: 'text_too_long' }
+  }
+  if (opts.fileBytes && mime === 'text/plain' && !pastedText) {
+    pastedText = new TextDecoder('utf-8').decode(opts.fileBytes)
+    if (textOverLimit(pastedText)) {
+      return { ok: false, message: TEXT_TOO_LONG_ES, policyId: 'text_too_long' }
+    }
+  }
 
   if (opts.fileBytes && mime) {
     storagePath = buildUploadStoragePath({
@@ -159,17 +189,38 @@ export async function processManualBulletinUpload(opts: {
         message: 'No se pudo guardar el archivo. Intente de nuevo.',
       }
     }
+  }
 
-    if (mime === 'text/plain' && !pastedText) {
-      pastedText = new TextDecoder('utf-8').decode(opts.fileBytes)
+  async function createUploadRow(
+    args: Record<string, unknown>
+  ): Promise<{ ok: true; data: Record<string, unknown> | null } | { ok: false; message: string; policyId?: string; policyReason?: string }> {
+    const { data, error } = await db.rpc('create_bulletin_upload', args)
+    if (error) {
+      await removeStoredUpload(storagePath)
+      return {
+        ok: false,
+        message: 'No se pudo registrar la carga.',
+        policyReason: error.message,
+      }
     }
+    const row = data as Record<string, unknown> | null
+    if (row && row.ok === false) {
+      await removeStoredUpload(storagePath)
+      return {
+        ok: false,
+        policyId: String(row.policy_id ?? 'rbac_role'),
+        policyReason: String(row.policy_reason ?? 'Denegado.'),
+        message: String(row.policy_reason ?? 'Denegado.'),
+      }
+    }
+    return { ok: true, data: row }
   }
 
   const textOk = isTextProcessable(mime, pastedText ?? undefined)
 
   // Scanned PDF / images: store only, honest needs_review copy.
   if (!textOk) {
-    const { data, error } = await db.rpc('create_bulletin_upload', {
+    const created = await createUploadRow({
       p_firm_id: persona.firmId,
       p_actor: persona.id,
       p_state_code: entry.stateCode,
@@ -189,18 +240,7 @@ export async function processManualBulletinUpload(opts: {
       p_retention_days: 30,
       p_upload_id: uploadId,
     })
-    if (error) {
-      return { ok: false, message: 'No se pudo registrar la carga.', policyReason: error.message }
-    }
-    const row = data as Record<string, unknown> | null
-    if (row && row.ok === false) {
-      return {
-        ok: false,
-        policyId: String(row.policy_id ?? 'rbac_role'),
-        policyReason: String(row.policy_reason ?? 'Denegado.'),
-        message: String(row.policy_reason ?? 'Denegado.'),
-      }
-    }
+    if (!created.ok) return created
     return {
       ok: true,
       uploadId,
@@ -214,7 +254,7 @@ export async function processManualBulletinUpload(opts: {
 
   const parsed = validateAndParseManualText(pastedText ?? '')
   if (!parsed.ok) {
-    const { data, error } = await db.rpc('create_bulletin_upload', {
+    const created = await createUploadRow({
       p_firm_id: persona.firmId,
       p_actor: persona.id,
       p_state_code: entry.stateCode,
@@ -233,7 +273,7 @@ export async function processManualBulletinUpload(opts: {
       p_retention_days: 30,
       p_upload_id: uploadId,
     })
-    if (error || (data as Record<string, unknown> | null)?.ok === false) {
+    if (!created.ok) {
       return {
         ok: false,
         message: parsed.error ?? 'No se pudo interpretar el texto.',
@@ -321,7 +361,7 @@ export async function processManualBulletinUpload(opts: {
     })
   }
 
-  const { data: createData, error: createErr } = await db.rpc('create_bulletin_upload', {
+  const created = await createUploadRow({
     p_firm_id: persona.firmId,
     p_actor: persona.id,
     p_state_code: entry.stateCode,
@@ -341,7 +381,7 @@ export async function processManualBulletinUpload(opts: {
     p_upload_id: uploadId,
   })
 
-  if (createErr || (createData as Record<string, unknown> | null)?.ok === false) {
+  if (!created.ok) {
     return {
       ok: false,
       message: 'La corrida se registró, pero falló el recibo de carga.',

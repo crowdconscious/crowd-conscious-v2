@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { parseSubmitClientNeedNoteInput } from '@/lib/ciceron/client-notes/validation'
-import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/client'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
@@ -30,16 +29,12 @@ export async function submitClientNeedNoteAction(input: {
     return { ok: false, message: 'Sin conexión a datos. Intente de nuevo más tarde.' }
   }
 
-  const isDemo =
-    persona.firmId === CICERON_SEED.firmDemo ||
-    persona.firmId === CICERON_SEED.firmContraste
-
+  // p_is_demo is ignored by the RPC (firms.is_demo is authoritative).
   const { data, error } = await db.rpc('submit_client_need_note', {
     p_firm_id: persona.firmId,
     p_actor: persona.id,
     p_context: parsed.data.context,
     p_body: parsed.data.body,
-    p_is_demo: isDemo,
     p_notify_admins: true,
   })
 

@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import {
+  MAX_BULLETIN_TEXT_CHARS,
+  TEXT_TOO_LONG_ES,
   parseManualUploadInput,
   type AllowedUploadMime,
 } from '@/lib/ciceron/boletines/manual-upload-validation'
@@ -45,6 +47,12 @@ export async function uploadManualBulletinAction(
   const persona = await getCiceronDemoSession()
   if (!persona) return { ok: false, message: 'Sin sesión.' }
 
+  const pastedRaw = String(formData.get('pastedText') ?? '')
+  // Reject oversized paste before any storage or RPC work.
+  if (pastedRaw.length > MAX_BULLETIN_TEXT_CHARS) {
+    return { ok: false, message: TEXT_TOO_LONG_ES }
+  }
+
   const file = formData.get('file')
   const fileObj = file instanceof File && file.size > 0 ? file : null
   let mime: AllowedUploadMime | null = null
@@ -62,12 +70,18 @@ export async function uploadManualBulletinAction(
       }
     }
     bytes = new Uint8Array(await fileObj.arrayBuffer())
+    if (mime === 'text/plain') {
+      const decoded = new TextDecoder('utf-8').decode(bytes)
+      if (decoded.length > MAX_BULLETIN_TEXT_CHARS) {
+        return { ok: false, message: TEXT_TOO_LONG_ES }
+      }
+    }
   }
 
   const parsed = parseManualUploadInput({
     stateCode: String(formData.get('stateCode') ?? ''),
     publicationDate: String(formData.get('publicationDate') ?? ''),
-    pastedText: String(formData.get('pastedText') ?? '') || undefined,
+    pastedText: pastedRaw.trim() || undefined,
     mime: mime ?? undefined,
     fileName: fileObj?.name,
   })

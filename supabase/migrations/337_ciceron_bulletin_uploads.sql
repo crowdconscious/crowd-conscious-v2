@@ -4,6 +4,7 @@
 -- Existing ciceron storage policies already allow can_manage_firm INSERT
 -- under that path layout — NO new storage.objects policies in this migration.
 -- Do NOT apply to production from an agent — CTO applies and verifies.
+-- is_demo is ALWAYS derived from ciceron.firms.is_demo (caller cannot override).
 
 -- ---------------------------------------------------------------------------
 -- bulletin_uploads
@@ -71,6 +72,8 @@ COMMENT ON TABLE ciceron.bulletin_uploads IS
   'Manual bulletin uploads by firm lawyers. Text/txt may be auto-matched; PDF/images stay needs_review until OCR lands.';
 COMMENT ON COLUMN ciceron.bulletin_uploads.retention_until IS
   'Raw paste/file retention; default from source retention_days or 30.';
+COMMENT ON COLUMN ciceron.bulletin_uploads.is_demo IS
+  'Copied from firms.is_demo at insert; never taken from the caller.';
 
 ALTER TABLE ciceron.bulletin_uploads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ciceron.bulletin_uploads FORCE ROW LEVEL SECURITY;
@@ -90,6 +93,9 @@ CREATE POLICY bulletin_uploads_insert ON ciceron.bulletin_uploads
     firm_id IN (SELECT ciceron.firms_of_current_user())
     AND ciceron.can_manage_firm(firm_id)
     AND uploaded_by = ciceron.current_actor_id()
+    AND is_demo IS NOT DISTINCT FROM (
+      SELECT f.is_demo FROM ciceron.firms f WHERE f.id = firm_id
+    )
   );
 
 DROP TRIGGER IF EXISTS bulletin_uploads_set_updated_at ON ciceron.bulletin_uploads;
@@ -99,6 +105,7 @@ CREATE TRIGGER bulletin_uploads_set_updated_at
 
 -- ---------------------------------------------------------------------------
 -- RPC: create upload row (service_role; app processes text matching after)
+-- p_is_demo accepted for signature stability but IGNORED — firm.is_demo wins.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ciceron.create_bulletin_upload(
   p_firm_id uuid,
@@ -115,7 +122,7 @@ CREATE OR REPLACE FUNCTION ciceron.create_bulletin_upload(
   p_hits_found int DEFAULT 0,
   p_parser_notes text DEFAULT NULL,
   p_run_id uuid DEFAULT NULL,
-  p_is_demo boolean DEFAULT false,
+  p_is_demo boolean DEFAULT false, -- unused; firm.is_demo is authoritative
   p_retention_days int DEFAULT NULL,
   p_upload_id uuid DEFAULT NULL
 )
@@ -133,6 +140,8 @@ DECLARE
   uid uuid;
   st text;
 BEGIN
+  -- p_is_demo intentionally ignored (firm.is_demo is authoritative).
+
   SELECT ms.role INTO actor_role
   FROM ciceron.memberships ms
   WHERE ms.firm_id = p_firm_id AND ms.user_id = p_actor;
@@ -160,6 +169,23 @@ BEGIN
     );
   END IF;
 
+  IF p_storage_path IS NOT NULL
+     AND p_storage_path !~ ('^' || p_firm_id::text || '/') THEN
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'invalid_storage_path',
+      'policy_reason', 'La ruta de almacenamiento debe comenzar con el identificador del despacho.'
+    );
+  END IF;
+
+  IF p_pasted_text IS NOT NULL AND char_length(p_pasted_text) > 500000 THEN
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'text_too_long',
+      'policy_reason', 'El texto supera el límite de 500 000 caracteres.'
+    );
+  END IF;
+
   st := COALESCE(NULLIF(trim(p_status), ''), 'received');
   IF st NOT IN ('received', 'processing', 'matched', 'no_matches', 'needs_review', 'failed') THEN
     RETURN jsonb_build_object(
@@ -169,7 +195,13 @@ BEGIN
     );
   END IF;
 
-  SELECT f.is_demo INTO firm_is_demo FROM ciceron.firms f WHERE f.id = p_firm_id;
+  SELECT COALESCE(f.is_demo, false) INTO firm_is_demo
+  FROM ciceron.firms f
+  WHERE f.id = p_firm_id;
+
+  IF firm_is_demo IS NULL THEN
+    firm_is_demo := false;
+  END IF;
 
   src_retention := NULL;
   IF p_source_id IS NOT NULL THEN
@@ -201,7 +233,7 @@ BEGIN
     GREATEST(COALESCE(p_entries_found, 0), 0),
     GREATEST(COALESCE(p_hits_found, 0), 0),
     NULLIF(trim(p_parser_notes), ''),
-    COALESCE(p_is_demo, firm_is_demo, false),
+    firm_is_demo,
     p_publication_date + make_interval(days => retain_days)
   )
   RETURNING id INTO rid;
@@ -223,7 +255,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION ciceron.create_bulletin_upload IS
-  'Service-role create of a manual bulletin upload row (socio/asociado/admin).';
+  'Service-role create of a manual bulletin upload. is_demo from firms.is_demo; path must start with firm_id/.';
 
 REVOKE ALL ON FUNCTION ciceron.create_bulletin_upload(
   uuid, uuid, text, text, date, uuid, text, text, text, text, int, int, text, uuid, boolean, int, uuid

@@ -33,6 +33,16 @@ describe('parseManualUploadInput', () => {
     })
     assert.equal(r.ok, false)
   })
+
+  it('rejects pasted text over 500000 characters', () => {
+    const r = parseManualUploadInput({
+      stateCode: 'CDMX',
+      publicationDate: '2026-11-25',
+      pastedText: 'x'.repeat(500_001),
+    })
+    assert.equal(r.ok, false)
+    if (!r.ok) assert.match(r.message, /500/)
+  })
 })
 
 describe('isTextProcessable / storage path', () => {

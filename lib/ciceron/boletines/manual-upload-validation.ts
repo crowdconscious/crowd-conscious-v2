@@ -8,6 +8,12 @@ export const ALLOWED_UPLOAD_MIMES = [
   'text/plain',
 ] as const
 
+/** Hard cap for pasted / decoded text/plain before storage or RPC. */
+export const MAX_BULLETIN_TEXT_CHARS = 500_000
+
+export const TEXT_TOO_LONG_ES =
+  'El texto supera el límite de 500 000 caracteres. Recorte el contenido o suba un archivo más corto.'
+
 export type AllowedUploadMime = (typeof ALLOWED_UPLOAD_MIMES)[number]
 
 const mimeSchema = z.enum(ALLOWED_UPLOAD_MIMES)
@@ -24,7 +30,11 @@ export const manualUploadInputSchema = z
       .string()
       .trim()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Indique la fecha de publicación (AAAA-MM-DD).'),
-    pastedText: z.string().trim().max(500_000).optional(),
+    pastedText: z
+      .string()
+      .trim()
+      .max(MAX_BULLETIN_TEXT_CHARS, TEXT_TOO_LONG_ES)
+      .optional(),
     mime: mimeSchema.optional(),
     fileName: z.string().trim().max(240).optional(),
   })

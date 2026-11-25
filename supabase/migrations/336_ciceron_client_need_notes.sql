@@ -2,6 +2,7 @@
 -- Additive: firm-facing feedback box («¿Qué les gustaría ver o automatizar?»).
 -- Do NOT apply to production from an agent — CTO applies and verifies.
 -- Demo path uses service_role RPCs; authenticated RLS covers real JWT users.
+-- is_demo is ALWAYS derived from ciceron.firms.is_demo (caller cannot override).
 
 -- ---------------------------------------------------------------------------
 -- client_need_notes
@@ -35,6 +36,8 @@ COMMENT ON COLUMN ciceron.client_need_notes.author_actor IS
   'Actor id (auth.users or demo_personas) matching memberships.user_id.';
 COMMENT ON COLUMN ciceron.client_need_notes.context IS
   'Surface where the note was written: hoy | boletines | preferencias | general.';
+COMMENT ON COLUMN ciceron.client_need_notes.is_demo IS
+  'Copied from firms.is_demo at insert; never taken from the caller.';
 
 ALTER TABLE ciceron.client_need_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ciceron.client_need_notes FORCE ROW LEVEL SECURITY;
@@ -61,23 +64,28 @@ CREATE POLICY client_need_notes_select_admin ON ciceron.client_need_notes
   );
 
 -- Firm members may insert notes for their firm as themselves.
+-- is_demo must match the firm row (caller cannot force demo/non-demo).
 DROP POLICY IF EXISTS client_need_notes_insert ON ciceron.client_need_notes;
 CREATE POLICY client_need_notes_insert ON ciceron.client_need_notes
   FOR INSERT TO authenticated
   WITH CHECK (
     firm_id IN (SELECT ciceron.firms_of_current_user())
     AND author_actor = ciceron.current_actor_id()
+    AND is_demo IS NOT DISTINCT FROM (
+      SELECT f.is_demo FROM ciceron.firms f WHERE f.id = firm_id
+    )
   );
 
 -- ---------------------------------------------------------------------------
 -- RPC: submit a client need note (demo-persona and JWT safe)
+-- p_is_demo is accepted for signature stability but IGNORED — firm.is_demo wins.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ciceron.submit_client_need_note(
   p_firm_id uuid,
   p_actor uuid,
   p_context text,
   p_body text,
-  p_is_demo boolean DEFAULT false,
+  p_is_demo boolean DEFAULT false, -- unused; firm.is_demo is authoritative
   p_notify_admins boolean DEFAULT true
 )
 RETURNS jsonb
@@ -92,7 +100,10 @@ DECLARE
   ctx text;
   cleaned text;
   admin_rec record;
+  is_persona boolean;
 BEGIN
+  -- p_is_demo intentionally ignored (firm.is_demo is authoritative).
+
   ctx := lower(trim(COALESCE(p_context, 'general')));
   IF ctx NOT IN ('hoy', 'boletines', 'preferencias', 'general') THEN
     RETURN jsonb_build_object(
@@ -130,9 +141,13 @@ BEGIN
     );
   END IF;
 
-  SELECT f.is_demo INTO firm_is_demo
+  SELECT COALESCE(f.is_demo, false) INTO firm_is_demo
   FROM ciceron.firms f
   WHERE f.id = p_firm_id;
+
+  IF firm_is_demo IS NULL THEN
+    firm_is_demo := false;
+  END IF;
 
   INSERT INTO ciceron.client_need_notes (
     firm_id, author_actor, context, body, status, is_demo
@@ -142,10 +157,14 @@ BEGIN
     ctx,
     cleaned,
     'nuevo',
-    COALESCE(p_is_demo, firm_is_demo, false)
+    firm_is_demo
   )
   RETURNING id INTO note_id;
 
+  -- Notify admins without aborting the note on FK / policy failures.
+  -- recipient_persona FK → demo_personas; real JWT admins use recipient_id.
+  -- TODO (DECISIONS): scope to Cicerón staff when a staff marker exists;
+  -- today every membership role=admin is notified.
   IF COALESCE(p_notify_admins, true) THEN
     FOR admin_rec IN
       SELECT ms.user_id AS admin_id
@@ -154,19 +173,44 @@ BEGIN
       ORDER BY ms.user_id
       LIMIT 20
     LOOP
-      INSERT INTO ciceron.in_app_notifications (
-        firm_id, recipient_id, recipient_persona, kind, title, body,
-        entity_type, entity_id
-      ) VALUES (
-        p_firm_id,
-        NULL,
-        admin_rec.admin_id,
-        'client_need_note',
-        'Nueva nota del despacho',
-        'Un miembro del despacho envió una sugerencia desde ' || ctx || '.',
-        'client_need_notes',
-        note_id
-      );
+      BEGIN
+        SELECT EXISTS (
+          SELECT 1 FROM ciceron.demo_personas dp WHERE dp.id = admin_rec.admin_id
+        ) INTO is_persona;
+
+        IF is_persona THEN
+          INSERT INTO ciceron.in_app_notifications (
+            firm_id, recipient_id, recipient_persona, kind, title, body,
+            entity_type, entity_id
+          ) VALUES (
+            p_firm_id,
+            NULL,
+            admin_rec.admin_id,
+            'client_need_note',
+            'Nueva nota del despacho',
+            'Un miembro del despacho envió una sugerencia desde ' || ctx || '.',
+            'client_need_notes',
+            note_id
+          );
+        ELSE
+          INSERT INTO ciceron.in_app_notifications (
+            firm_id, recipient_id, recipient_persona, kind, title, body,
+            entity_type, entity_id
+          ) VALUES (
+            p_firm_id,
+            admin_rec.admin_id,
+            NULL,
+            'client_need_note',
+            'Nueva nota del despacho',
+            'Un miembro del despacho envió una sugerencia desde ' || ctx || '.',
+            'client_need_notes',
+            note_id
+          );
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          NULL; -- note already committed in this function body; skip failed notify
+      END;
     END LOOP;
   END IF;
 
@@ -182,7 +226,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION ciceron.submit_client_need_note IS
-  'Insert a firm need note; optional in-app notify for admin personas. No email/WhatsApp.';
+  'Insert a firm need note; is_demo from firms.is_demo. Notify best-effort. No email/WhatsApp.';
 
 REVOKE ALL ON FUNCTION ciceron.submit_client_need_note(uuid, uuid, text, text, boolean, boolean)
   FROM PUBLIC, anon, authenticated;
