@@ -25,6 +25,10 @@ export type BulletinMatchCardProps = {
   matchKind: 'exact' | 'possible'
   caseFileId: string | null
   sourceUrl: string | null
+  /** In-app viewer when a local page locator exists. */
+  localFuenteHref?: string | null
+  /** e.g. «Boletín No. 199 · pág. 78» */
+  fuenteCitation?: string | null
   reason: string
   /** Server-built Qué cambió copy (plain Spanish). */
   queCambioBefore: string
@@ -72,7 +76,11 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
   const { secondary } = pickMatchPrimaryAction({
     caseFileId: props.caseFileId,
     sourceUrl: props.sourceUrl,
+    localFuenteHref: props.localFuenteHref,
   })
+
+  const fuenteHref = props.localFuenteHref || props.sourceUrl
+  const fuenteExternal = !props.localFuenteHref && Boolean(props.sourceUrl)
 
   useEffect(() => {
     if (!open) return
@@ -109,21 +117,33 @@ export function BulletinMatchCard(props: BulletinMatchCardProps) {
       {parts.meta ? (
         <p className="cic-muted cic-match-card-meta">{parts.meta}</p>
       ) : null}
+      {props.fuenteCitation ? (
+        <p className="cic-match-card-citation">{props.fuenteCitation}</p>
+      ) : null}
 
       <section className="cic-que-cambio" aria-label={copy.boletines.queCambioTitle}>
         <h3 className="cic-que-cambio-title">{copy.boletines.queCambioTitle}</h3>
         <p className="cic-que-cambio-before">{props.queCambioBefore}</p>
         <p className="cic-que-cambio-after">{props.queCambioAfter}</p>
-        {props.sourceUrl ? (
+        {fuenteHref ? (
           <p className="cic-que-cambio-source">
-            <a
-              className="cic-btn cic-btn-secondary cic-btn-compact"
-              href={props.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {copy.boletines.verFuenteOficial}
-            </a>
+            {fuenteExternal ? (
+              <a
+                className="cic-btn cic-btn-secondary cic-btn-compact"
+                href={fuenteHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {copy.boletines.openSource}
+              </a>
+            ) : (
+              <Link
+                className="cic-btn cic-btn-secondary cic-btn-compact"
+                href={fuenteHref}
+              >
+                {copy.boletines.openSource}
+              </Link>
+            )}
           </p>
         ) : null}
         <details className="cic-que-cambio-legal">

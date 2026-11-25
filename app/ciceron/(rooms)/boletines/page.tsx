@@ -17,6 +17,7 @@ import {
 } from '@/lib/ciceron/boletines/card-action-pure'
 import { formatConsultHm } from '@/lib/ciceron/boletines/map-state-panel-pure'
 import { buildQueCambio } from '@/lib/ciceron/boletines/que-cambio-pure'
+import { resolveHitFuenteLink } from '@/lib/ciceron/boletines/local-sources'
 import { buildEmptyHitsMessage } from '@/lib/ciceron/demo/empty-state-pure'
 import { personaHomeKind } from '@/lib/ciceron/demo/persona-home-pure'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
@@ -270,6 +271,13 @@ export default async function BoletinesPage({
                 courtName: h.courtName,
                 expedienteNumber: h.expedienteNumber,
               })
+              const fuente = resolveHitFuenteLink({
+                hitId: h.id,
+                expediente: h.expedienteNumber,
+                courtName: h.courtName,
+                sourceUrl: h.sourceUrl,
+                bulletinDate: h.publicationDate,
+              })
               const primaryLabel =
                 primary.id === 'notify-client'
                   ? copy.boletines.notifyClientBtn
@@ -283,7 +291,7 @@ export default async function BoletinesPage({
               if (primary.denied && primary.denyReason && !pageDenialReason) {
                 pageDenialReason = primary.denyReason
               }
-              return { h, primary, cambio, primaryLabel }
+              return { h, primary, cambio, primaryLabel, fuente }
             })
             return (
               <>
@@ -293,7 +301,7 @@ export default async function BoletinesPage({
                   </p>
                 ) : null}
                 <ul className="cic-stack cic-match-list">
-                  {cards.map(({ h, primary, cambio, primaryLabel }) => (
+                  {cards.map(({ h, primary, cambio, primaryLabel, fuente }) => (
                     <li key={h.id}>
                       <BulletinMatchCard
                         id={h.id}
@@ -308,7 +316,9 @@ export default async function BoletinesPage({
                         deadlineLabel={null}
                         matchKind={h.matchKind}
                         caseFileId={h.caseFileId}
-                        sourceUrl={h.sourceUrl}
+                        sourceUrl={fuente.external ? fuente.href : h.sourceUrl}
+                        localFuenteHref={fuente.external ? null : fuente.href}
+                        fuenteCitation={fuente.citation}
                         reason={h.reason}
                         queCambioBefore={cambio.before}
                         queCambioAfter={cambio.after}

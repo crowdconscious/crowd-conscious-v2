@@ -43,4 +43,16 @@ describe('pickMatchPrimaryAction', () => {
     assert.equal(primary.id, 'capture')
     assert.ok(!secondary.some((a) => a.id === 'capture'))
   })
+
+  it('prefers the local fuente viewer over an external URL', () => {
+    const { secondary } = pickMatchPrimaryAction({
+      caseFileId: 'case-1',
+      sourceUrl: 'https://example.gob.mx',
+      localFuenteHref: '/ciceron/boletines/fuente/hit-1',
+    })
+    const source = secondary.find((a) => a.id === 'source')
+    assert.ok(source)
+    assert.equal(source!.href, '/ciceron/boletines/fuente/hit-1')
+    assert.equal(source!.external, false)
+  })
 })
