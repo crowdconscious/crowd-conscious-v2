@@ -1,7 +1,7 @@
 /**
  * «Boletines por estado» directory — static entry pages for all 32 entities
  * plus federal DOF / SCJN landings. URLs are entry pages only (no date deep links).
- * No DB reads/writes. Verification from VM curl 2026-11-25.
+ * No DB reads/writes. Verification: VM curl + Mexico-reachable check 2026-11-25.
  */
 
 export type BulletinAccessType =
@@ -47,8 +47,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     displayName: 'Boletín Judicial PJBC',
     landingUrl: 'https://www.pjbc.gob.mx/boletin_judicial.aspx',
     accessType: 'abierto',
-    urlStatus: 'cloudflare',
-    note: 'El portal bloquea algunas redes; ábralo en el navegador del despacho.',
+    urlStatus: 'ok',
     kind: 'state',
   },
   {
@@ -76,11 +75,10 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     stateCode: 'CHIS',
     stateName: 'Chiapas',
     sourceKey: 'chis_listas',
-    displayName: 'Consulta de Listas de Publicación de Acuerdos',
-    landingUrl: 'https://consultalistas.poderjudicialchiapas.gob.mx/inicial.php',
-    accessType: 'captcha',
-    urlStatus: 'cloudflare',
-    note: 'Barrera del portal desde redes de nube; use el navegador del despacho.',
+    displayName: 'Listas de Publicación de Acuerdos',
+    landingUrl: 'https://consultalistas.poderjudicialchiapas.gob.mx/',
+    accessType: 'abierto',
+    urlStatus: 'ok',
     kind: 'state',
   },
   {
@@ -100,8 +98,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     displayName: 'Boletín Judicial PJCDMX',
     landingUrl: 'https://poderjudicialcdmx.gob.mx/consulta-boletin/',
     accessType: 'abierto',
-    urlStatus: 'cloudflare',
-    note: 'Bloqueo de red desde algunas ubicaciones; el enlace oficial es correcto.',
+    urlStatus: 'ok',
     kind: 'state',
   },
   {
@@ -117,12 +114,12 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
   {
     stateCode: 'COL',
     stateName: 'Colima',
-    sourceKey: 'col_listas_stj',
-    displayName: 'Listas de Acuerdos — STJ Colima',
-    landingUrl: 'https://stjcolima.gob.mx/listas/index.php/Lista_Acuerdos/',
+    sourceKey: 'col_portal_stj',
+    displayName: 'Portal STJ Colima',
+    landingUrl: 'https://stjcolima.gob.mx/',
     accessType: 'abierto',
-    urlStatus: 'error',
-    note: 'La ruta respondió error desde esta red; confírmela en el navegador del despacho.',
+    urlStatus: 'ok',
+    note: 'Portal del tribunal; la ruta de listas respondió error. Abra las listas desde el portal.',
     kind: 'state',
   },
   {
@@ -247,7 +244,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     displayName: 'Acuerdos — PJ Puebla',
     landingUrl: 'https://pjpuebla.gob.mx/acuerdos',
     accessType: 'abierto',
-    urlStatus: 'cloudflare',
+    urlStatus: 'ok',
     kind: 'state',
   },
   {
@@ -264,12 +261,12 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
   {
     stateCode: 'QROO',
     stateName: 'Quintana Roo',
-    sourceKey: 'qroo_tsj',
-    displayName: 'Portal TSJQROO — Lista Electrónica',
-    landingUrl: 'https://www.tsjqroo.gob.mx/',
+    sourceKey: 'qroo_estrados',
+    displayName: 'Lista Electrónica — TSJQROO',
+    landingUrl: 'https://www.tsjqroo.gob.mx/estrados/',
     accessType: 'abierto',
     urlStatus: 'timeout',
-    note: 'Portal no respondió desde esta red; confírmelo en el despacho.',
+    note: 'Lista electrónica oficial; el portal no respondió desde algunas redes.',
     kind: 'state',
   },
   {
@@ -285,12 +282,12 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
   {
     stateCode: 'SIN',
     stateName: 'Sinaloa',
-    sourceKey: 'sin_boletin',
-    displayName: 'Boletín Judicial — servicios en línea',
-    landingUrl: 'https://www.stj-sin.gob.mx/serviciosenlinea/boletinjudicial',
-    accessType: 'captcha',
-    urlStatus: 'error',
-    note: 'Puerta de verificación adicional en el portal.',
+    sourceKey: 'sin_portal_stj',
+    displayName: 'Portal STJ Sinaloa',
+    landingUrl: 'https://www.stj-sin.gob.mx/',
+    accessType: 'abierto',
+    urlStatus: 'ok',
+    note: 'Portal del tribunal; la ruta del boletín respondió error. Abra el boletín desde el portal.',
     kind: 'state',
   },
   {
