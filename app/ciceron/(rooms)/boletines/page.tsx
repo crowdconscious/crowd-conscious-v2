@@ -71,6 +71,8 @@ export default async function BoletinesPage({
       <p className="cic-hoy-links">
         <Link href="/ciceron/boletines/coordinador">{copy.boletines.coordinatorLink}</Link>
         {' · '}
+        <Link href="/ciceron/boletines/estados">{copy.boletines.statesDirectoryLink}</Link>
+        {' · '}
         <Link href="/ciceron/revision">{copy.boletines.openRevision}</Link>
       </p>
 
