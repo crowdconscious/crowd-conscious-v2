@@ -493,7 +493,7 @@ export const copy = {
     statesAccess: {
       abierto: 'Abierto',
       requiere_usuario: 'Requiere usuario de la firma',
-      captcha: 'Captcha',
+      captcha: 'Verificación en el portal',
       pdf_organo: 'PDF por órgano',
     },
     statesAutomation: {
@@ -503,7 +503,7 @@ export const copy = {
     },
     statesUrlStatus: {
       ok: 'Enlace verificado',
-      cloudflare: 'Bloqueo de red (Cloudflare)',
+      cloudflare: 'Bloqueo de red en el portal',
       timeout: 'Sin respuesta desde esta red',
       error: 'Error al verificar',
       unverified: 'Por verificar',

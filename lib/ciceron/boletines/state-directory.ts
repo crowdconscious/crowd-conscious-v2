@@ -93,7 +93,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     automation: 'por_verificar',
     sourceId: STATE_DIRECTORY_SOURCE_IDS.bajaCalifornia,
     urlStatus: 'cloudflare',
-    note: 'Cloudflare bloquea algunas redes; ábralo en el navegador del despacho.',
+    note: 'El portal bloquea algunas redes; ábralo en el navegador del despacho.',
     kind: 'state',
   },
   {
@@ -131,7 +131,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     automation: 'manual',
     sourceId: STATE_DIRECTORY_SOURCE_IDS.chiapas,
     urlStatus: 'cloudflare',
-    note: 'Barrera Cloudflare desde redes de nube; use el navegador del despacho.',
+    note: 'Barrera del portal desde redes de nube; use el navegador del despacho.',
     kind: 'state',
   },
   {
@@ -156,7 +156,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     automation: 'por_verificar',
     sourceId: STATE_DIRECTORY_SOURCE_IDS.cdmx,
     urlStatus: 'cloudflare',
-    note: 'Cloudflare desde redes de nube; el enlace oficial es correcto.',
+    note: 'Bloqueo de red desde algunas ubicaciones; el enlace oficial es correcto.',
     kind: 'state',
   },
   {
@@ -220,7 +220,7 @@ export const STATE_DIRECTORY: StateDirectoryEntry[] = [
     automation: 'manual',
     sourceId: STATE_DIRECTORY_SOURCE_IDS.guanajuato,
     urlStatus: 'ok',
-    note: 'Captcha y PDF por órgano. Descargue manualmente y súbalo aquí.',
+    note: 'Verificación en el portal y PDF por órgano. Descargue manualmente y súbalo aquí.',
     kind: 'state',
   },
   {
