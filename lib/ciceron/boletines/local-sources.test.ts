@@ -30,6 +30,21 @@ describe('findLocalFuente', () => {
     assert.equal(formatLocalFuenteCitation(match!), 'Boletín No. 199 · pág. 78')
     assert.match(formatLocalFuenteHeader(match!), /página 78 de 362/)
   })
+
+  it('matches CDMX 25 Nov demo hit by expediente and court', () => {
+    const match = findLocalFuente({
+      sourceKey: 'cdmx_boletin_pj',
+      bulletinDate: '2026-11-25',
+      expediente: '51/2026',
+      courtName: 'Juzgado Trigésimo Segundo de lo Civil',
+    })
+    assert.ok(match)
+    assert.equal(match!.bulletin.bulletinNumber, '200')
+    assert.equal(match!.entry.printedPage, 78)
+    assert.equal(match!.entry.imagePath, '/ciceron/fuentes/cdmx/2026-11-25/p078.webp')
+    assert.equal(formatLocalFuenteCitation(match!), 'Boletín No. 200 · pág. 78')
+    assert.match(formatLocalFuenteHeader(match!), /página 78 de 380/)
+  })
 })
 
 describe('resolveHitFuenteLink', () => {
@@ -47,6 +62,23 @@ describe('resolveHitFuenteLink', () => {
     )
     assert.equal(link.citation, 'Boletín No. 199 · pág. 78')
   })
+
+  it('routes a 25 Nov hit to the local viewer', () => {
+    const link = resolveHitFuenteLink({
+      hitId: 'b7400000-0000-4000-8000-000000000201',
+      expediente: '297/2026',
+      courtName: 'Juzgado Décimo Primero de lo Civil',
+      sourceUrl: 'https://edigital.example/visor',
+      bulletinDate: '2026-11-25',
+    })
+    assert.equal(link.external, false)
+    assert.equal(
+      link.href,
+      '/ciceron/boletines/fuente/b7400000-0000-4000-8000-000000000201'
+    )
+    assert.equal(link.citation, 'Boletín No. 200 · pág. 43')
+  })
+
 
   it('falls back to the external URL without a locator', () => {
     const link = resolveHitFuenteLink({

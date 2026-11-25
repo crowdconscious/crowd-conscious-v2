@@ -125,7 +125,99 @@ export const LOCAL_BOLETIN_CDMX_2026_11_24: LocalBulletinManifest = {
   ],
 }
 
-const MANIFESTS: LocalBulletinManifest[] = [LOCAL_BOLETIN_CDMX_2026_11_24]
+/** Demo scans for Boletín Judicial CDMX No. 200 (25 nov 2026). */
+const CDMX_2026_11_25_VISOR =
+  'https://edigital.poderjudicialcdmx.gob.mx/visor20/WmtNNC9XNExEZmpxeHdUbXZFRzAxVW82WGRrVmc2RzZyZkF3RldNbWRIRi9URXlhYVZrdm44NSswL0NYeGxGSHQzdk9Lb05iZ0RROC9yTDVLa1lIL3NzdUtpN01GZkg2WTBGOHRiQi91Y0Rvc1dSMWp4YTlqY0lEK2R6MWlma0FISElJU0ZaLysrZVMyZlB4azZiVWNtZTRjUTZnZmsxeTBzcXprY1A1am04NDMyZ2ZCN0kvM21LZGdlbW5vMUk9'
+
+export const LOCAL_BOLETIN_CDMX_2026_11_25: LocalBulletinManifest = {
+  sourceKey: 'cdmx_boletin_pj',
+  bulletinDate: '2026-11-25',
+  title: 'Boletín Judicial CDMX',
+  bulletinNumber: '200',
+  dateLabelEs: '25 nov 2026',
+  totalPages: 380,
+  officialVisorUrl: CDMX_2026_11_25_VISOR,
+  officialLandingUrl: 'https://poderjudicialcdmx.gob.mx/consulta-boletin/',
+  entries: [
+    {
+      expediente: '297/2026',
+      courtMatch: 'Décimo Primero de lo Civil',
+      printedPage: 43,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p043.webp',
+      highlight: { x: 0.502, y: 0.8443, w: 0.4471, h: 0.0267 },
+      excerpt:
+        'SECRETARÍA «A». Acuerdos del 24 de noviembre de 2026. Albarrán Cuevas Patricia vs. Mendoza Delgado Guillermo. Ordinario Civil, P-78. 1 Acdo. Núm. Exp. 297/2026.',
+    },
+    {
+      expediente: '1622/2024',
+      courtMatch: 'Décimo Primero de lo Civil',
+      printedPage: 44,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p044.webp',
+      highlight: { x: 0.502, y: 0.5306, w: 0.4471, h: 0.0388 },
+      excerpt:
+        'SECRETARÍA «B». Acuerdos del 24 de noviembre de 2026. Autofinanciamiento México, S.A. de C.V. vs. Palacios Jácome Carlos y Ramírez Núñez Laura Denisse y Rosendo Lumbreras Laura. Vía Ejecutiva Cuantía Menor Civil. 1 Acdo. Núm. Exp. 1622/2024.',
+    },
+    {
+      expediente: '51/2026',
+      courtMatch: 'Trigésimo Segundo de lo Civil',
+      printedPage: 78,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p078.webp',
+      highlight: { x: 0.502, y: 0.2877, w: 0.4471, h: 0.0273 },
+      excerpt:
+        'SECRETARÍA «A». Acuerdos del 24 de noviembre de 2026. Alcalá González José Humberto vs. Grupo Mexicano de Seguros, S.A. de C.V. Ordinario Civil, Aclaración. 1 Acdo. Núm. Exp. 51/2026.',
+    },
+    {
+      expediente: '435/2025',
+      courtMatch: 'Trigésimo Segundo de lo Civil',
+      printedPage: 78,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p078.webp',
+      highlight: { x: 0.502, y: 0.3119, w: 0.4471, h: 0.0376 },
+      excerpt:
+        'SECRETARÍA «A». Alva Pérez Jorge Fernando vs. Jefa de Gobierno de la Ciudad de México y Plascencia Díaz Julia. Ordinario Civil, Vista Oficio Telmex. 1 Acdo. Núm. Exp. 435/2025.',
+    },
+    {
+      expediente: '1251/2024',
+      courtMatch: 'Trigésimo Segundo de lo Civil',
+      printedPage: 78,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p078.webp',
+      highlight: { x: 0.502, y: 0.427, w: 0.4471, h: 0.0297 },
+      excerpt:
+        'SECRETARÍA «A». Autofinanciamiento Mzd, S.A. de C.V. vs. Rodríguez Romero Carlos Ariel y Maturano Oliva Inés. Ejecutivo Mercantil, Autr. de la Parte Actora. 1 Acdo. Núm. Exp. 1251/2024.',
+    },
+    {
+      expediente: '871/2026',
+      courtMatch: 'Trigésimo Primero de lo Civil de Proceso Oral',
+      printedPage: 254,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p254.webp',
+      highlight: { x: 0.0941, y: 0.6408, w: 0.3765, h: 0.0242 },
+      excerpt:
+        'SECRETARÍA «A». Acuerdos del 24 de noviembre de 2026. Daimler Financial Services, S.A. de C.V., Sofom E.N.R. vs. Rosales Sánchez Juan. Ejecutivo Mercantil. 2 Acdos. Núm. Exp. 871/2026.',
+    },
+    {
+      expediente: '799/2026',
+      courtMatch: 'Trigésimo Segundo de lo Civil de Proceso Oral',
+      printedPage: 255,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p255.webp',
+      highlight: { x: 0.0941, y: 0.7765, w: 0.3765, h: 0.0242 },
+      excerpt:
+        'SECRETARÍA «A». Acuerdos del 24 de noviembre de 2026. Banco Nacional del Ejército, Fuerza Aérea y Armada, S.N.C. vs. Cruz Romero Juan Carlos. Oral Mercantil. 1 Acdo. Núm. Exp. 799/2026.',
+    },
+    {
+      expediente: '1320/2026',
+      courtMatch: 'Trigésimo Segundo de lo Civil de Proceso Oral',
+      printedPage: 255,
+      imagePath: '/ciceron/fuentes/cdmx/2026-11-25/p255.webp',
+      highlight: { x: 0.502, y: 0.7674, w: 0.4471, h: 0.0345 },
+      excerpt:
+        'SECRETARÍA «B». Acuerdos del 24 de noviembre de 2026. BBVA México, S.A., Institución de Banca Múltiple, Grupo Financiero BBVA México vs. Muñiz Vega Yanerys. Oral Mercantil. 1 Acdo. Núm. Exp. 1320/2026.',
+    },
+  ],
+}
+
+const MANIFESTS: LocalBulletinManifest[] = [
+  LOCAL_BOLETIN_CDMX_2026_11_24,
+  LOCAL_BOLETIN_CDMX_2026_11_25,
+]
 
 function fold(s: string): string {
   return s
