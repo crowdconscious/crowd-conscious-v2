@@ -265,7 +265,18 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
-## Pending
+## Pending / roadmap
+
+### 2026-11-25 — Manual bulletin upload (MVP shipped as draft)
+- **Context:** Pasantes and associates still download state bulletins by hand for captcha/login/PDF-per-court sources. Need a real (not demo-only) upload path that stores the file, matches text when possible, and keeps human double-checking in the loop.
+- **Decision (draft PR):** Additive `ciceron.bulletin_uploads` + text/`.txt` deterministic parser → existing `matchEntries` + `record_bulletin_*` with `metadata.origin = 'manual_upload'`. PDF/JPG/PNG store as `needs_review` — **no OCR/LLM in this PR**. Storage under `{firm_id}/boletines/uploads/{date}/{id}.{ext}` using the existing private `ciceron` bucket policies (no new storage RLS). Directory at `/ciceron/boletines/estados` for all 32 entities + DOF/SCJN landings.
+- **Next:** OCR/vision + LLM extraction under `CICERON_FIRM_AI_BUDGET_USD`, then agentified interpretation against firm case files. Never log into Edomex or bypass captchas (rules 9 / 9b / 9e).
+- **Consequences:** Migrations `337` (uploads) + `338` (directory source rows). Agents do not apply to production.
+
+### 2026-11-25 — Client need notes box
+- **Context:** Demo prospects ask for features during the walkthrough; no durable inbox existed without polluting analytics events (free text forbidden in `events`).
+- **Decision (draft PR):** Additive `ciceron.client_need_notes` with firm RLS + admin read-all; small card on Hoy / Boletines / Preferencias; admin inbox on `/ciceron/admin/ventas`. Optional `in_app_notifications` for admins. **No email, WhatsApp, or Resend.**
+- **Consequences:** Migration `336`. Note bodies never enter product events.
 
 ### P8 — Counsel clearance for any future public case-file lookup
 - **Needed by:** before enabling `PublicLookupConnector` (still required; Prompt 6 keeps the stub).

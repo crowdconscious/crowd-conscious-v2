@@ -5,6 +5,7 @@ import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { ReviewBadge } from '../../_components/ReviewBadge'
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist'
 import { FeedbackSuggest } from '../../_components/FeedbackSuggest'
+import { ClientNeedNotesCard } from '../../_components/ClientNeedNotesCard'
 import { SuMananaHero, type DeniedActionNote } from '../../_components/SuMananaHero'
 import { PartnerCoverageMap } from './PartnerCoverageMap'
 import { applyHitCountsToBoard } from '@/lib/ciceron/boletines/board-hit-counts-pure'
@@ -532,6 +533,8 @@ export default async function HoyPage() {
             ))}
           </ul>
         </section>
+
+        <ClientNeedNotesCard context="hoy" />
       </div>
 
       <aside className="cic-hoy-secondary" aria-label={copy.hoy.secondaryColumn}>

@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import {
   AssignButton,
   CompleteButton,
   PartnerSummaryPreview,
 } from '../CoordinatorControls'
 import { BulletinClockStrip } from '../BulletinClockStrip'
+import { BoletinesUploadControls } from '../BoletinesUploadControls'
 import { CoordinatorBoardView } from '../CoordinatorBoardView'
 import { CoordinatorMexicoMap } from '../CoordinatorMexicoMap'
 import { PartnerMorningReport } from '../PartnerMorningReport'
@@ -71,7 +73,21 @@ export default async function CoordinadorBoletinesPage() {
       </p>
       <p className="cic-hoy-links">
         <Link href="/ciceron/boletines">{copy.boletines.title}</Link>
+        {' · '}
+        <Link href="/ciceron/boletines/estados">{copy.boletines.statesDirectoryLink}</Link>
       </p>
+
+      <div style={{ margin: '12px 0' }}>
+        <Suspense fallback={null}>
+          <BoletinesUploadControls
+            canUpload={
+              persona.role === 'socio' ||
+              persona.role === 'asociado' ||
+              persona.role === 'admin'
+            }
+          />
+        </Suspense>
+      </div>
 
       <BulletinClockStrip board={board} />
 

@@ -930,6 +930,90 @@ export type CiceronDatabase = {
           CiceronDatabase['ciceron']['Tables']['bulletin_manual_checks']['Insert']
         >
       }
+      bulletin_uploads: {
+        Row: {
+          id: string
+          firm_id: string
+          source_id: string | null
+          run_id: string | null
+          state_code: string
+          state_name: string
+          publication_date: string
+          uploaded_by: string
+          mime: string | null
+          storage_path: string | null
+          pasted_text: string | null
+          status:
+            | 'received'
+            | 'processing'
+            | 'matched'
+            | 'no_matches'
+            | 'needs_review'
+            | 'failed'
+          entries_found: number
+          hits_found: number
+          parser_notes: string | null
+          is_demo: boolean
+          retention_until: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          source_id?: string | null
+          run_id?: string | null
+          state_code: string
+          state_name: string
+          publication_date: string
+          uploaded_by: string
+          mime?: string | null
+          storage_path?: string | null
+          pasted_text?: string | null
+          status?:
+            | 'received'
+            | 'processing'
+            | 'matched'
+            | 'no_matches'
+            | 'needs_review'
+            | 'failed'
+          entries_found?: number
+          hits_found?: number
+          parser_notes?: string | null
+          is_demo?: boolean
+          retention_until: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['bulletin_uploads']['Insert']>
+      }
+      client_need_notes: {
+        Row: {
+          id: string
+          firm_id: string
+          author_actor: string
+          context: 'hoy' | 'boletines' | 'preferencias' | 'general'
+          body: string
+          status: 'nuevo' | 'leido'
+          is_demo: boolean
+          created_at: string
+          read_at: string | null
+          read_by_actor: string | null
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          author_actor: string
+          context?: 'hoy' | 'boletines' | 'preferencias' | 'general'
+          body: string
+          status?: 'nuevo' | 'leido'
+          is_demo?: boolean
+          created_at?: string
+          read_at?: string | null
+          read_by_actor?: string | null
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['client_need_notes']['Insert']>
+      }
       match_assignments: {
         Row: {
           id: string
@@ -1261,6 +1345,59 @@ export type CiceronDatabase = {
           p_check_id: string
           p_actor: string
           p_notes?: string | null
+        }
+        Returns: Record<string, unknown>
+      }
+      submit_client_need_note: {
+        Args: {
+          p_firm_id: string
+          p_actor: string
+          p_context: string
+          p_body: string
+          p_is_demo?: boolean
+          p_notify_admins?: boolean
+        }
+        Returns: Record<string, unknown>
+      }
+      mark_client_need_note_read: {
+        Args: {
+          p_note_id: string
+          p_actor: string
+        }
+        Returns: Record<string, unknown>
+      }
+      create_bulletin_upload: {
+        Args: {
+          p_firm_id: string
+          p_actor: string
+          p_state_code: string
+          p_state_name: string
+          p_publication_date: string
+          p_source_id?: string | null
+          p_mime?: string | null
+          p_storage_path?: string | null
+          p_pasted_text?: string | null
+          p_status?: string
+          p_entries_found?: number
+          p_hits_found?: number
+          p_parser_notes?: string | null
+          p_run_id?: string | null
+          p_is_demo?: boolean
+          p_retention_days?: number | null
+          p_upload_id?: string | null
+        }
+        Returns: Record<string, unknown>
+      }
+      finalize_bulletin_upload: {
+        Args: {
+          p_firm_id: string
+          p_upload_id: string
+          p_actor: string
+          p_status: string
+          p_entries_found?: number
+          p_hits_found?: number
+          p_parser_notes?: string | null
+          p_run_id?: string | null
         }
         Returns: Record<string, unknown>
       }
