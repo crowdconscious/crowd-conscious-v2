@@ -91,9 +91,10 @@ export function LiveActionCard({ locale, market, question }: Props) {
           transition={{ duration: 0.45, ease: 'easeOut' }}
           className="order-2 md:order-1"
         >
-          <p className="mb-3 text-sm font-medium text-emerald-400/90">
+          {/* Visible h1 required for agent/no-JS content checks; brand stays the hero signal. */}
+          <h1 className="mb-3 text-sm font-medium text-emerald-400/90">
             Crowd Conscious
-          </p>
+          </h1>
 
           <Link
             href={href}
