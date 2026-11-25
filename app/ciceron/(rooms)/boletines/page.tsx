@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { BulletinClockStrip } from './BulletinClockStrip'
+import { BoletinesUploadControls } from './BoletinesUploadControls'
 import { BulletinMatchCard } from '../../_components/BulletinMatchCard'
+import { ClientNeedNotesCard } from '../../_components/ClientNeedNotesCard'
 import { EmptyState } from '../../_components/EmptyState'
 import { ExportViewButton } from '../../_components/ExportViewButton'
 import { CICERON_BASE } from '@/lib/ciceron/config'
@@ -43,6 +46,8 @@ export default async function BoletinesPage({
   const data = await loadBulletinBoard(persona)
   const homeKind = personaHomeKind(persona.role, persona.id)
   const personaRole = homeKind as CardPersonaRole
+  const canUpload =
+    persona.role === 'socio' || persona.role === 'asociado' || persona.role === 'admin'
   const filteredHits = estadoFilter
     ? data.hits.filter((h) => h.stateCode.toUpperCase() === estadoFilter)
     : data.hits
@@ -71,8 +76,27 @@ export default async function BoletinesPage({
       <p className="cic-hoy-links">
         <Link href="/ciceron/boletines/coordinador">{copy.boletines.coordinatorLink}</Link>
         {' · '}
+        <Link href="/ciceron/boletines/estados">{copy.boletines.statesDirectoryLink}</Link>
+        {' · '}
         <Link href="/ciceron/revision">{copy.boletines.openRevision}</Link>
       </p>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10,
+          alignItems: 'center',
+          margin: '12px 0 8px',
+        }}
+      >
+        <Suspense fallback={null}>
+          <BoletinesUploadControls
+            canUpload={canUpload}
+            initialStateCode={estadoFilter}
+          />
+        </Suspense>
+      </div>
 
       <BulletinClockStrip board={data.board} />
 
@@ -348,6 +372,8 @@ export default async function BoletinesPage({
           </ul>
         )}
       </section>
+
+      <ClientNeedNotesCard context="boletines" />
     </div>
   )
 }

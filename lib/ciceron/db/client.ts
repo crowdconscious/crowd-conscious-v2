@@ -32,6 +32,9 @@ type StorageBucket = {
     opts?: { contentType?: string; upsert?: boolean }
   ) => Promise<{ data: unknown; error: { message: string } | null }>
   download: (path: string) => Promise<{ data: Blob | null; error: { message: string } | null }>
+  remove: (
+    paths: string[]
+  ) => Promise<{ data: unknown; error: { message: string } | null }>
 }
 
 type SchemaCapable = {

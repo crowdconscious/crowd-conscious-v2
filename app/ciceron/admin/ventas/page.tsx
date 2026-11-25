@@ -1,9 +1,11 @@
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatDateTimeEs } from '@/lib/ciceron/copy/format-date'
+import { loadClientNeedNotesInbox } from '@/lib/ciceron/client-notes/data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { loadSalesInviteProgress } from '@/lib/ciceron/demo/sales'
 import { redirect } from 'next/navigation'
 import { CICERON_BASE } from '@/lib/ciceron/config'
+import { NotesInbox } from './NotesInbox'
 import { ResetDemoButton } from './ResetDemoButton'
 import { recordCiceronEvent } from '@/lib/ciceron/events'
 
@@ -22,6 +24,7 @@ export default async function AdminVentasPage() {
   })
 
   const { rows, source } = await loadSalesInviteProgress(persona)
+  const notesInbox = await loadClientNeedNotesInbox(persona)
 
   return (
     <div>
@@ -30,6 +33,16 @@ export default async function AdminVentasPage() {
       <p className="cic-muted" style={{ fontSize: '0.85rem' }}>
         {source === 'schema' ? copy.adminMetricas.schemaSource : copy.adminMetricas.demoSource}
       </p>
+
+      <section className="cic-section" aria-labelledby="notes-inbox" style={{ marginTop: 28 }}>
+        <h2 id="notes-inbox" className="cic-h2">
+          {copy.adminVentas.notesInboxTitle}
+        </h2>
+        <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+          {copy.adminVentas.notesInboxLead}
+        </p>
+        <NotesInbox rows={notesInbox.rows} />
+      </section>
 
       {rows.length === 0 ? (
         <p className="cic-muted">{copy.adminVentas.empty}</p>

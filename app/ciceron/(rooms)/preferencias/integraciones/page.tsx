@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { ClientNeedNotesCard } from '@/app/ciceron/_components/ClientNeedNotesCard'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { GoogleLiveActions } from '@/app/ciceron/_components/GoogleLiveActions'
@@ -155,6 +156,8 @@ export default async function IntegracionesPrefsPage() {
           </p>
         )}
       </section>
+
+      <ClientNeedNotesCard context="preferencias" />
     </div>
   )
 }
