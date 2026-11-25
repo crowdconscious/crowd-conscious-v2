@@ -101,6 +101,7 @@ export const eventPayloadSchemas = {
         'hoy',
         'boletines',
         'boletines-coordinador',
+        'boletines-estados',
         'monitor-dof',
         'expedientes',
         'investigacion',

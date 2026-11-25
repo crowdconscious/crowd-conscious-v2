@@ -74,11 +74,19 @@ function isAllowedMention(file: string, line: string): boolean {
     ) {
       return false
     }
+    // Federal judiciary hosts stay forbidden except the human-facing directory
+    // landing list (no fetch / connector — display + <a target=_blank> only).
     if (
       /cjf\.gob\.mx|scjn\.gob\.mx|sise\.pjf\.gob\.mx|servicios\.pjf\.gob\.mx|tfja\.gob\.mx/i.test(
         line
       )
     ) {
+      if (
+        rel.endsWith('/boletines/state-directory.ts') ||
+        rel.endsWith('/boletines/state-directory.test.ts')
+      ) {
+        return true
+      }
       return false
     }
     return true
