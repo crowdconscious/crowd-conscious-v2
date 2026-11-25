@@ -444,6 +444,9 @@ export const copy = {
     openRevision: 'Cola de revisión',
     coordinatorLink: 'Vista del coordinador',
     statesDirectoryLink: 'Boletines por estado',
+    statesManualSearchCta: 'Búsqueda manual de boletines',
+    statesManualSearchNav: 'Búsqueda manual',
+    statesBackToBoletines: 'Volver a Boletines',
     statesTitle: 'Boletines por estado',
     statesLead:
       'Abra desde aquí el boletín oficial de cada entidad. La consulta del día queda en manos de quien revisa.',

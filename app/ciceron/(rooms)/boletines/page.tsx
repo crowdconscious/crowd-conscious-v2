@@ -66,12 +66,20 @@ export default async function BoletinesPage({
 
   return (
     <div>
-      <h1 className="cic-h1">{copy.boletines.title}</h1>
-      <p className="cic-lead">{copy.boletines.lead}</p>
+      <div className="cic-bol-page-head">
+        <div className="cic-bol-page-head-text">
+          <h1 className="cic-h1">{copy.boletines.title}</h1>
+          <p className="cic-lead">{copy.boletines.lead}</p>
+        </div>
+        <Link
+          href="/ciceron/boletines/estados"
+          className="cic-btn cic-bol-manual-cta"
+        >
+          {copy.boletines.statesManualSearchCta}
+        </Link>
+      </div>
       <p className="cic-hoy-links">
         <Link href="/ciceron/boletines/coordinador">{copy.boletines.coordinatorLink}</Link>
-        {' · '}
-        <Link href="/ciceron/boletines/estados">{copy.boletines.statesDirectoryLink}</Link>
         {' · '}
         <Link href="/ciceron/revision">{copy.boletines.openRevision}</Link>
       </p>

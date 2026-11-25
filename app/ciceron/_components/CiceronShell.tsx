@@ -256,23 +256,49 @@ function ShellInner({
                 {group.roomIds.map((roomId) => {
                   const room = roomsById.get(roomId)
                   if (!room) return null
+                  const estadosPath = '/ciceron/boletines/estados'
+                  const onEstados = Boolean(pathname?.startsWith(estadosPath))
+                  // Keep Boletines highlighted on board/coordinador, not on the manual directory.
                   const active =
-                    pathname === room.href || pathname?.startsWith(`${room.href}/`)
+                    room.id === 'boletines'
+                      ? pathname === room.href ||
+                        Boolean(
+                          pathname?.startsWith(`${room.href}/`) && !onEstados
+                        )
+                      : pathname === room.href ||
+                        Boolean(pathname?.startsWith(`${room.href}/`))
                   const badge = roomBadge(room.id, meta.reviewBadge, room.badge)
                   return (
-                    <Link
-                      key={room.id}
-                      href={room.href}
-                      aria-current={active ? 'page' : undefined}
-                      title={copy.rooms[room.id]}
-                      aria-label={copy.rooms[room.id]}
-                    >
-                      <span className="cic-rail-link-short" aria-hidden="true">
-                        {copy.rooms[room.id].slice(0, 1)}
-                      </span>
-                      <span className="cic-rail-link-label">{copy.rooms[room.id]}</span>
-                      {badge > 0 ? <span className="cic-badge">{badge}</span> : null}
-                    </Link>
+                    <div key={room.id} className="cic-rail-room-block">
+                      <Link
+                        href={room.href}
+                        aria-current={active ? 'page' : undefined}
+                        title={copy.rooms[room.id]}
+                        aria-label={copy.rooms[room.id]}
+                      >
+                        <span className="cic-rail-link-short" aria-hidden="true">
+                          {copy.rooms[room.id].slice(0, 1)}
+                        </span>
+                        <span className="cic-rail-link-label">{copy.rooms[room.id]}</span>
+                        {badge > 0 ? <span className="cic-badge">{badge}</span> : null}
+                      </Link>
+                      {room.id === 'boletines' ? (
+                        <Link
+                          href={estadosPath}
+                          className="cic-rail-sub"
+                          aria-current={onEstados ? 'page' : undefined}
+                          title={copy.boletines.statesManualSearchNav}
+                          aria-label={copy.boletines.statesManualSearchNav}
+                        >
+                          <span className="cic-rail-link-short" aria-hidden="true">
+                            B
+                          </span>
+                          <span className="cic-rail-link-label">
+                            {copy.boletines.statesManualSearchNav}
+                          </span>
+                        </Link>
+                      ) : null}
+                    </div>
                   )
                 })}
               </div>
@@ -376,13 +402,40 @@ function ShellInner({
         <GuidedStoryPanel state={meta.guidedStory} />
       ) : null}
       <nav className="cic-mobile-nav" aria-label="Salas">
-        {CICERON_ROOMS.filter((room) => room.id !== 'clientes').map((room) => {
-          const active = pathname === room.href
-          return (
-            <Link key={room.id} href={room.href} aria-current={active ? 'page' : undefined}>
+        {CICERON_ROOMS.filter((room) => room.id !== 'clientes').flatMap((room) => {
+          const active =
+            room.id === 'boletines'
+              ? pathname === room.href ||
+                Boolean(
+                  pathname?.startsWith(`${room.href}/`) &&
+                    !pathname?.startsWith('/ciceron/boletines/estados')
+                )
+              : pathname === room.href
+          const links = [
+            <Link
+              key={room.id}
+              href={room.href}
+              aria-current={active ? 'page' : undefined}
+            >
               {copy.rooms[room.id]}
-            </Link>
-          )
+            </Link>,
+          ]
+          if (room.id === 'boletines') {
+            links.push(
+              <Link
+                key="boletines-estados"
+                href="/ciceron/boletines/estados"
+                aria-current={
+                  pathname?.startsWith('/ciceron/boletines/estados')
+                    ? 'page'
+                    : undefined
+                }
+              >
+                {copy.boletines.statesManualSearchNav}
+              </Link>
+            )
+          }
+          return links
         })}
         <button
           type="button"
@@ -427,6 +480,17 @@ function ShellInner({
               onNavigate={() => setMoreOpen(false)}
             />
             <div className="cic-mobile-more-links">
+              <Link
+                href="/ciceron/boletines/estados"
+                onClick={() => setMoreOpen(false)}
+                aria-current={
+                  pathname?.startsWith('/ciceron/boletines/estados')
+                    ? 'page'
+                    : undefined
+                }
+              >
+                {copy.boletines.statesManualSearchNav}
+              </Link>
               <Link href="/ciceron/clientes" onClick={() => setMoreOpen(false)}>
                 {copy.rooms.clientes}
               </Link>

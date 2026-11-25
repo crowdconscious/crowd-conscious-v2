@@ -323,6 +323,10 @@
   padding-right: calc(var(--cic-space) * 0.75);
 }
 
+.ciceron-root.is-rail-collapsed .cic-rail a.cic-rail-sub {
+  padding-left: calc(var(--cic-space) * 0.75);
+}
+
 .ciceron-root.is-rail-collapsed .cic-badge {
   position: absolute;
   top: 2px;
@@ -682,6 +686,18 @@ details[open] > .cic-secondary-summary::before {
   font-weight: 500;
   color: var(--cic-muted);
   border: 1px solid transparent;
+}
+
+.cic-rail-room-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cic-rail a.cic-rail-sub {
+  padding-left: calc(var(--cic-space) * 2.5);
+  font-size: 0.82rem;
+  font-weight: 500;
 }
 
 .cic-rail a:not(.cic-rail-brand)[aria-current='page'] {
@@ -2144,6 +2160,43 @@ textarea.cic-input {
 .cic-onboarding-mark.is-pending {
   color: var(--cic-muted);
 }
+.cic-bol-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(var(--cic-space) * 1.5);
+  margin-bottom: calc(var(--cic-space) * 1.5);
+}
+
+.cic-bol-page-head-text {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.cic-bol-page-head .cic-h1 {
+  margin-bottom: 0.35rem;
+}
+
+.cic-bol-page-head .cic-lead {
+  margin-bottom: 0;
+}
+
+a.cic-bol-manual-cta {
+  flex: 0 0 auto;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--cic-on-accent);
+}
+
+@media (max-width: 640px) {
+  a.cic-bol-manual-cta {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
 .cic-hoy-links {
   font-size: 0.9rem;
   margin: 0 0 20px;

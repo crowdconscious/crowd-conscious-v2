@@ -25,11 +25,12 @@ export default async function BoletinesEstadosPage() {
 
   return (
     <div>
+      <p className="cic-hoy-links" style={{ marginBottom: 8 }}>
+        <Link href="/ciceron/boletines">{`← ${copy.boletines.statesBackToBoletines}`}</Link>
+      </p>
       <h1 className="cic-h1">{copy.boletines.statesTitle}</h1>
       <p className="cic-lead">{copy.boletines.statesLead}</p>
       <p className="cic-hoy-links">
-        <Link href="/ciceron/boletines">{copy.rooms.boletines}</Link>
-        {' · '}
         <Link href="/ciceron/boletines/coordinador">{copy.boletines.coordinatorLink}</Link>
       </p>
 
