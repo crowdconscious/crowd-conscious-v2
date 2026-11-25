@@ -58,12 +58,16 @@ export type MatchCardAction = {
 export function pickMatchPrimaryAction(opts: {
   caseFileId: string | null
   sourceUrl: string | null
+  /** In-app local viewer; preferred over external sourceUrl when set. */
+  localFuenteHref?: string | null
 }): { primary: MatchCardAction; secondary: MatchCardAction[] } {
   const secondary: MatchCardAction[] = [
     { id: 'capture', href: '/ciceron/expedientes/captura' },
     { id: 'review', href: '/ciceron/revision' },
   ]
-  if (opts.sourceUrl) {
+  if (opts.localFuenteHref) {
+    secondary.push({ id: 'source', href: opts.localFuenteHref, external: false })
+  } else if (opts.sourceUrl) {
     secondary.push({ id: 'source', href: opts.sourceUrl, external: true })
   }
   if (opts.caseFileId) {

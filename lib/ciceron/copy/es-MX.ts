@@ -606,6 +606,19 @@ export const copy = {
     clientSideDemandado: 'demandado',
     secretaria: 'Secretaría',
     publicationDate: 'Fecha de publicación',
+    fuenteTitle: 'Fuente del boletín',
+    fuenteBack: 'Volver a boletines',
+    fuenteCourt: 'Juzgado',
+    fuenteExp: 'Expediente',
+    fuenteParties: 'Partes',
+    fuenteDownloadPage: 'Descargar página',
+    fuenteOpenOfficial: 'Abrir en el portal oficial',
+    fuenteNoLocal:
+      'No hay una página descargada para esta coincidencia. Puede abrir la fuente en el portal oficial.',
+    fuenteNoExternal: 'No hay enlace de fuente disponible para esta coincidencia.',
+    fuenteOpenFull: 'Abrir página a tamaño completo',
+    fuenteCloseFull: 'Cerrar',
+    fuenteZoomHint: 'Toque la página para ampliarla. En móvil puede pellizcar para acercar.',
   },
 
   monitor: {
